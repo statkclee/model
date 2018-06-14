@@ -30,7 +30,7 @@ title: 데이터 과학 -- 모형
 ## 학습목차 
 
 - **모형**
-
+- [서포트 벡터 머신(SVM)](model_svm.html)
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
 

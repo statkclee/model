@@ -1,0 +1,330 @@
+---
+layout: page
+title: xwMOOC 데이터 과학
+subtitle: 서포트 벡터 머신(SVM)
+date: "`r Sys.Date()`"
+author: xwMOOC
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: hide
+    number_section: true
+---
+
+``` {r, include=FALSE}
+source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=12)
+
+
+```
+
+
+# 직관적인 SVM 설명 [^intuitive-svm-in-r] {#intuitive-svm}
+
+[^intuitive-svm-in-r]: [Eight to Late - Sensemaking and Analytics for Organizations, "An intuitive introduction to support vector machines using R – Part 1"](https://eight2late.wordpress.com/)
+
+
+**서포트 벡터 머신(support vector machine, SVM)**은 기계 학습의 분야 중 하나로 패턴 인식, 자료 분석을 위한 지도 학습 모델이며, 
+주로 분류와 회귀 분석을 위해 사용한다. 
+두 카테고리 중 어느 하나에 속한 데이터의 집합이 주어졌을 때, 
+SVM 알고리즘은 주어진 데이터 집합을 바탕으로 하여 새로운 데이터가 어느 카테고리에 속할지 판단하는 비확률적 이진 선형 분류 모델을 제작하는데 유용하고 
+회귀문제도 적용이 가능하다. [^svm-wiki]
+
+[^svm-wiki]: [위키백과, 서포트 벡터 머신(SVM)](https://ko.wikipedia.org/wiki/서포트_벡터_머신)
+
+["An intuitive introduction to support vector machines using R – Part 1"](https://eight2late.wordpress.com/)에 공개된 데이터를 다운로드 받아 
+원본 데이터를 시각화한다.
+
+``` {r intuitive-svm-linear}
+# 0. 팩키지 -----
+library(tidyverse)
+library(readxl)
+library(caret)
+library(e1071)
+library(extrafont)
+loadfonts()
+
+# 1. 데이터 -----
+
+# download.file("https://eight2late.files.wordpress.com/2018/06/sugar_content.xls", destfile="data/sugar.xls", mode = "wb")
+drink_df <- read_excel("data/sugar.xls")
+
+# 2. 원본 데이터 -----
+drink_df %>% 
+  ggplot(aes(x=sugar_content, y=c(0))) +
+    geom_point() +
+    theme_bw(base_family = "NanumGothic") +
+    labs(x="설탕 함유량", y="") +
+    geom_text(data=drink_df, aes(label = sugar_content), size = 2.5, vjust=-2)
+```
+
+## 1차원 의사결정 경계 {#one-dimension-decision-boundary}
+
+1차원 공간에 나온 설탕이 많이 함유된 제품과 설탕이 적게 함유된 제품을 구분하는 의사결정 경계(deicion boundary)를 시각화해서 다음과 같이 
+표현할 수 있다.
+
+``` {r intuitive-svm-linear-decision-boundary}
+# 3. decision boundary -----
+
+decision_bound_df <- tribble(
+  ~sep,
+  9.1,
+  9.7
+)
+
+drink_df %>% 
+  ggplot(aes(x=sugar_content, y=c(0))) +
+  geom_point() +
+  theme_bw(base_family = "NanumGothic") +
+  labs(x="설탕 함유량", y="") +
+  geom_text(data=drink_df, aes(label = sugar_content), size = 2.5, vjust=-2) +
+  geom_point(data=decision_bound_df, aes(x=sep, y=0), color="red", size=3) +
+  geom_text(data=decision_bound_df, aes(x=sep, y=0, label = sep), size = 2.5, vjust=-2) 
+```
+
+## 1차원 마진(margin) {#one-dimension-margin}
+
+1차원 공간에 나온 설탕이 많이 함유된 제품과 설탕이 적게 함유된 제품을 구분하는 의사결정 경계(deicion boundary)는 다수 존재하지만,
+마진(margin)을 최대화하는 의사결정 선은 아마도 두 의사결정 설탕 함유량 데이터를 평균내는 것이 합리적일 적이다.
+
+
+``` {r intuitive-svm-linear-margin}
+# 4. 마진(margin) -----
+
+mm_sep_df <- tribble(
+  ~sep,
+  (8.8+10)/2
+)
+
+drink_df %>% 
+  ggplot(aes(x=sugar_content, y=c(0))) +
+  geom_point() +
+  theme_bw(base_family = "NanumGothic") +
+  labs(x="설탕 함유량", y="") +
+  geom_text(data=drink_df, aes(label = sugar_content), size = 2.5, vjust=-2) +
+  geom_point(data=decision_bound_df, aes(x=sep, y=0), color="red", size=3) +
+  geom_text(data=decision_bound_df, aes(x=sep, y=0, label = sep), size = 2.5, vjust=-2) +
+  geom_point(data=mm_sep_df, aes(x=sep, y=0), color="blue", size=3) +
+  geom_text(data=mm_sep_df, aes(x=sep, y=0, label = sep), size = 2.5, vjust=-2) 
+```  
+
+# 2차원 평면 확장 {#two-dimension-intuitive-svm}
+
+## 데이터 {#two-dimension-intuitive-svm-data}
+
+가로(0 -- 1), 세로(0--1) 직사사각형 공간에 난수를 500개 생성한다.
+그리고 이를 시각화한다.
+
+``` {r two-dimension-intuitive-svm-data}
+# 1. 데이터 -----
+n <- 500
+two_df <- tibble(x_1=runif(n), x_2=runif(n))
+
+# 2. 원본 데이터 -----
+two_df %>% 
+  ggplot(aes(x=x_1, y=x_2)) +
+    geom_point() +
+    theme_bw(base_family = "NanumGothic") +
+    labs(x="x_1", y="x_2") +
+    coord_fixed()
+```
+
+## 의사결정 경계 {#two-dimension-intuitive-svm-decision-boundary}
+
+
+두개 집단으로 나누기 위해서 $y = x$ 방정식을 통해 두개 삼각형 공간으로 나누고 각 집단을 구분하고 
+$\delta$ 0.1로 설정하여 마진을 둔다. 
+
+``` {r two-dimension-intuitive-svm-decision-boundary}
+# 3. 의사결정 경계(Decision Boundary) -----
+two_df <- two_df %>% 
+  mutate(y = as.factor(ifelse(x_1 > x_2, -1, 1))) 
+
+## 3.1. 의사결정 경계선과 마진 사이 비무장지대 설정
+delta <- 0.1
+
+two_df <- two_df %>% 
+  filter(abs(x_1 - x_2) > delta)
+
+## 3.2. 시각화
+two_df %>% 
+  ggplot(aes(x = x_1, y = x_2, color = y)) +
+  geom_point() +
+  theme_bw(base_family = "NanumGothic") +
+  labs(x="x_1", y="x_2") +
+  scale_color_manual(values = c("-1" = "red", "1" = "blue")) +
+  geom_abline(slope = 1, intercept = 0, size=1.5) +
+  coord_fixed() +
+  geom_abline(slope = 1, intercept=delta, linetype = "dashed") +
+  geom_abline(slope = 1, intercept=-delta, linetype = "dashed") 
+```
+
+
+# 선형 SVM {#linear-svm}
+
+`caret` 팩키지를 사용해서 훈련/시험 데이터로 나누고 이를 
+`e1071` 팩키지 `svm()` 함수를 사용해서 분류모형을 구축한다.
+
+`svm()` 모형을 구축할 때, `type`, `kernel`, `scale`, `cost`가 주요 모수가 되니,
+주어진 데이터를 잘 분류할 수 있는 모형을 구축할 때 신중히 모수를 설정한다.
+
+- type="C-classification"
+- kernel="linear" 
+- scale=FALSE
+- cost=1
+
+```{r caret-lienar-svm}
+# 2. 훈련/시험 데이터 분할 ----
+train_index <- createDataPartition(two_df$y, p = .8, list = FALSE)
+
+train_df <- two_df[ train_index,]
+test_df  <- two_df[-train_index,]
+
+# 3. SVM 모형 적합 -----
+svm_model <- svm(y ~ ., data=train_df, type="C-classification", kernel="linear", scale=FALSE)
+
+# 4. SVM 모형 평가 -----
+## 4.1. 훈련데이터
+pred_train <- predict(svm_model, train_df)
+mean(pred_train == train_df$y)
+## 4.2. 검증데이터
+pred_test <- predict(svm_model, test_df)
+mean(pred_test == test_df$y)
+```
+
+
+## 선형 SVM 시각화 - 서포트 벡터 {#intuitive-linear-svm-viz}
+
+`svm()` 함수로 모형을 구축하고 R 객체로 저장하게 되면,
+`svm_model$index`, `svm_model$SV`을 통해 서포트 벡터와 이에 해당되는 데이터 행을 추출해낼 수 있다.
+
+```{r intuitive-linear-svm-viz}
+# 5. SVM 모형 시각화 -----
+
+## 5.1. 지지벡터(Support Vector) 의사결정 경계점 시각화 -----
+
+train_sv <- train_df[svm_model$index,]
+
+train_df %>% 
+  ggplot(aes(x = x_1, y = x_2, color = y)) +
+  geom_point() +
+  theme_bw(base_family = "NanumGothic") +
+  labs(x="x_1", y="x_2") +
+  scale_color_manual(values = c("-1" = "red", "1" = "blue")) +
+  geom_abline(slope = 1, intercept = 0, size=0.7, linetype=3, alpha=0.7) +
+  coord_fixed() +
+  geom_point(data=train_sv, aes(x=x_1, y=x_2), colour="purple", size = 4, alpha=0.5)
+```
+
+## 선형 SVM 시각화 - 선 {#intuitive-linear-svm-viz-line}
+
+가중치를 계산하고 이를 반영하여 기울기와 절편을 계산하면 SVM 의사결정 경계선을 시각화할 수 있다.
+
+```{r intuitive-linear-svm-viz-line}
+## 5.2. 지지벡터(Support Vector) 시각화 -----
+weight <- t(svm_model$coefs) %*% svm_model$SV
+
+### 기울기
+slope_1 <- -weight[1]/weight[2]
+
+### 절편
+intercept_1 <- svm_model$rho/weight[2]
+
+train_df %>% 
+  ggplot(aes(x = x_1, y = x_2, color = y)) +
+  geom_point() +
+  theme_bw(base_family = "NanumGothic") +
+  labs(x="x_1", y="x_2") +
+  scale_color_manual(values = c("-1" = "red", "1" = "blue")) +
+  coord_fixed() +
+  geom_point(data=train_sv, aes(x=x_1, y=x_2), colour="purple", size = 4, alpha=0.5) +
+  geom_abline(slope=slope_1, intercept = intercept_1) +
+  geom_abline(slope=slope_1,intercept = intercept_1-1/weight[2], linetype="dashed")+
+  geom_abline(slope=slope_1,intercept = intercept_1+1/weight[2], linetype="dashed")
+```
+
+
+## 선형 SVM 시각화 - SVM 내장함수 {#intuitive-linear-svm-viz-built-in}
+
+SVM 내장된 시각화함수를 통하면 앞선 작업없이 시각화가 가능하다.
+$\times$는 서포트 벡터를 나타내고 분류결과를 채색하여 시각적으로 표현해 준다.
+
+```{r intuitive-linear-svm-viz-built-in}
+## 5.3. SVM 자체 내장 시각화 -----
+plot(x=svm_model, data=train_df)
+```
+
+# 다중분류 {#iris-multi-class}
+
+선형 SVM을 통해 두집단을 분류하는 문제에 적용시켰다.
+`iris` 데이터와 같이 집단이 3개를 분류할 경우 적용하는 전략은 `one-against-one` 분류전략이 된다.
+
+- 데이터를 두집단을 갖는 $\frac{N(N-1)}{2}$로 나눈다.
+- 각 부분집합이 두개의 집단을 갖기 때문에 앞선 알고리즘을 적용한다.
+- 각 데이터 행마다 다수결 원칙을 적용하여 분류작업을 완성시킨다.
+
+
+```{r multiclass-iris}
+# 1. 데이터 -----
+data(iris)
+
+## 1.1. 데이터 시각화 ----
+iris %>% 
+  ggplot(aes(x=Petal.Width,y=Petal.Length,colour=Species)) + 
+    geom_point() +
+    theme_minimal(base_family="NanumGothic")
+```
+
+## iris 데이터 SVM {#iris-multi-class-application}
+
+`iris` 데이터를 한번만 훈련/시험 데이터로 나눠 분류모형을 작업하게 되면 
+일반화에 문제가 생길수가 있으니 100회 반복하여 분류작업을 수행한다.
+
+수행결과를 평균내고 이를 수치화한다.
+
+```{r iris-multi-class-application}
+# 2. one-against-one 분류전략 -----
+## 2.1. 훈련/시험 데이터 분할 ----
+train_index <- createDataPartition(iris$Species, p = .8, list = FALSE)
+
+train_df <- iris[ train_index,]
+test_df  <- iris[-train_index,]
+
+# 3. SVM 모형 적합 -----
+svm_model <- svm(Species ~ ., data=train_df, type="C-classification", kernel="linear", scale=FALSE)
+
+# 4. SVM 모형 평가 -----
+## 4.1. 훈련데이터
+pred_train <- predict(svm_model, train_df)
+mean(pred_train == train_df$Species)
+## 4.2. 검증데이터
+pred_test <- predict(svm_model, test_df)
+mean(pred_test == test_df$Species)
+
+# 5. 100회 SVM 모형 평가 ----
+accuracy <- rep(NA,100)
+
+for (i in 1:100){
+  # 1. 훈련/시험 데이터 분할 ----
+  train_index <- createDataPartition(iris$Species, p = .8, list = FALSE)
+  
+  train_df <- iris[ train_index,]
+  test_df  <- iris[-train_index,]
+  
+  # 2. SVM 모형 적합 -----
+  svm_model <- svm(Species ~ ., data=train_df, type="C-classification", kernel="linear", scale=FALSE)
+  
+  # 3. SVM 모형 평가 -----
+  pred_test <- predict(svm_model, test_df)
+  accuracy[i] <- mean(pred_test == test_df$Species)
+}
+
+mean(accuracy)
+sd(accuracy)
+```
+
+
+
+
