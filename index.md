@@ -33,6 +33,10 @@ title: 데이터 과학 -- 모형
     - [`rsampling`](model-rsampling.html) 
 - **모형**
     - [서포트 벡터 머신(SVM)](model_svm.html)
+- **모형 시각화**
+    - [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
+
+
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
 

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="xwMOOC" />
+
+<meta name="date" content="2018-06-29" />
+
+<title>xwMOOC 모형</title>
+
+<script src="gapminder/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="gapminder/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="gapminder/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="gapminder/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="gapminder/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="gapminder/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="gapminder/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="gapminder/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="gapminder/navigation-1.1/tabsets.js"></script>
+<script src="gapminder/navigation-1.1/codefolding.js"></script>
+<script src="gapminder/htmlwidgets-1.2/htmlwidgets.js"></script>
+<link href="gapminder/bokehjs-0.12.2/bokeh.min.css" rel="stylesheet" />
+<link href="gapminder/bokehjs-0.12.2/loader.css" rel="stylesheet" />
+<script src="gapminder/bokehjs-0.12.2/bokeh.min.js"></script>
+<script src="gapminder/rbokeh-binding-0.5.0/rbokeh.js"></script>
+<script src="gapminder/trelliscopejs_widget-0.1.20/trelliscope.min.js"></script>
+<script src="gapminder/trelliscopejs_widget-binding-0.1.13/trelliscopejs_widget.js"></script>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; background-color: #f8f8f8; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+pre, code { background-color: #f8f8f8; }
+code > span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code > span.dt { color: #204a87; } /* DataType */
+code > span.dv { color: #0000cf; } /* DecVal */
+code > span.bn { color: #0000cf; } /* BaseN */
+code > span.fl { color: #0000cf; } /* Float */
+code > span.ch { color: #4e9a06; } /* Char */
+code > span.st { color: #4e9a06; } /* String */
+code > span.co { color: #8f5902; font-style: italic; } /* Comment */
+code > span.ot { color: #8f5902; } /* Other */
+code > span.al { color: #ef2929; } /* Alert */
+code > span.fu { color: #000000; } /* Function */
+code > span.er { color: #a40000; font-weight: bold; } /* Error */
+code > span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #000000; } /* Constant */
+code > span.sc { color: #000000; } /* SpecialChar */
+code > span.vs { color: #4e9a06; } /* VerbatimString */
+code > span.ss { color: #4e9a06; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #000000; } /* Variable */
+code > span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code > span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code > span.ex { } /* Extension */
+code > span.at { color: #c4a000; } /* Attribute */
+code > span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code > span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">xwMOOC 모형</h1>
+<h3 class="subtitle"><em>회귀모형 - <code>purrr</code> + <code>trelliscopejs</code></em></h3>
+<h4 class="author"><em>xwMOOC</em></h4>
+<h4 class="date"><em>2018-06-29</em></h4>
+
+</div>
+
+
+<div id="model-reg-viz-data" class="section level1">
+<h1><span class="header-section-number">1</span> 기대수명 데이터</h1>
+<p><code>gapminder</code> 데이터를 가지고 회귀모형을 구축하고 모형을 활용하여 종속변수(기대수명, <code>lifeExp</code>)가 늘어나지 못한 국가를 뽑아내고 이를 시각적으로 확인해보자.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 0. 환경설정 -----</span>
+<span class="co"># 데이터</span>
+<span class="kw">library</span>(gapminder)
+
+<span class="co"># Tidyverse</span>
+<span class="kw">library</span>(tidyverse)
+
+<span class="co"># 시각화</span>
+<span class="kw">library</span>(cowplot)
+<span class="kw">library</span>(trelliscopejs)
+<span class="kw">library</span>(rbokeh)
+
+<span class="co"># 모형</span>
+<span class="kw">library</span>(broom)
+
+<span class="co"># 1. 데이터 -----</span>
+gapminder</code></pre></div>
+<pre class="output"><code># A tibble: 1,704 x 6
+   country     continent  year lifeExp      pop gdpPercap
+   &lt;fct&gt;       &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+ 1 Afghanistan Asia       1952    28.8  8425333      779.
+ 2 Afghanistan Asia       1957    30.3  9240934      821.
+ 3 Afghanistan Asia       1962    32.0 10267083      853.
+ 4 Afghanistan Asia       1967    34.0 11537966      836.
+ 5 Afghanistan Asia       1972    36.1 13079460      740.
+ 6 Afghanistan Asia       1977    38.4 14880372      786.
+ 7 Afghanistan Asia       1982    39.9 12881816      978.
+ 8 Afghanistan Asia       1987    40.8 13867957      852.
+ 9 Afghanistan Asia       1992    41.7 16317921      649.
+10 Afghanistan Asia       1997    41.8 22227415      635.
+# ... with 1,694 more rows
+</code></pre>
+</div>
+<div id="model-reg-viz-model" class="section level1">
+<h1><span class="header-section-number">2</span> 기대수명 회귀분석</h1>
+<p>대륙과 국가를 그룹으로 잡아 회귀분석을 각각에 대해서 돌리고 나서, 모형 결과값을 데이터와 모형이 함께 위치하도록 티블(tibble)에 저장시켜 놓은다. 그리고 나서, 주요한 회귀모형 성능지표인 결정계수(<span class="math inline">\(R^2\)</span>)를 기준으로 정렬시킨다.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 2. 모형 -----</span>
+country_model &lt;-<span class="st"> </span><span class="cf">function</span>(df)
+  <span class="kw">lm</span>(lifeExp <span class="op">~</span><span class="st"> </span>year, <span class="dt">data=</span>df)
+
+by_country &lt;-<span class="st"> </span>gapminder <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(country, continent) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">nest</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">model =</span> <span class="kw">map</span>(data, country_model),
+         <span class="dt">model_glance =</span> <span class="kw">map</span>(model, glance),
+         <span class="dt">rsquare =</span> <span class="kw">map_dbl</span>(model_glance, <span class="op">~</span>.<span class="op">$</span>r.squared))
+
+by_country <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(<span class="op">-</span>rsquare)</code></pre></div>
+<pre class="output"><code># A tibble: 142 x 6
+   country           continent data        model  model_glance     rsquare
+   &lt;fct&gt;             &lt;fct&gt;     &lt;list&gt;      &lt;list&gt; &lt;list&gt;             &lt;dbl&gt;
+ 1 Brazil            Americas  &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.998
+ 2 Mauritania        Africa    &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.998
+ 3 France            Europe    &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.998
+ 4 Switzerland       Europe    &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.997
+ 5 Pakistan          Asia      &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.997
+ 6 Indonesia         Asia      &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.997
+ 7 Equatorial Guinea Africa    &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.997
+ 8 Comoros           Africa    &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.997
+ 9 Nicaragua         Americas  &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.997
+10 Guatemala         Americas  &lt;tibble [1~ &lt;S3: ~ &lt;data.frame [1 ~   0.997
+# ... with 132 more rows
+</code></pre>
+</div>
+<div id="model-reg-viz-model-trelliscope" class="section level1">
+<h1><span class="header-section-number">3</span> 기대수명 회귀모형 시각화</h1>
+<div id="model-reg-viz-model-trelliscope-single" class="section level2">
+<h2><span class="header-section-number">3.1</span> 단일 국가 회귀시각화</h2>
+<p><code>rbokeh</code> 기능을 활용하도록 <code>figure()</code> 함수에 <code>ly_points</code>, <code>ly_abline</code> 을 파이프 연산자로 연결하여 데이터와 앞서 구현한 회귀모형을 함께 넣어 시각화하는 함수를 작성하고 정상적인 반영여부를 확인한다.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 3. 시각화 -----</span>
+country_plot &lt;-<span class="st"> </span><span class="cf">function</span>(data, model) {
+  <span class="kw">figure</span>(<span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">1948</span>, <span class="dv">2011</span>), <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">10</span>,<span class="dv">95</span>), <span class="dt">tools =</span> <span class="ot">NULL</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">    </span><span class="kw">ly_points</span>(year, lifeExp, <span class="dt">data=</span>data, <span class="dt">hover=</span>data) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">    </span><span class="kw">ly_abline</span>(model)
+}
+
+## 3.1. 단일 그래프
+<span class="kw">country_plot</span>(by_country<span class="op">$</span>data[[<span class="dv">1</span>]], by_country<span class="op">$</span>model[[<span class="dv">1</span>]])</code></pre></div>
+<div id="htmlwidget-21edef8abc3bec16fc13" style="width:1152px;height:480px;" class="rbokeh html-widget"></div>
+<script type="application/json" data-for="htmlwidget-21edef8abc3bec16fc13">{"x":{"elementid":"3b60f7fa41a4b4cde82de02147096fc3","modeltype":"Plot","modelid":"564eb262e257c2d3bfa1697b95524fce","docid":"c049b71da6c86b9c2b78c1dd701c6b79","docs_json":{"c049b71da6c86b9c2b78c1dd701c6b79":{"version":"0.12.2","title":"Bokeh Figure","roots":{"root_ids":["564eb262e257c2d3bfa1697b95524fce"],"references":[{"type":"Plot","id":"564eb262e257c2d3bfa1697b95524fce","attributes":{"id":"564eb262e257c2d3bfa1697b95524fce","sizing_mode":"scale_both","x_range":{"type":"Range1d","id":"899d4b6775c58858ccf587a03adf67e2"},"y_range":{"type":"Range1d","id":"6df4856a684ca40eed16e15bae29ece0"},"left":[{"type":"LinearAxis","id":"913368b785f1a9b6fabd867dcef92a84"}],"below":[{"type":"LinearAxis","id":"d90c7d492d73be0fe870265cd8602d12"}],"right":[],"above":[],"renderers":[{"type":"GlyphRenderer","id":"22fea605917c317e71f715ee5e8b9b8f"},{"type":"GlyphRenderer","id":"726c9c4f152bcbdc03ab304f645ad87a"},{"type":"LinearAxis","id":"d90c7d492d73be0fe870265cd8602d12"},{"type":"Grid","id":"f3d3633db6b00c8819e1ed142783c0b9"},{"type":"LinearAxis","id":"913368b785f1a9b6fabd867dcef92a84"},{"type":"Grid","id":"72e14242b90883433231ea2b89cfbfe2"}],"extra_y_ranges":{},"extra_x_ranges":{},"tags":[],"min_border_left":4,"min_border_right":4,"min_border_top":4,"min_border_bottom":4,"lod_threshold":null,"toolbar_location":null,"toolbar":{"type":"Toolbar","id":"80b0e88c8c7a07d16a7d8f35d3104084"},"tool_events":{"type":"ToolEvents","id":"e3fa2254bcfdb0cf3d2f12fee5bdb17e"}},"subtype":"Figure"},{"type":"Toolbar","id":"80b0e88c8c7a07d16a7d8f35d3104084","attributes":{"id":"80b0e88c8c7a07d16a7d8f35d3104084","tags":[],"active_drag":"auto","active_scroll":"auto","active_tap":"auto","tools":[{"type":"HoverTool","id":"1cf1f647cf89ad6ef1dd1307b88f36f2"}],"logo":null}},{"type":"ToolEvents","id":"e3fa2254bcfdb0cf3d2f12fee5bdb17e","attributes":{"id":"e3fa2254bcfdb0cf3d2f12fee5bdb17e","tags":[]},"geometries":[]},{"type":"HoverTool","id":"1cf1f647cf89ad6ef1dd1307b88f36f2","attributes":{"id":"1cf1f647cf89ad6ef1dd1307b88f36f2","tags":[],"plot":{"type":"Plot","id":"564eb262e257c2d3bfa1697b95524fce","subtype":"Figure"},"renderers":[{"type":"GlyphRenderer","id":"22fea605917c317e71f715ee5e8b9b8f"}],"names":[],"anchor":"center","attachment":"horizontal","line_policy":"prev","mode":"mouse","point_policy":"snap_to_data","tooltips":[["year","@hover_col_1"],["lifeExp","@hover_col_2"],["pop","@hover_col_3"],["gdpPercap","@hover_col_4"]]}},{"type":"ColumnDataSource","id":"c2943ae264df529a07a317a92eca6e50","attributes":{"id":"c2943ae264df529a07a317a92eca6e50","tags":[],"column_names":["x","y","hover_col_1","hover_col_2","hover_col_3","hover_col_4"],"selected":[],"data":{"x":[1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007],"y":[28.801,30.332,31.997,34.02,36.088,38.438,39.854,40.822,41.674,41.763,42.129,43.828],"hover_col_1":["1952","1957","1962","1967","1972","1977","1982","1987","1992","1997","2002","2007"],"hover_col_2":["28.801","30.332","31.997","34.020","36.088","38.438","39.854","40.822","41.674","41.763","42.129","43.828"],"hover_col_3":[" 8425333"," 9240934","10267083","11537966","13079460","14880372","12881816","13867957","16317921","22227415","25268405","31889923"],"hover_col_4":["779.4453","820.8530","853.1007","836.1971","739.9811","786.1134","978.0114","852.3959","649.3414","635.3414","726.7341","974.5803"]}}},{"type":"Circle","id":"51916f13d3d63f9cf20014b9b6f5e7e8","attributes":{"id":"51916f13d3d63f9cf20014b9b6f5e7e8","tags":[],"size":{"units":"screen","value":10},"visible":true,"line_color":{"units":"data","value":"#1F77B4"},"fill_color":{"units":"data","value":"#1F77B4"},"line_alpha":{"units":"data","value":1},"fill_alpha":{"units":"data","value":0.5},"x":{"units":"data","field":"x"},"y":{"units":"data","field":"y"}}},{"type":"Circle","id":"d6d1ba00f11cdc75bf7cabdfe664511b","attributes":{"id":"d6d1ba00f11cdc75bf7cabdfe664511b","tags":[],"size":{"units":"screen","value":10},"visible":true,"line_color":{"units":"data","value":"#e1e1e1"},"fill_color":{"units":"data","value":"#e1e1e1"},"line_alpha":{"units":"data","value":1},"fill_alpha":{"units":"data","value":0.5},"x":{"units":"data","field":"x"},"y":{"units":"data","field":"y"}}},{"type":"Circle","id":"3c80eebb284353d14b3751acc0d06a4c","attributes":{"id":"3c80eebb284353d14b3751acc0d06a4c","tags":[],"size":{"units":"screen","value":10},"visible":true,"line_color":{"units":"data","value":"#1F77B4"},"fill_color":{"units":"data","value":"#1F77B4"},"line_alpha":{"units":"data","value":1},"fill_alpha":{"units":"data","value":1},"x":{"units":"data","field":"x"},"y":{"units":"data","field":"y"}}},{"type":"GlyphRenderer","id":"22fea605917c317e71f715ee5e8b9b8f","attributes":{"id":"22fea605917c317e71f715ee5e8b9b8f","tags":[],"selection_glyph":null,"nonselection_glyph":{"type":"Circle","id":"d6d1ba00f11cdc75bf7cabdfe664511b"},"hover_glyph":{"type":"Circle","id":"3c80eebb284353d14b3751acc0d06a4c"},"name":null,"data_source":{"type":"ColumnDataSource","id":"c2943ae264df529a07a317a92eca6e50"},"glyph":{"type":"Circle","id":"51916f13d3d63f9cf20014b9b6f5e7e8"}}},{"type":"ColumnDataSource","id":"19d47229d0584b5d62556d206d695bfd","attributes":{"id":"19d47229d0584b5d62556d206d695bfd","tags":[],"column_names":["x0","y0","x1","y1"],"selected":[],"data":{"x0":[0],"y0":[-507.534271561773],"x1":[1],"y1":[-507.258942890444]}}},{"type":"Segment","id":"2fde2046e7021331a1c68d5d4eb8b390","attributes":{"id":"2fde2046e7021331a1c68d5d4eb8b390","tags":[],"visible":true,"line_color":{"units":"data","value":"black"},"line_width":{"units":"data","value":1},"x0":{"units":"data","field":"x0"},"y0":{"units":"data","field":"y0"},"x1":{"units":"data","field":"x1"},"y1":{"units":"data","field":"y1"}}},{"type":"Segment","id":"c8c6ccd284e2cf16ade8e6b6d5ce2244","attributes":{"id":"c8c6ccd284e2cf16ade8e6b6d5ce2244","tags":[],"visible":true,"line_color":{"units":"data","value":"#e1e1e1"},"line_width":{"units":"data","value":1},"x0":{"units":"data","field":"x0"},"y0":{"units":"data","field":"y0"},"x1":{"units":"data","field":"x1"},"y1":{"units":"data","field":"y1"}}},{"type":"Segment","id":"d50aaa90319f0d9909e9a3aa38cc1dee","attributes":{"id":"d50aaa90319f0d9909e9a3aa38cc1dee","tags":[],"visible":true,"line_color":{"units":"data","value":"black"},"line_width":{"units":"data","value":1},"x0":{"units":"data","field":"x0"},"y0":{"units":"data","field":"y0"},"x1":{"units":"data","field":"x1"},"y1":{"units":"data","field":"y1"}}},{"type":"GlyphRenderer","id":"726c9c4f152bcbdc03ab304f645ad87a","attributes":{"id":"726c9c4f152bcbdc03ab304f645ad87a","tags":[],"selection_glyph":null,"nonselection_glyph":{"type":"Segment","id":"c8c6ccd284e2cf16ade8e6b6d5ce2244"},"hover_glyph":{"type":"Segment","id":"d50aaa90319f0d9909e9a3aa38cc1dee"},"name":null,"data_source":{"type":"ColumnDataSource","id":"075f25f3b1137a7165e9d859f170f440"},"glyph":{"type":"Segment","id":"2fde2046e7021331a1c68d5d4eb8b390"}}},{"type":"Range1d","id":"899d4b6775c58858ccf587a03adf67e2","attributes":{"id":"899d4b6775c58858ccf587a03adf67e2","tags":[],"start":1948,"end":2011}},{"type":"Range1d","id":"6df4856a684ca40eed16e15bae29ece0","attributes":{"id":"6df4856a684ca40eed16e15bae29ece0","tags":[],"start":10,"end":95}},{"type":"LinearAxis","id":"d90c7d492d73be0fe870265cd8602d12","attributes":{"id":"d90c7d492d73be0fe870265cd8602d12","tags":[],"plot":{"type":"Plot","id":"564eb262e257c2d3bfa1697b95524fce","subtype":"Figure"},"axis_label":"year","formatter":{"type":"BasicTickFormatter","id":"1f310f82567ae8111b01777e85d1de37"},"ticker":{"type":"BasicTicker","id":"c79587c4d7cb726685d51c2607fde71d"},"visible":true,"axis_label_text_font_size":"12pt"}},{"type":"BasicTickFormatter","id":"1f310f82567ae8111b01777e85d1de37","attributes":{"id":"1f310f82567ae8111b01777e85d1de37","tags":[]}},{"type":"BasicTicker","id":"c79587c4d7cb726685d51c2607fde71d","attributes":{"id":"c79587c4d7cb726685d51c2607fde71d","tags":[],"num_minor_ticks":5}},{"type":"Grid","id":"f3d3633db6b00c8819e1ed142783c0b9","attributes":{"id":"f3d3633db6b00c8819e1ed142783c0b9","tags":[],"dimension":0,"plot":{"type":"Plot","id":"564eb262e257c2d3bfa1697b95524fce","subtype":"Figure"},"ticker":{"type":"BasicTicker","id":"c79587c4d7cb726685d51c2607fde71d"}}},{"type":"LinearAxis","id":"913368b785f1a9b6fabd867dcef92a84","attributes":{"id":"913368b785f1a9b6fabd867dcef92a84","tags":[],"plot":{"type":"Plot","id":"564eb262e257c2d3bfa1697b95524fce","subtype":"Figure"},"axis_label":"lifeExp","formatter":{"type":"BasicTickFormatter","id":"6d3ad7775d95bf99df2772f2fab4cc50"},"ticker":{"type":"BasicTicker","id":"97c639742758e5e1a121554cb0b09b72"},"visible":true,"axis_label_text_font_size":"12pt"}},{"type":"BasicTickFormatter","id":"6d3ad7775d95bf99df2772f2fab4cc50","attributes":{"id":"6d3ad7775d95bf99df2772f2fab4cc50","tags":[]}},{"type":"BasicTicker","id":"97c639742758e5e1a121554cb0b09b72","attributes":{"id":"97c639742758e5e1a121554cb0b09b72","tags":[],"num_minor_ticks":5}},{"type":"Grid","id":"72e14242b90883433231ea2b89cfbfe2","attributes":{"id":"72e14242b90883433231ea2b89cfbfe2","tags":[],"dimension":1,"plot":{"type":"Plot","id":"564eb262e257c2d3bfa1697b95524fce","subtype":"Figure"},"ticker":{"type":"BasicTicker","id":"97c639742758e5e1a121554cb0b09b72"}}},{"type":"ColumnDataSource","id":"075f25f3b1137a7165e9d859f170f440","attributes":{"id":"075f25f3b1137a7165e9d859f170f440","tags":[],"column_names":["x0","y0","x1","y1"],"selected":[],"data":{"x0":[1948],"y0":[28.805980186495],"x1":[2011],"y1":[46.1516864802019]}}}]}}},"debug":false},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="model-reg-viz-model-trelliscope-many" class="section level2">
+<h2><span class="header-section-number">3.2</span> 전체 국가 회귀시각화</h2>
+<p><code>trelliscopejs</code> 팩키지를 활용하여 나머지 모든 국가의 회귀분석결과를 시각화한다. 시간이 지남에 따라 기대수명이 늘어나지 못하는 나라를 중심으로 시각화한다.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## 3.2. trelliscope 그래프
+by_country &lt;-<span class="st"> </span>by_country <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">plot =</span> <span class="kw">map2_plot</span>(data, model, country_plot)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(rsquare)
+
+by_country <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">trelliscope</span>(<span class="dt">name =</span> <span class="st">&quot;by_country_lm&quot;</span>, <span class="dt">nrow=</span><span class="dv">2</span>, <span class="dt">ncol=</span><span class="dv">4</span>, <span class="dt">path=</span><span class="st">&quot;gapminder&quot;</span>)</code></pre></div>
+<div id="htmlwidget-6cd39cc32bf01f4607ac" style="width:900px;height:550px;" class="trelliscopejs_widget html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6cd39cc32bf01f4607ac">{"x":{"id":"e7383071","config_info":"'gapminder/appfiles/config.jsonp'","self_contained":false,"latest_display":{"name":"by_country_lm","group":"common"},"spa":false,"in_knitr":true,"in_notebook":false},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

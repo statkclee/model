@@ -1,0 +1,108 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 회귀모형 - `purrr` + `trelliscopejs`
+date: "`r Sys.Date()`"
+author: xwMOOC
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: false
+    lib_dir: gapminder
+---
+
+``` {r, include=FALSE}
+source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=12)
+
+
+```
+
+
+# 기대수명 데이터 {#model-reg-viz-data}
+
+`gapminder` 데이터를 가지고 회귀모형을 구축하고 모형을 활용하여 종속변수(기대수명, `lifeExp`)가 늘어나지 못한 국가를 뽑아내고 이를 시각적으로 확인해보자.
+
+```{r model-reg-viz-gapminder}
+
+# 0. 환경설정 -----
+# 데이터
+library(gapminder)
+
+# Tidyverse
+library(tidyverse)
+
+# 시각화
+library(cowplot)
+library(trelliscopejs)
+library(rbokeh)
+
+# 모형
+library(broom)
+
+# 1. 데이터 -----
+gapminder
+```
+
+# 기대수명 회귀분석 {#model-reg-viz-model}
+
+대륙과 국가를 그룹으로 잡아 회귀분석을 각각에 대해서 돌리고 나서,
+모형 결과값을 데이터와 모형이 함께 위치하도록 티블(tibble)에 저장시켜 놓은다.
+그리고 나서, 주요한 회귀모형 성능지표인 결정계수($R^2$)를 기준으로 정렬시킨다.
+
+```{r model-reg-viz-gapminder-reg}
+# 2. 모형 -----
+country_model <- function(df)
+  lm(lifeExp ~ year, data=df)
+
+by_country <- gapminder %>% 
+  group_by(country, continent) %>% 
+  nest() %>% 
+  mutate(model = map(data, country_model),
+         model_glance = map(model, glance),
+         rsquare = map_dbl(model_glance, ~.$r.squared))
+
+by_country %>% 
+  arrange(-rsquare)
+```
+
+
+# 기대수명 회귀모형 시각화 {#model-reg-viz-model-trelliscope}
+
+
+## 단일 국가 회귀시각화 {#model-reg-viz-model-trelliscope-single}
+
+`rbokeh` 기능을 활용하도록 `figure()` 함수에 `ly_points`, `ly_abline` 을 파이프 연산자로 연결하여 
+데이터와 앞서 구현한 회귀모형을 함께 넣어 시각화하는 함수를 작성하고 
+정상적인 반영여부를 확인한다. 
+
+```{r model-reg-viz-gapminder-reg-viz-single}
+# 3. 시각화 -----
+country_plot <- function(data, model) {
+  figure(xlim = c(1948, 2011), ylim=c(10,95), tools = NULL) %>% 
+    ly_points(year, lifeExp, data=data, hover=data) %>% 
+    ly_abline(model)
+}
+
+## 3.1. 단일 그래프
+country_plot(by_country$data[[1]], by_country$model[[1]])
+```
+
+## 전체 국가 회귀시각화 {#model-reg-viz-model-trelliscope-many}
+
+`trelliscopejs` 팩키지를 활용하여 나머지 모든 국가의 회귀분석결과를 시각화한다.
+시간이 지남에 따라 기대수명이 늘어나지 못하는 나라를 중심으로 시각화한다.
+
+```{r model-reg-viz-gapminder-reg-viz-many}
+## 3.2. trelliscope 그래프
+by_country <- by_country %>% 
+  mutate(plot = map2_plot(data, model, country_plot)) %>% 
+  arrange(rsquare)
+
+by_country %>% 
+  trelliscope(name = "by_country_lm", nrow=2, ncol=4, path="gapminder")
+```

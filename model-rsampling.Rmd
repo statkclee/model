@@ -26,6 +26,8 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=12)
 [rsample](https://topepo.github.io/rsample/) 팩키지가 모형개발과 통계분석을 위해서 별도 코드를 포함하지 않는 
 진정한 모형을 위한 표본 인프라 팩키지로 개발되고 있다.
 
+<img src="fig/rsample-overview.png" alt="rsample 인프라" width = "60%" />
+
 가장 큰 장점은 아마도 다음 부츠트랩 표본구성을 하는 코드에도 나타나지만 부츠트랩 표본을 10세트 만드면 
 당연히 객체 크기가 10배 커져야 하나 `rsample` 팩키지가 효율적으로 작성되어 
 크기를 상당히 줄일 수 있게 되었다.
