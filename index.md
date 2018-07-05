@@ -31,6 +31,7 @@ title: 데이터 과학 -- 모형
 
 - **모형 인프라(Model Infrastructure)**
     - [`rsampling`](model-rsampling.html) 
+    - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
 - **모형**
     - [서포트 벡터 머신(SVM)](model_svm.html)
 - **모형 시각화**
