@@ -1,0 +1,180 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 항공여객 데이터 ARIMA 모형 - `rsample`
+date: "`r Sys.Date()`"
+author: xwMOOC
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+---
+
+``` {r, include=FALSE}
+source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=12)
+
+
+```
+
+
+# 항공여객 시계열 데이터 [^time-series-rsample] {#time-series-airpassenger-rsample}
+
+[^time-series-rsample]: [rsample - Time Series Analysis Example](https://tidymodels.github.io/rsample/articles/Applications/Time_Series.html)
+
+시계열계의 `iris` 붓꽃 데이터인 `AirPassenger` 항공여객 데이터를 훈련/시험 데이터로 분할해보자.
+항공여객 데이터는 한시대를 풍미한 박스-젠킨스 ARIMA 모형의 우수성을 증명하는 데이터로 자주 인용되고 있다.
+`datasets` 팩키지에 포함된 `ts` 객체 항공여객 데이터(`AirPassengers`)를 
+`as_tbl_time()` 함수로 변환시켜 `ggplot`으로 시각화한다.
+
+``` {r time-series-rsample-data}
+# 0. 환경설정 -----
+# Core Tidyverse
+library(tidyverse)
+library(glue)
+library(forcats)
+
+# Time Series
+library(timetk)
+library(tidyquant)
+library(tibbletime)
+library(sweep)
+
+# Visualization
+library(cowplot)
+
+# Preprocessing
+library(recipes)
+
+# Sampling / Accuracy
+library(rsample)
+library(yardstick) 
+
+# Modeling
+library(forecast)
+
+# 1. 데이터 -----
+## 1.1. 데이터 가져오기 ----
+ap_ts  <- datasets::AirPassengers %>%
+  tk_tbl() %>%
+  mutate(index = as_date(index)) %>%
+  as_tbl_time(index = index)
+
+ggplot(ap_ts, aes(x=index, y=value)) +
+  geom_line()
+```
+
+# 시계열 데이터 분할 {#time-series-airpassenger-rsample-split}
+
+시계열 데이터를 훈련/시험 데이터로 분할하는 방법은 상관관계를 유지해야 되다는 측면에서 차이가 난다.
+`rolling_origin()` 함수로 시계열 데이터를 훈련/시험 데이터로 준비한다.
+그리고, 시계열 데이터 식별할 수 있도록 훈련데이터와 시험데이터 시작 시점을 알 수 있도록 뽑아내서 
+티블(tibble)에 추가한다.
+
+``` {r time-series-rsample-data-split}
+## 1.2. rsample 교차검증 데이터 ----
+periods_train <- 12 * 2
+periods_test  <- 12 * 1
+skip_span     <- 11
+
+roll_ap_rs <- rolling_origin(
+  ap_ts ,
+  initial    = periods_train,
+  assess     = periods_test,
+  cumulative = FALSE,
+  skip       = skip_span
+)
+
+# 2. 예측모형 구축 -----
+## 2.1. 예측모형 훈련/검증 재표본 살펴보기
+get_test_date <- function(x) 
+  min(assessment(x)$index)
+
+get_train_date <- function(x) 
+  min(analysis(x)$index)
+
+test_start_date  <- map(roll_ap_rs$splits, get_test_date)
+train_start_date <- map(roll_ap_rs$splits, get_train_date)
+
+roll_ap_rs$train_start_date <- do.call("c", train_start_date)
+roll_ap_rs$test_start_date  <- do.call("c", test_start_date)
+
+head(roll_ap_rs)
+```
+
+# ARIMA 모형 적합 {#time-series-airpassenger-rsample-arima}
+
+`fit_arima()` ARIMA 함수를 사용해서 각 시계열 훈련데이터에 적합시킨다.
+물론 함수형 프로그래밍 `map()` 함수를 사용한다.
+
+``` {r time-series-rsample-data-arima}
+## 2.2. 시계열 분석
+### ARIMA 모형 적합
+fit_arima <- function(x, ...) {
+  x %>%
+    analysis() %>%
+    tk_ts(start = .$index[[1]] %>% zoo::as.yearmon(), 
+          freq = 12, 
+          silent = TRUE) %>%
+    auto.arima(...)
+}
+
+roll_ap_rs$arima <- map(roll_ap_rs$splits, fit_arima)
+
+roll_ap_rs$arima[[1]]
+```
+
+# ARIMA 모형 내삽/외삽 오차 {#time-series-airpassenger-rsample-arima-error}
+
+ARIMA 모형을 적합시키게 되면 내삽오차(interpolation)와 외삽오차(extrapolation)를 각각 계산하여 
+티블에 저장시킨다.
+
+``` {r time-series-rsample-data-arima-error}
+### ARIMA 모형 내삽오차(interpolation error)
+roll_ap_rs$interpolation <- map_dbl(
+  roll_ap_rs$arima,
+  function(x) 
+    sw_glance(x)[["MAPE"]]
+)
+
+summary(roll_ap_rs$interpolation)
+
+### ARIMA 모형 외삽오차(extrapolation error)
+get_extrapolate <- function(split, mod) {
+  n <- nrow(assessment(split))
+  pred_dat <- assessment(split) %>%
+    mutate(
+      pred = as.vector(forecast(mod, h = n)$mean),
+      pct_error = ( value - pred ) / value * 100
+    )
+  mean(abs(pred_dat$pct_error))
+}
+
+roll_ap_rs$extrapolation <- 
+  map2_dbl(roll_ap_rs$splits, roll_ap_rs$arima, get_extrapolate)
+
+summary(roll_ap_rs$extrapolation)
+```
+
+
+# 내삽/외삽 오차 시각화 {#time-series-airpassenger-rsample-arima-error-viz}
+
+내삽/외삽 오차를 시각화하여 훈련/검증 각 시계열에 대해서 살펴본다.
+
+``` {r time-series-rsample-data-arima-error-viz}
+## 2.3. 시계열 모형 성능 시각화
+
+roll_ap_rs %>%
+  select(interpolation, extrapolation, test_start_date) %>%
+  as.data.frame %>%
+  gather(error, MAPE, -test_start_date) %>%
+  ggplot(aes(x = test_start_date, y = MAPE, col = error)) + 
+  geom_point() + 
+  geom_line() + 
+  theme_bw() + 
+  theme(legend.position = "top")
+```  
