@@ -27,11 +27,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=12)
 일반적인 훈련/시험 데이터 분할은 뒤섞여도 상관이 없기 때문에 전통적인 검증 방식으로 수행을 했다.
 하지만, 시계열 데이터는 데이터 자체에 연관성이 존재하기 때문에 이를 반영하여 데이터를 훈련/시험 데이터로 분할시키는 것이 필요하다.
 
-
-<div class = "row">
-  <div class = "col-md-6">
-
-**전통적인 검증**
+## 전통적인 검증 {#CV-for-time-series-traditional}
 
 전통적인 시계열 모형 개발방법론은 훈련데이터와 시험데이터를 나누고 훈련데이터로 예측모형을 개발하고 나서 예측모형의 성능을 
 시험데이터로 검증하는 방식을 많이 취했다.
@@ -49,15 +45,18 @@ text(10,1,"훈련데이터",col="blue")
 text(21,1,"시험데이터",col="red")
 ```
 
-  </div>
+
+## 시계열 훈련/시험 분할 {#CV-for-time-series-train-test-split}
+
+<div class = "row">
   <div class = "col-md-6">
 
-**훈련/시험 교차검증**
+**훈련/시험 누적 교차검증**
 
 예측 정확도를 시험데이터에 대해서 평균을 내는 방법으로 "evaluation on a rolling forecasting origin"으로 알려져 있고,
 `tsCV()` 함수를 사용한다.
   
-```{r train-test-split-cv-time-series, fig.height=5}
+```{r train-test-split-cv-time-series-cumulative, fig.height=7}
 par(mar=c(0,0,0,0))
 plot(0,0,xlim=c(0,28),ylim=c(0,1),
      xaxt="n",yaxt="n",bty="n",xlab="",ylab="",type="n")
@@ -79,8 +78,35 @@ text(28,.95,"시간")
 ```
 
   </div>
-</div>
+  <div class = "col-md-6">
 
+**훈련/시험 비누적 교차검증**
+
+시간창(time windows)를 이동하면서 훈련/시험 비누적 교차검증 데이터를 작성하는 방식도 있다.
+
+```{r train-test-split-cv-time-series, fig.height=7}
+par(mar=c(0,0,0,0))
+plot(0,0,xlim=c(0,28),ylim=c(0,1),
+     xaxt="n",yaxt="n",bty="n",xlab="",ylab="",type="n")
+i <- 1
+for(j in 1:10)
+{
+  test <- (16+j):26
+  train <- j:(15+j)
+  arrows(0,1-j/20,27,1-j/20,0.05)
+  points(train,rep(1-j/20,length(train)),pch=19,col="blue")
+  if(length(test) >= i)
+    points(test[i], 1-j/20, pch=19, col="red")
+  if(length(test) >= i)
+    points(test[-i], rep(1-j/20,length(test)-1), pch=19, col="gray")
+  else
+    points(test, rep(1-j/20,length(test)), pch=19, col="gray")
+}
+text(28,.95,"시간")
+```
+
+  </div>
+</div>
 
 
 # 시계열 데이터 분할 검정 [^time-series-deep-learning] {#CV-for-time-series-airpassenger}
@@ -90,7 +116,7 @@ text(28,.95,"시간")
 시계열계의 `iris` 붓꽃 데이터인 `AirPassenger` 항공여객 데이터를 훈련/시험 데이터로 분할해보자.
 
 
-# 항공여객 데이터 {#CV-for-time-series-airpassenger-data}
+## 항공여객 데이터 {#CV-for-time-series-airpassenger-data}
 
 `datasets` 팩키지에 포함된 `ts` 객체 항공여객 데이터(`AirPassengers`)를 
 `as_tbl_time()` 함수로 변환시켜 `ggplot`으로 시각화한다.
@@ -134,7 +160,7 @@ ggplot(ap_ts, aes(x=index, y=value)) +
   geom_line()
 ```
 
-# 훈련/검증 데이터 분할 {#CV-for-time-series-airpassenger-data}
+## 비누적 방식 훈련/검증 데이터 분할 {#CV-for-time-series-airpassenger-data}
 
 항공여객 데이터를 `rsample` 팩키지를 활용하여 시계열 데이터를 분할시킨다.
 [rsample: Time Series Analysis Example](https://tidymodels.github.io/rsample/articles/Applications/Time_Series.html)을 참조하고,
@@ -143,6 +169,9 @@ ggplot(ap_ts, aes(x=index, y=value)) +
 2년치 데이터($12 \times 2$)를 훈련데이터로 활용하고, 1년치 데이터($12 \times 1$)를 모형 시험데이터로 사용한다.
 그리고 `skip_span`을 통해 1년이면 12달이라 11달은 건너뛰고 1달만 사용한다는데, 주별 모형을 작성할 경우 7일이 일주일이라 6일은 
 건너뛰는 방식으로 사용하면 유용하다.
+
+비누적방식으로 시계열 훈련/검증 데이터를 준비할 경우 `cumulative = FALSE`를 지정하면 지정한 시간창(time window)에 맞춰 훈련/시험 시계열 데이터가 
+준비된다.
 
 ``` {r airpassenger-data-rsample-time-series-split}
 ## 1.2. rsample 교차검증 데이터 ----
@@ -160,7 +189,7 @@ rolling_origin_resamples <- rolling_origin(
 rolling_origin_resamples
 ```
 
-# 분할된 데이터 시각화 {#CV-for-time-series-airpassenger-data-viz}
+### 분할된 데이터 시각화 {#CV-for-time-series-airpassenger-data-viz}
 
 `plot_split()` 함수를 사용해서 시계열 훈련/검증 데이터셋으로 분할된 데이터일부를 시각화하여 
 의도한 것과 같이 분할이 된 것인지 확인한다.
@@ -228,7 +257,7 @@ plot_grid(original_g, rescaled_g)
 ```
 
 
-# 분할된 전체 데이터 시각화 {#CV-for-time-series-airpassenger-data-viz-all}
+### 분할된 전체 데이터 시각화 {#CV-for-time-series-airpassenger-data-viz-all}
 
 `plot_sampling_plan()` 함수를 작성하여 전체 시계열 훈련/검증 데이터셋으로 분할이
 의도한 것과 같이 잘 분할된 것인지 확인한다.
@@ -268,3 +297,129 @@ rolling_origin_resamples %>%
 
 
 
+## 누적 방식 훈련/검증 데이터 분할 {#CV-for-time-series-airpassenger-data-cumulative}
+
+누적방식으로 시계열 훈련/검증 데이터를 준비할 경우 `cumulative = TRUE`를 지정하면,
+지정한 시간창(time window)에 누적하여 훈련/시험 시계열 데이터가 준비된다.
+
+``` {r airpassenger-data-rsample-time-series-split-cumulative}
+## 1.2. rsample 교차검증 데이터 ----
+periods_train <- 12 * 2
+periods_test  <- 12 * 1
+skip_span     <- 11
+
+rolling_origin_resamples <- rolling_origin(
+  ap_ts ,
+  initial    = periods_train,
+  assess     = periods_test,
+  cumulative = TRUE,
+  skip       = skip_span
+)
+rolling_origin_resamples
+```
+
+### 분할된 데이터 시각화 {#CV-for-time-series-airpassenger-data-viz-cumulative}
+
+`plot_split()` 함수를 사용해서 시계열 훈련/검증 데이터셋으로 분할된 데이터일부를 시각화하여 
+의도한 것과 같이 분할이 된 것인지 확인한다.
+
+``` {r airpassenger-data-rsample-time-series-split-viz-cumulative}
+# 2. 탐색적 데이터 분석 -----
+plot_split <- function(split, expand_y_axis = TRUE, alpha = 1, size = 1, base_size = 14) {
+  
+  # Manipulate data
+  train_tbl <- training(split) %>%
+    add_column(key = "training") 
+  
+  test_tbl  <- testing(split) %>%
+    add_column(key = "testing") 
+  
+  data_manipulated <- bind_rows(train_tbl, test_tbl) %>%
+    as_tbl_time(index = index) %>%
+    mutate(key = fct_relevel(key, "training", "testing"))
+  
+  # Collect attributes
+  train_time_summary <- train_tbl %>%
+    tk_index() %>%
+    tk_get_timeseries_summary()
+  
+  test_time_summary <- test_tbl %>%
+    tk_index() %>%
+    tk_get_timeseries_summary()
+  
+  # Visualize
+  g <- data_manipulated %>%
+    ggplot(aes(x = index, y = value, color = key)) +
+    geom_line(size = size, alpha = alpha) +
+    theme_tq(base_size = base_size) +
+    scale_color_tq() +
+    labs(
+      title    = glue("Split: {split$id}"),
+      subtitle = glue("{train_time_summary$start} to {test_time_summary$end}"),
+      y = "", x = ""
+    ) +
+    theme(legend.position = "none") 
+  
+  if (expand_y_axis) {
+    
+    ap_time_summary <- ap_ts %>% 
+      tk_index() %>% 
+      tk_get_timeseries_summary()
+    
+    g <- g +
+      scale_x_date(limits = c(ap_time_summary$start, 
+                              ap_time_summary$end)) 
+  }
+  
+  return(g)
+}
+
+original_g <- rolling_origin_resamples$splits[[3]] %>%
+  plot_split(expand_y_axis = TRUE) +
+  theme(legend.position = "bottom")
+
+rescaled_g <- rolling_origin_resamples$splits[[3]] %>%
+  plot_split(expand_y_axis = FALSE) +
+  theme(legend.position = "bottom")
+
+plot_grid(original_g, rescaled_g)
+```
+
+
+### 분할된 전체 데이터 시각화 {#CV-for-time-series-airpassenger-data-viz-all-cumulative}
+
+`plot_sampling_plan()` 함수를 작성하여 전체 시계열 훈련/검증 데이터셋으로 분할이
+의도한 것과 같이 잘 분할된 것인지 확인한다.
+
+``` {r airpassenger-data-rsample-time-series-split-viz-all-cumulative}
+plot_sampling_plan <- function(sampling_tbl, expand_y_axis = TRUE, 
+                               ncol = 3, alpha = 1, size = 1, base_size = 14, 
+                               title = "Sampling Plan") {
+  
+  # Map plot_split() to sampling_tbl
+  sampling_tbl_with_plots <- sampling_tbl %>%
+    mutate(gg_plots = map(splits, plot_split, 
+                          expand_y_axis = expand_y_axis,
+                          alpha = alpha, base_size = base_size))
+  
+  # Make plots with cowplot
+  plot_list <- sampling_tbl_with_plots$gg_plots 
+  
+  p_temp <- plot_list[[1]] + theme(legend.position = "bottom")
+  legend <- get_legend(p_temp)
+  
+  p_body  <- plot_grid(plotlist = plot_list, ncol = ncol)
+  
+  p_title <- ggdraw() + 
+    draw_label(title, size = 18, fontface = "bold", colour = palette_light()[[1]])
+  
+  g <- plot_grid(p_title, p_body, legend, ncol = 1, rel_heights = c(0.05, 1, 0.05))
+  
+  return(g)
+  
+}  
+
+rolling_origin_resamples %>%
+  plot_sampling_plan(expand_y_axis = T, ncol = 4, alpha = 1, size = 1, base_size = 10, 
+                     title = "Backtesting Strategy: Rolling Origin Sampling Plan")
+```
