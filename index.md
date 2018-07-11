@@ -38,6 +38,7 @@ title: 데이터 과학 -- 모형
     - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)
 - **모형 시각화**
     - [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
+    - [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
 
 
 
