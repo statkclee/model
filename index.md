@@ -39,7 +39,8 @@ title: 데이터 과학 -- 모형
 - **모형 시각화**
     - [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
     - [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
-
+- **모형 평가**
+    - [tidyposterior](model-tidyposterior.html)
 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
