@@ -32,6 +32,8 @@ title: 데이터 과학 -- 모형
 - **모형 인프라(Model Infrastructure)**
     - [`rsampling`](model-rsampling.html) 
     - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
+- **탐색적 데이터분석(EDA)**
+    - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형](tidyverse-model.html)**
     - [예측모형 파이프 - R 모형설계행렬(Recipe)](ml-r-design-matrix.html) 
     - [서포트 벡터 머신(SVM)](model_svm.html)
@@ -39,6 +41,7 @@ title: 데이터 과학 -- 모형
 - **모형 시각화**
     - [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
     - [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
+    
 - **모형 평가**
     - [tidyposterior](model-tidyposterior.html)
 
