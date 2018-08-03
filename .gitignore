@@ -11,3 +11,5 @@ _site
 .ipynb_*
 twitterOAuth.R
 .httr-oauth
+data/Kaggle_Training_Dataset_v2.csv
+data/Kaggle_Test_Dataset_v2.csv

@@ -22,4 +22,188 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 ```
 
-# ...
+# 캐글 백오더 데이터와 준비 {#kaggle-backorder-data}
+
+캐글 "백오더(backorder)" 데이터는 **went_on_backorder**인지 예측하는 문제다.
+
+- sku - Random ID for the product
+- national_inv - Current inventory level for the part
+- lead_time - Transit time for product (if available)
+- in_transit_qty - Amount of product in transit from source
+- forecast_3_month - Forecast sales for the next 3 months
+- forecast_6_month - Forecast sales for the next 6 months
+- forecast_9_month - Forecast sales for the next 9 months
+- sales_1_month - Sales quantity for the prior 1 month time period
+- sales_3_month - Sales quantity for the prior 3 month time period
+- sales_6_month - Sales quantity for the prior 6 month time period
+- sales_9_month - Sales quantity for the prior 9 month time period
+- min_bank - Minimum recommend amount to stock
+- potential_issue - Source issue for part identified
+- pieces_past_due - Parts overdue from source
+- perf_6_month_avg - Source performance for prior 6 month period
+- perf_12_month_avg - Source performance for prior 12 month period
+- local_bo_qty - Amount of stock orders overdue
+- deck_risk - Part risk flag
+- oe_constraint - Part risk flag
+- ppap_risk - Part risk flag
+- stop_auto_buy - Part risk flag
+- rev_stop - Part risk flag
+- **went_on_backorder** - Product actually went on backorder. This is the target value.
+
+백오더 예측을 위해서 다음 팩키지가 필요하다.
+
+- `tidyverse`: dplyr, tidyr, ggplot 등
+- `unbalanced`: 백오더가 매우 드문 상황이라 데이터 불균형 문제를 해결하기 위해서 `ubSMOTE()` 함수를 사용한다.
+- `h2o`: 기계학습 모형 개발에 사용되는 최신 알고리즘
+
+
+# `dplyr`과 $H_2O$ {#kaggle-backorder-data}
+
+
+## 데이터 {#kaggle-backorder-data-kaggle}
+
+`[캐글 Product Backorder 데이터](https://github.com/rodrigosantis1/backorder_prediction/blob/master/data/kaggle/kaggle.rar)`를 
+다운로드 받아 데이터 정제과정을 거친다. 결측값처리와 문자형 변수를 숫자형으로 변환시키는 것이 포함된다.
+
+``` {r backorder-dplyr-h2o}
+# 0. 환경설정 -----
+library(tidyverse)
+library(tidyquant)
+library(janitor)
+library(caret)
+library(h2o)
+library(unbalanced)
+
+# 1. 데이터 -----
+## 1.1. 데이터 가져오기 -----
+train_dat    <- read_csv("data/Kaggle_Training_Dataset_v2.csv")
+test_dat     <- read_csv("data/Kaggle_Test_Dataset_v2.csv")
+
+## 1.2. 데이터 정제과정 -----
+
+clean_data <- function(df) {
+    clean_df <- df %>% 
+        clean_names() %>% 
+        remove_empty(c("rows", "cols")) %>% 
+        select(-sku) %>% 
+        mutate_if(is.character, .funs = function(x) ifelse(x == "Yes", 1, 0)) %>%
+        mutate(went_on_backorder = as.factor(went_on_backorder)) %>% 
+        mutate(perf_6_month_avg = ifelse(perf_6_month_avg == -99, NA, lead_time)) %>% 
+        mutate(perf_6_month_avg = randomForest::na.roughfix(perf_6_month_avg)) %>% 
+        mutate(lead_time = ifelse(lead_time == -99, NA, lead_time)) %>% 
+        mutate(lead_time = randomForest::na.roughfix(lead_time)) %>% 
+        mutate(perf_12_month_avg = ifelse(perf_12_month_avg == -99, NA, lead_time)) %>% 
+        mutate(perf_12_month_avg = randomForest::na.roughfix(perf_12_month_avg))
+
+    return(clean_df)
+}
+
+train_dat <- clean_data(train_dat)
+test_df <- clean_data(test_dat)
+```
+
+## 클래스 불균형 문제 {#kaggle-backorder-data-kaggle-unbalance}
+
+백오더 문제가 발생되는 사례가 상대적으로 희귀하기 때문에 예측모형 성능향상을 위해서 
+`SMOTE` 방법을 통해 클래스 불균형 문제를 보정한다.
+
+- `perc.over = 200`: 과표본 추출(Oversampling) 비율로 5개의 희귀 백오더 관측점이 있다면 이를 200%해서 10개를 생성시킨다.
+- `perc.under = 200`: 희귀 관측점이 아니라 다수를 점하는 관측점에 대한 것으로 SMOTE 과정을 통해서 10개가 생성되었다면, 200% 즉, 20개 표본이 추출된다. 
+- `k = 5`: 새로운 관측점을 생성할 때 참조하는 인점 관측점 숫자를 지정한다.
+
+``` {r backorder-dplyr-h2o-split}
+## 1.3. 데이터 분할 -----
+idx <- createDataPartition(train_dat$went_on_backorder, 
+                           p = 0.85, list = FALSE, times = 1)
+
+train_df <- train_dat[ idx,]
+valid_df  <- train_dat[-idx,]
+
+## 1.4. 분균형 데이터문제 해결: SMOTE -----
+input  <- train_df %>% select(-went_on_backorder)
+output <- train_df$went_on_backorder 
+train_balanced <- ubSMOTE(input, output, perc.over = 200, perc.under = 200, k = 5)
+
+train_df <- bind_cols(as.tibble(train_balanced$X), tibble(went_on_backorder = train_balanced$Y))
+
+train_df %>% tabyl(went_on_backorder)
+```
+
+## 모형적합과 성능 {#kaggle-backorder-data-kaggle-fit}
+
+$H_2O$ AutoML 기계학습 모형을 자동으로 적합해서 최적의 모형을 만들어 낸다.
+`h2o.performance()` 함수로 최적 모형에 대한 성능을 시각화한다.
+
+``` {r backorder-dplyr-h2o-fit}
+# 2. H2O 자동 기계학습(AutoML) -----
+## 2.1. 데이터프레임 --> H2O 데이터프레임 변환
+h2o.init()
+h2o.no_progress()
+
+train_h2o <- as.h2o(train_df)
+valid_h2o <- as.h2o(valid_df)
+test_h2o  <- as.h2o(test_df)
+
+## 2.2. 모형 공식 설정 
+y <- "went_on_backorder"
+x <- setdiff(names(train_h2o), y)
+
+## 2.3. 자동 기계학습
+backorder_aml <- h2o.automl(
+    x = x, 
+    y = y,
+    training_frame    = train_h2o,
+    validation_frame  = valid_h2o,
+    leaderboard_frame = test_h2o,
+    max_runtime_secs  = 45
+)
+
+backorder_lb <- backorder_aml@leader
+
+## 2.4. 예측모형 성능평가
+perf_h2o <- h2o.performance(backorder_lb, newdata = test_h2o) 
+
+h2o.auc(perf_h2o)
+
+left_join(h2o.tpr(perf_h2o), h2o.fpr(perf_h2o)) %>%
+    mutate(random_guess = fpr) %>%
+    select(-threshold) %>%
+    ggplot(aes(x = fpr)) +
+    geom_area(aes(y = tpr, fill = "AUC"), alpha = 0.5) +
+    geom_point(aes(y = tpr, color = "TPR"), alpha = 0.25) +
+    geom_line(aes(y = random_guess, color = "Random Guess"), size = 1, linetype = 2) +
+    theme_tq(base_family = "NanumGothic") +
+    scale_color_manual(
+        name = "Key", 
+        values = c("TPR" = palette_dark()[[1]],
+                   "Random Guess" = palette_dark()[[2]])
+    ) +
+    scale_fill_manual(name = "Fill", values = c("AUC" = palette_dark()[[5]])) +
+    labs(title = "ROC 곡선", 
+         subtitle = "모형이 어림짐작보다 더 좋은 성능을 보여주고 있다.") +
+    annotate("text", x = 0.25, y = 0.65, label = "어림짐작보다 좋음") +
+    annotate("text", x = 0.75, y = 0.25, label = "어림짐작보다 못함")
+```
+
+## 백오더 예측 {#kaggle-backorder-data-kaggle-predict}
+
+`test_h2o` 시험데이터로 백오더 가능성을 예측해본다.
+백오더 예측확률이 제시되면 의사결정을 위한 컷오프를 설정해야 되는데 
+`perf_h2o@metrics$max_criteria_and_metric_scores` 곳에 `F1`을 비롯한 의사결정을 위한 
+지표가 모두 저장되어 있다.
+
+
+``` {r backorder-dplyr-h2o-predict}
+## 2.5. 백오더 예측
+
+pred_h2o <- h2o.predict(backorder_lb, newdata = test_h2o)
+pred_h2o %>% tbl_df
+
+## 2.5. 컷오프 설정 
+
+perf_h2o@metrics$max_criteria_and_metric_scores %>% tbl_df %>% 
+    DT::datatable()
+```
+
+
+
