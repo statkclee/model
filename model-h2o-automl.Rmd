@@ -1,0 +1,109 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 순수 $H_2 O$ AutoML
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+---
+ 
+``` {r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+
+```
+
+# 왜 AutoML인가? {#why-automl}
+
+기계학습(Machine Learning)이 많은 장점과 실제 적용되서 실생활을 많이 바꾸고 있습니다.
+하지만, 기계학습 전문가를 양성하는데 시간이 많이 걸릴 뿐더러 양성된 인력의 품질(?)문제도 해결해야 될 난제로 남아 있다. 
+데이터는 폭발적으로 증가하고 있지만, 이를 분석할 수 있는 인력은 턱없이 모자라고 기계학습 알고리즘을 제작하는 인력부족도 
+심각하기는 마찬가지다. 
+
+이런 움직임에 **자동기계학습(AutoML)** 움직임이 활발히 뜨면서... 기존 데이터과학자와 인공지능 알고리즘 전문가의 일자리를 
+대체하고 있는 것도 사실이다. 이에 $H_2O$ AutoML을 바탕으로 자동기계학습에 대해서 살펴보자.
+
+
+# 순수 $H_2O$ AutoML [^h2o-tutorial] [^business-science-backorder] {#pure-h2o-automl}
+
+[^h2o-tutorial]: [GitHub: Tutorials and training material for the H2O Machine Learning Platform](https://github.com/h2oai/h2o-tutorials)
+
+[^business-science-backorder]: [SALES ANALYTICS: HOW TO USE MACHINE LEARNING TO PREDICT AND OPTIMIZE PRODUCT BACKORDERS Written by Matt Dancho on October 16, 2017](http://www.business-science.io/business/2017/10/16/sales_backorder_prediction.html)
+
+
+## 백오더 데이터 {#pure-h2o-automl-backorder}
+
+재고가 없어 처리 못한 주문을 구매에서 백오더(back order)라고 한다. 
+결품이 나게 되면 생산에 차질이 나고 이는 판매를 못해 심하면 매출을 넘어 브랜드에도 악영향을 미치게 된다.
+
+캐글에 공개되었다가 지금은 삭제된 `Product Backorder` 데이터를 Github에서 다운로드 받아 순수 $H_2O$를 바탕으로 
+기계학습을 자동화해본다.
+
+``` {r pure-h2o-automl}
+# 0. 환경설정 -----
+library(tidyverse)
+library(h2o)
+
+h2o.init()
+h2o.no_progress()
+
+# 1. 데이터 -----
+## 1.1. 데이터 가져오기 -----
+backorder_df <- h2o.importFile("https://github.com/h2oai/h2o-tutorials/raw/master/h2o-world-2017/automl/data/product_backorders.csv")
+
+## 1.2. 데이터 살펴보기 -----
+h2o.describe(backorder_df)
+```
+
+
+## 예측모형 적합 및 성능평가 {#pure-h2o-automl-backorder-fit}
+
+`h2o.automl()` 함수를 바탕으로 제품 백오더 데이터를 학습한다. 
+`max_models = 10`은 기본 예측모형을 10개를 자동선택해서 학습한다는 설정이고 
+모형의 성능은 `leaderboard`에 담겨진다.
+
+``` {r pure-h2o-automl-fit}
+# 2. 예측모형 -----
+## 2.1. 모형공식 설정 -----
+y <- "went_on_backorder"
+x <- setdiff(names(backorder_df), c(y, "sku"))
+
+## 2.2. 모형적합 -----
+backorder_aml <- h2o.automl(y = y, x = x,
+                  training_frame = backorder_df,
+                  max_models = 10,
+                  seed = 1)
+
+# 3. 모형 성능 -----
+## 3.1. 모형성능 
+backorder_aml@leaderboard %>% 
+    as.data.frame() %>% 
+    DT::datatable()
+```
+
+## 예측모형 기여도 평가 {#pure-h2o-automl-backorder-fit-viz}
+
+모형을 뽑아서 메타모형을 발굴하여 메타모형에 가장 큰 기여를 한 모형을 식별한다.
+
+``` {r pure-h2o-automl-fit-viz}
+## 3.2. 메타학습모형 기여도 평가
+
+model_ids <- as.data.frame(backorder_aml@leaderboard$model_id)[,1]
+stacked_ensemble_model <- h2o.getModel(grep("StackedEnsemble_AllModels", model_ids, value = TRUE)[1])
+
+metalearner <- h2o.getModel(stacked_ensemble_model@model$metalearner$name)
+
+### 시각화
+h2o.varimp(metalearner) %>% DT::datatable()
+
+h2o.varimp_plot(metalearner)
+```
