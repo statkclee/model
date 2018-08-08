@@ -47,6 +47,7 @@ title: 데이터 과학 -- 모형
 - **모형 자동화(AutoML)**
     - [순수 $H_2 O$ AutoML](model-h2o-automl.html)
     - [`dplyr` + $H_2 O$ AutoML](model-dplyr-h2o-automl.html)
+    - [기계학습 모형개발 30분 - `recipe` + $H_2 O$ AutoML](model-recipe-h2o-automl.html)
 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
