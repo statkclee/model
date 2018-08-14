@@ -38,10 +38,12 @@ title: 데이터 과학 -- 모형
     - [예측모형 파이프 - R 모형설계행렬(Recipe)](ml-r-design-matrix.html) 
     - [서포트 벡터 머신(SVM)](model_svm.html)
     - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)
-- **모형 시각화**
-    - [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
-    - [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
-    - [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
+- **[모형 설명]**
+    - [R2D3 - DALEX](model-r2d3-dalex.html)
+    - **모형 시각화**
+        + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
+        + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
+        + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
 - **모형 평가**
     - [tidyposterior](model-tidyposterior.html)
 - **모형 자동화(AutoML)**
