@@ -24,5 +24,148 @@ library(kableExtra)
 
 ```
 
-# 
+# R2D3 {#r2d3-website}
 
+[R2D3](http://www.r2d3.us/) 웹사이트에 기계학습에 대한 시각적 소개가 잘 정리되어 있다.
+뉴욕과 샌프란시스코 두 도시의 부동산을 분류하는 데이터를 바탕으로 의사결정나무(Decision Tree) 기계학습 알고리즘이 동작하는 방식을 
+마우스 스크롤을 아래로 내리게 되면 시각적으로 확인할 수 있다.
+
+[FAQ](http://www.r2d3.us/about/faqs/) 웹사이트에서 CSV 파일을 다운로드 받아 직접 기계학습 예측모형을 제작해보자.
+
+# `xgBoost` 예측모형 설명과 이해 {#r2d3-xgboost}
+
+## 데이터셋 {#r2d3-dataset}
+
+[뉴욕, 샌프란시스코 집값데이터](https://raw.githubusercontent.com/jadeyee/r2d3-part-1-data/master/part_1_data.csv)를 다운로드 받아 작업을 하는데 
+xgBoost에서는 분류예측모형을 개발할 때 종속변수가 0,1로 코딩이 되어야 되서 이를 사전에 반영한다.
+
+``` {r r2d3-dataset}
+# 0. 환경설정 -----
+
+library(tidyverse)
+library(recipes)
+library(skimr)
+library(DALEX)
+library(xgboost)
+
+# 1. 데이터 -----
+## 1.1. 데이터 가져오기
+r2d3_df <- read_csv("https://raw.githubusercontent.com/jadeyee/r2d3-part-1-data/master/part_1_data.csv", skip=2) %>% 
+    mutate(in_sf = as.integer(as.factor(in_sf))-1)
+
+glimpse(r2d3_df)        
+```
+
+
+## 모형 {#r2d3-dataset-xgboost}
+
+`recipes` 팩키지를 이용하여 요리를 한 후에 `xgb.DMatrix()` 함수로 데이터프레임을 xgBoost 행렬로 변환시킨다.
+그리고 나서 예측모형을 생성한다.
+
+``` {r r2d3-xgboost}
+## 1.2. X/Y 데이터 분할
+x_train_tbl <- r2d3_df %>% select(-in_sf)
+y_train_tbl <- r2d3_df %>% select(in_sf)   
+
+## 1.3. X/Y 데이터 요리
+rec_obj <- recipe(~ ., data = x_train_tbl) %>%
+    # step_scale(all_numeric()) %>%
+    prep(stringsAsFactors = FALSE)
+
+x_train_processed_tbl <- bake(rec_obj, x_train_tbl) 
+
+y_train_processed_tbl <- y_train_tbl
+
+xy_train <- bind_cols(y_train_processed_tbl, x_train_processed_tbl)
+
+# 2. 모형 -----
+## 2.1. xgBoost 데이터프레임 --> 행렬 변환 -----
+model_martix_train <- model.matrix(in_sf ~ . - 1, xy_train)
+data_train <- xgb.DMatrix(model_martix_train, label = xy_train$in_sf)
+
+## 2.2. CV 훈련 -----
+param <- list(max_depth = 3, eta = 0.5, silent = 1, 
+              nrounds =10, objective = "binary:logistic", eval_metric = "auc")
+
+bst.cv <- xgb.cv(param = param, data_train, 
+                 nfold = 5, nrounds = 10)
+## 2.3. xgBoost 모형 -----
+xgb_model <- xgb.train(param, data_train, nrounds = 5)
+xgb_model
+```
+
+## 모형 이해와 설명 {#r2d3-dataset-xgboost-explain}
+
+블랙박스 xgBoost 모형 이해와 설명을 위해서 DALEX 팩키지 `explain()` 함수를 사용한다.
+연속형 변수 예측이 아니라 범주 예측이라 [Przemyslaw Biecek(2018-04-28), "How to use DALEX with the xgboost models"](https://pbiecek.github.io/DALEX/articles/DALEX_and_xgboost.html)을 
+참조하여 준용한다.
+
+``` {r r2d3-xgboost-explain}
+# 3. 모형 설명  -----
+predict_logit <- function(model, x) {
+    raw_x <- predict(model, x)
+    exp(raw_x)/(1 + exp(raw_x))
+}
+
+logit <- function(x) exp(x)/(1+exp(x))
+
+explainer_xgb <- explain(xgb_model, 
+                         data = model_martix_train, 
+                         y = xy_train$in_sf, 
+                         predict_function = predict_logit,
+                         link = logit,
+                         label = "xgboost")
+```
+
+### 모형 이해와 설명 {#r2d3-dataset-xgboost-explain-performance}
+
+예측모형 성능을 이해하기 위해서 `model_performance()` 함수를 사용한다.
+경우에 따라 차이가 있기는 하지만, 대체로 `xgBoost`가 회귀분석이나 분류모형 거의 모든 경우에 
+가장 성능이 좋게 나오거나 유사한 성능을 보이고 있다.
+
+``` {r r2d3-xgboost-explain-performance}
+## 3.1. 모형성능(Performance) -----
+
+mp_xgb <- model_performance(explainer_xgb)
+plot(mp_xgb, geom = "boxplot", show_outliers = 3)
+```
+
+### 중요 변수 {#r2d3-dataset-xgboost-explain-importance}
+
+`variable_importance()` 함수로 중요한 변수가 무엇인지 시각적으로 파악한다.
+
+``` {r r2d3-xgboost-explain-importance}
+## 3.2. 변수 중요도(Variable Importance)
+vd_xgb <- variable_importance(explainer_xgb, type = "raw")
+plot(vd_xgb)
+```
+
+
+### 반응 변수 연관 {#r2d3-dataset-xgboost-explain-relation}
+
+`variable_response()` 함수로 관심있는 변수가 뉴욕, 샌프란시스코 부동산 분류 예측에 어떻게 연관되는지 파악한다.
+
+``` {r r2d3-xgboost-explain-relation}
+## 3.3. 변수 반응도
+sv_xgb_price  <- variable_response(explainer_xgb, 
+                                                variable = "price",
+                                                type = "pdp")
+plot(sv_xgb_price) +
+    scale_x_log10(labels=scales::comma)
+```
+
+### 특정 관측점 예측  {#r2d3-dataset-xgboost-explain-relation}
+
+마지막으로 특정 관측점에 영향을 주는 요인이 무엇인지 `prediction_breakdown()` 함수로 파악한다.
+예측에 대한 각 변수별 기여도를 분해(breakdown)하여 자세히 살펴볼 수 있다.
+
+``` {r r2d3-xgboost-explain-breakdown}
+## 3.4. 특정 관측점 Breakdown
+
+target_obs <- model_martix_train[1, , drop = FALSE]
+
+sp_xgb  <- prediction_breakdown(explainer_xgb, 
+                                observation = target_obs)
+
+plot(sp_xgb)
+```
