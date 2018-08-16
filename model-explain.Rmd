@@ -1,0 +1,77 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 모형 이해와 설명
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+---
+ 
+``` {r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(knitr)
+library(kableExtra)
+
+```
+
+# 예측모형 [^iml-christophM] [^dalex-github] {#model-explain-predictive-model}
+
+[^iml-christophM]: [Christoph Molnar (2018-08-14), "Interpretable Machine Learning A Guide for Making Black Box Models Explainable."](https://christophm.github.io/interpretable-ml-book/)
+
+[^dalex-github]: [DALEX: Descriptive mAchine Learning EXplanations](https://pbiecek.github.io/DALEX/)
+
+통계모형과 비교하여 예측모형(predictive model)은 예측 성능에 무게중심을 두고 있다. 
+과거 예측만 맞으면 된다고 생각을 하고 있었으나, 최근에는 예측모형을 좀더 다양한 곳에 많이 사용하고자
+예측모형에 대한 이해와 설명에 관심이 모아지고 있다.
+해당 분야는 최근들어 급격히 발전에 발전을 거듭하고 있고 현재 시점 공개된 예측모형 이해와 해석에 대한 사항을 살펴보자.
+
+[DALEX](https://pbiecek.github.io/DALEX/), [LIME](https://github.com/thomasp85/lime), 
+[iml](https://christophm.github.io/interpretable-ml-book/) 등 기계학습 예측모형을 이해하고 설명하기 위한 다양한 접근방법이 제시되고 있다.
+
+<iframe width="300" height="180" src="https://www.youtube.com/embed/7miIGBG7JKY" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+
+# 예측모형 이해와 설명 {#model-explain-predictive-model-explain}
+
+예측모형 이해와 설명을 위해서 먼저 전문영역 지식(Domain Knowledge)와 데이터를 가지고 모형을 구축하는 과정, 구축된 
+최적의 예측모형을 활용하여 예측(Prediction)을 만들어 내는 과정이 그동안 많이 연구되고 실무에 적용되었던 사실이다.
+
+데이터에서 모형을 만들고 이를 예측하는 과정을 반대로 돌려서 모형예측에 숨겨진 동인(driver)을 
+이해함으로써 잘못된 결정을 고쳐 더 나은 모형을 제작하는 과정과 모형구조를 이해함으로써 
+더 나은 모형을 제작하는 과정이 이제는 명시적으로 관심을 갖고 살펴보게 되게 된 것이다.
+
+<img src="fig/model-explain.png" alt="예측모형 이해와 설명" width="100%" />
+
+예측모형의 구조를 이해하는 것과 예측값에 대한 이해를 하는 것은 서로 밀접히 연관되어 있지만, 나누어서 살펴보는 것이 도움이 된다.
+이를 위해서 예측모형 이해와 해석에서 `caret`같은 위상을 점하고자 부단히 노력하고 있는 폴란드 교수님이 주도되어 시작하는 `DALEX`를 살펴보자.
+
+모형성능 설명, 변수설명, 모형예측 설명이 주된 기능이고 이를 위해서 DALEX 팩키지는 `auditor`, `breakDown`, `factorMerger`, `ceterisParibus` 등 
+관련 팩키지의 도움을 받아 나름 **DALEX 생태계**를 구성하고 있다.
+
+<img src="fig/DALEX-ecosystem.png" alt="DALEX 생태계" width="77%" />
+
+
+## DALEX 아키텍처 {#model-dalex-architecture}
+
+DALEX 아키텍처는 3단 구성을 갖는다. 
+
+- 예측모형이 준비된 단계
+- 준비된 예측모형을 `explain()` 함수에서 넣어 예측모형 설명 및 이해 객체(explainer) 준비단계
+- `print()`, `plot()` 제네릭으로 설명자(explainer)를 사용하는 단계
+
+`single_variable()` 함수로 연속형 범주형 변수가 예측변수에 갖는 효과를 살펴보는 기능과 
+`variable_dropout()` 함수로 변수 중요도를 이해하고 설명하는 기능, 마지막으로 `single_prediction()` 함수로 
+해당 관측점에 대한 변수기여도를 살펴보는 기능이 담겨있다.
+
+<img src="fig/dalex-architecture.png" alt="DALEX 아키텍처" width="77%" />
+
