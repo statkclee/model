@@ -1,0 +1,71 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 예측모형 AWS EC2
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+---
+ 
+``` {r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(knitr)
+library(kableExtra)
+
+```
+
+# AWS EC2 예측모형 환경 {#aws-ec2-env}
+
+
+<img src="fig/aws-ec2-env.png" alt="AWS EC2 예측모형 개잘 환경" width="77%" />
+
+# 병렬처리 하드웨어 {#aws-ec2-env-cpu}
+
+병렬처리가 가능한 하드웨어, 특히 멀티코어로 코어갯수가 많은 EC2 인스턴스를 준비한다.
+
+# R과 팩키지 {#aws-ec2-env-R}
+
+최신 R 엔진을 사용하고 예측모형 구축에 필요한 팩키지를 일괄 설치하여 준비한다.
+
+# 예측모형 {#aws-ec2-env-predictive-model}
+
+`caret` 기반 예측모형을 FTP로 이동하여 준비된 EC2 인스턴스에서 실행할 수 있도록 준비한다.
+
+# 학습 {#aws-ec2-env-predictive-model-train}
+
+`doParallel` 팩키지를 활용하여 병렬처리를 통해 신속히 학습시킨다.
+
+```{r predictive-ec2-instance, eval=FALSE}
+# 0. Run Predictive model -----
+
+start_time <- Sys.time()
+
+source("code/predictive_function/predictive-model-source.R")
+
+end_time <- Sys.time()
+
+end_time - start_time
+
+# Time difference of 2.70212 mins
+
+Sys.time()
+
+```
+
+# 모니터링 {#aws-ec2-env-predictive-model-htop}
+
+`htop` 도구를 사용해서 병렬처리가 제대로 되는지 모니터링한다.
+
+# 배포 {#aws-ec2-env-predictive-model-htop-deploy}
+
+예측모형 보고서, 예측점수 스코어, 예측함수를 예측모형 학습결과로 뽑아낸다.
