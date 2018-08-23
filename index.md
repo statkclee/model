@@ -29,6 +29,9 @@ title: 데이터 과학 -- 모형
 
 ## 학습목차 
 
+- **모형 데이터 전처리 - Feature Engineering(피처 공학)**
+    - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
+    - [피처 공학(Feature Engineering)](model-feature-engineering.html)
 - **모형 인프라(Model Infrastructure)**
     - [`rsampling`](model-rsampling.html) 
     - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
