@@ -1,0 +1,202 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 기계학습 - `gapminer` + `rsample` + `purrr`
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+mainfont: NanumGothic
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                    comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+# knitr::opts_knit$set(root.dir = "C:/Users/chongmu/Dropbox/02_model/predictive-model")
+library(here)
+
+```
+
+
+# `gapminder` 데이터 {#gampinder-data}
+
+`dslabs` 팩키지에 포함된 `gapminder` 데이터셋에 결측값(NA)가 다수 포함되어 있어 결측값 패턴을 파악하고 결측값이 없는 국가만 추려 1960 ~ 2011년까지 국가별 현황을 데이터프레임으로 작성한다.
+
+```{r model-gapminder-data}
+# 0. 환경설정 -----
+library(tidyverse)
+library(dslabs)
+
+# 1. 데이터 정제 -----
+gapminder_lc <- gapminder %>% 
+    group_by(country) %>% 
+    nest()
+
+gapminder_lc_df <- gapminder_lc %>% 
+    mutate(na_cnt = map_int(data, ~ sum(is.na(.x)))) %>% 
+    filter(na_cnt == 8) %>% 
+    unnest(data) %>% 
+    filter(year <= 2011) %>% 
+    select(-na_cnt) %>% 
+    select(-continent, -region)
+
+```
+
+
+# 기대수명 예측 {#gampinder-life-expectancy}
+
+`gapminder` 데이터에서 기대수명(life_expectancy)를 예측하는 기계학습 모형을 구축한다.
+강건한 기대수명 예측모형 구축을 위해서 데이터를 훈련/시험데이터로 나누고, 훈련데이터는 훈련/검증데이터로 다시 나눈다. 이를 통해서 최적 모형을 식별하고 이를 예측에 활용한다.
+
+## 훈련/검증/시험 데이터 분할 {#gampinder-life-expectancy-data}
+
+`rsample` 팩키지 `initial_split()` 함수를 사용해서 훈련:시험 데이터를 7:3으로 나누고 나서
+`training()`, `testing()` 함수로 데이터를 구분시킨다.
+다시, 훈련데이터는 `vfold_cv()` 함수로 다시 쪼개는데 `v = 5` 인자로 5개로 다시 나눈다.
+
+
+```{r model-gapminder-life-expectancy-data}
+library(rsample)
+
+## 훈련/시험 데이터 분할
+gapminder_split <- initial_split(gapminder_lc_df, prop = 0.70)
+
+train_df <- training(gapminder_split)
+test_df  <- testing(gapminder_split)
+
+## 훈련 데이터를 검증(Cross Validation) 데이터 분할
+gapminder_cv_split <- vfold_cv(train_df, v = 5)
+
+cv_df <- gapminder_cv_split %>%
+           mutate(train    = map(splits, ~training(.x)),
+                  validate = map(splits, ~testing(.x)))
+
+cv_df
+```
+
+
+## 예측모형 적합/평가 {#gampinder-life-expectancy-fit}
+
+기대수명 예측은 예측값이 연속형이라 속도가 빠르면서 다른 예측모형에 대한 기준값을 제시할 수 있다는 점에서 가장 먼저 적합시켜보는 것이 의미가 있다.
+
+훈련데이터를 훈련/검증 데이터로 5조각 냈고 각각에 대해서 `life_expectancy ~ .` 회귀식을 적합시킨다.
+그리고 나서 `Metrics` 팩키지 `mae`, `rmse` 함수를 사용해서 각 검증데이터에 대한 오차를 계산하고 이를 평균내서 기준 예측오차 지표로 삼는다.
+
+```{r model-gapminder-life-expectancy-fit}
+library(broom)
+library(Metrics)
+
+# 회귀모형 적합
+model_cv_df <- cv_df %>% 
+    mutate(lm_model  = map(train,  ~lm(life_expectancy ~ ., data=.x)))
+
+# 회귀모형 성능 평가
+model_cv_df <- model_cv_df %>% 
+    mutate(valid_actual = map(validate, ~.x$life_expectancy), 
+           valid_pred   = map2(lm_model, validate, ~predict(.x, .y))) %>% 
+    mutate(valid_mae    = map2_dbl(valid_actual, valid_pred, ~mae(actual = .x, predicted = .y)),
+           valid_rmse    = map2_dbl(valid_actual, valid_pred, ~rmse(actual = .x, predicted = .y)))
+
+# model_cv_df$valid_mae
+# model_cv_df$valid_rmse
+
+mean(model_cv_df$valid_rmse)
+mean(model_cv_df$valid_mae)
+```
+
+## 예측모형 아키텍처 {#gampinder-life-expectancy-fit-architecture}
+
+서로 다른 모형 아키텍처 회귀모형, 나무모형, SVM 모형을 적합시켜 가장 MAE가 작은 모형 아키텍처를 선정한다.
+이를 통해 Random Forest를 모형 아키텍처로 잡고 모형의 성능을 더 향상시켜 보자.
+
+```{r model-gapminder-life-expectancy-fit-architecture}
+library(broom)
+library(e1071)
+library(ranger)
+library(extrafont)
+loadfonts()
+
+# 회귀모형 적합
+model_cv_df <- model_cv_df %>% 
+    mutate(lm_model  = map(train,  ~lm(life_expectancy ~ ., data=.x)),
+           rf_model  = map(train,  ~ranger(life_expectancy ~ ., data=.x)),
+           svm_model = map(train,  ~svm(life_expectancy ~ ., data=.x,  probability = TRUE)))
+
+# 회귀모형 성능평가
+model_cv_df <- model_cv_df %>% 
+    mutate(valid_actual = map(validate, ~.x$life_expectancy), 
+           valid_lm_pred   = map2(lm_model, validate, ~predict(.x, .y)),
+           valid_rf_pred   = map2(rf_model, validate, ~predict(.x, .y)$predictions),
+           valid_svm_pred  = map2(svm_model, validate, ~predict(.x, .y))) %>% 
+    mutate(valid_lm_mae    = map2_dbl(valid_actual, valid_lm_pred,  ~mae(actual = .x, predicted = .y)),
+           valid_rf_mae    = map2_dbl(valid_actual, valid_rf_pred,  ~mae(actual = .x, predicted = .y)),
+           valid_svm_mae   = map2_dbl(valid_actual, valid_svm_pred, ~mae(actual = .x, predicted = .y)))
+
+
+model_df <- data.frame(LM = model_cv_df$valid_lm_mae,
+           RF = model_cv_df$valid_rf_mae,
+           SVM = model_cv_df$valid_svm_mae)
+
+model_df %>% 
+    gather(model, MAE) %>% 
+    ggplot(aes(x=model, y=MAE, color=model)) +
+       geom_point(size=3) +
+       labs(x="예측모형", y="MAE (Mean Absolute Error)", color="예측모형",
+            title="GAPMINDER 데이터 - 기대수명 예측모형") +
+       theme_minimal(base_family="NanumGothic") 
+
+data.frame("LM_MAE_평균" = mean(model_cv_df$valid_lm_mae), 
+           "RF_MAE_평균" = mean(model_cv_df$valid_rf_mae),
+           "SVM_MAE_평균" = mean(model_cv_df$valid_svm_mae))
+
+```
+
+
+## 예측모형 튜닝 {#gampinder-life-expectancy-fit-architecture-tuning}
+
+Random Forest를 예측모형 아키텍처로 잡고 하이퍼모수(hyperparameter)를 통해 예측모형의 성능을 추가로 향상시켜본다.
+
+```{r model-gapminder-life-expectancy-fit-architecture-tune}
+# Random Forest 모형적합
+model_cv_df <- model_cv_df %>% 
+    # filter(id == "Fold1") %>% 
+    crossing(mtry = c(2,ceiling(sqrt(ncol(gapminder_lc_df)-2)),5), num.trees = c(500, 1000))  %>% 
+    mutate(rf_tune_model  = pmap(list(train, mtry, num.trees),  ~ranger(life_expectancy ~ ., data=.x, mtry=.y)))
+
+# RandomForest 성능평가
+model_cv_df <- model_cv_df %>% 
+    mutate(valid_actual = map(validate, ~.x$life_expectancy), 
+           valid_rf_tune_pred   = map2(rf_tune_model, validate, ~predict(.x, .y)$predictions)) %>% 
+    mutate(valid_rf_tune_mae    = map2_dbl(valid_actual, valid_rf_tune_pred,  ~mae(actual = .x, predicted = .y)))
+
+model_cv_df %>% 
+    group_by(mtry, num.trees) %>% 
+    summarise(mean_mae = mean(valid_rf_tune_mae))
+```
+
+
+## 예측모형 성능 평가 {#gampinder-life-expectancy-fit-architecture-testing}
+
+Random Forest 예측모형의 성능을 결정짓는데 중요한 역할을 수행하는 두가지 초모수(hyperparameter), 
+`mtry=3`, `num.trees = 500`을 적용시켜 최종모형을 구축하고 나서 이를 시험데이터에 적용하여 
+과적합이 해소되었지는지 성능은 좋게 나오는지 확인한다.
+
+```{r model-gapminder-life-expectancy-fit-architecture-final}
+gapminder_pm <- ranger(life_expectancy ~ ., data = train_df,
+                       mtry = 3, num.trees = 500)
+
+test_df$pred <- predict(gapminder_pm, test_df)$predictions
+
+test_df %>% 
+    mutate(absolute_err = abs(life_expectancy-pred)) %>% 
+    summarise(mae = mean(absolute_err))
+```
+
