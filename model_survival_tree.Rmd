@@ -55,7 +55,7 @@ churn_df <- churn_dat %>%
 
 churn_df %>% 
     sample_frac(0.01) %>%
-    DT::datatable()
+    DT::datatable(options = list(scrollX = TRUE))
 
 ```
 
@@ -69,10 +69,25 @@ library(ranger)
 library(survival)
 library(extrafont)
 loadfonts()
+library(caret)
 
-churn_rf <- ranger(Surv(account_length, churn) ~ ., data=churn_df, 
+## 훈련/시험 데이터 분할 ----
+churn_idx <- createDataPartition(churn_df$churn, p=0.7, list=FALSE)
+
+train_df <- churn_df[churn_idx, ]
+test_df <- churn_df[-churn_idx, ]
+
+## 랜덤포레스트 적합 ----
+churn_rf <- ranger(Surv(account_length, churn) ~ ., data=train_df, 
                     importance = "permutation", write.forest = TRUE)
 
+```
+
+### 중요변수 {#survival-random-forest-fit-eval}
+
+고객이탈 관련하여 중요한 변수를 random forest 모형의 Variable Importance를 통해 살펴본다.
+
+```{r survival-random-forest-model-eval}
 churn_varimp_df <- churn_rf$variable.importance %>% as.data.frame %>% 
     rownames_to_column(var="variable") %>% 
     rename(importance = ".")
@@ -83,8 +98,63 @@ churn_varimp_df %>%
       coord_flip() +
       labs(x="", y="변수 중요도", title = "생존 랜덤 포레스트 모형 변수 중요도") +
       theme_minimal(base_family = "NanumGothic")
-
-plot(timepoints(churn_rf), predictions(churn_rf)[1, ])
-
 ```
+
+
+### 고객별 잔존율 [^stackoverflow-transpose] {#survival-random-forest-viz}
+
+[^stackoverflow-transpose]: [stackoverflow, "How to transpose a dataframe in tidyverse?"](https://stackoverflow.com/questions/40306280/how-to-transpose-a-dataframe-in-tidyverse)
+
+고객 두명을 뽑아 예측모형에서 예측한 잔존율을 시각적으로 파악한다. 
+각 고객마다 잔존율을 물고 있어(`churn_rf$survival`), 이를 고개별로 바꾸고 고객을 추출하여 잔존율을 시각화한다.
+
+```{r survival-random-forest-model-viz}
+
+pred_df <- data.frame(churn_rf$survival) %>% 
+  add_rownames(., var ="customer") %>% 
+  gather(time, retention, -customer) %>% 
+  spread(customer, retention)
+
+
+pred_df %>% 
+  gather(customer, retention_prob, -time) %>% 
+  mutate(time = str_remove(time, "X") %>% as.integer) %>% 
+  filter(customer %in% c("1", "7")) %>% 
+  ggplot(aes(x=time, y=retention_prob, group=customer, color=customer)) +
+    geom_point() +
+    geom_line() +
+    labs(x="시간", y="유지율(%)") +
+    scale_y_continuous(labels = scales::percent, limits=c(0,1)) +
+    theme(legend.position = "top")
+```
+
+
+### 모형 성능평가 {#survival-random-forest-eval}
+
+앞서 분리한 시험데이터로 예측을 하고 이를 특시 시점 (30일)과 전체 기간에 대해서 AUC 값을 구해서 예측모형 성능을 확인한다.
+
+```{r survival-random-forest-model-eval-auc}
+library(Metrics)
+churn_pred <- predict(churn_rf, test_df)
+
+## 30일 경과 AUC 성능
+auc(actual=as.integer(test_df$churn)-1, predicted=1 - churn_pred$survival[, which(churn_pred$unique.death.times==30)])
+
+## 전체 시점 AUC 성능
+auc_v <- vector("double", length = length(churn_pred$unique.death.times))
+
+for(i in seq_along(churn_pred$unique.death.times)) {
+  auc_v[i] <- auc(actual=as.integer(test_df$churn)-1, predicted=1 - churn_pred$survival[, which(churn_pred$unique.death.times==i)])
+}
+
+churn_auc_df <- data.frame(time =churn_pred$unique.death.times, auc = auc_v)
+
+churn_auc_df %>% 
+  ggplot(aes(x=time, y=auc)) +
+    geom_point() +
+    geom_line() +
+    labs(x="시간", y="AUC", title = "각 시점별 예측모형 성능(AUC)") +
+    theme_minimal(base_family = "NanumGothic")
+```
+
 
