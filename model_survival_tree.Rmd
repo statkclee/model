@@ -1,0 +1,90 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 나무모형과 생존분석의 만남
+date: "`r Sys.Date()`"
+author: xwMOOC
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+    lib_dir: gapminder
+editor_options: 
+  chunk_output_type: console
+---
+
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                    comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(here)
+```
+
+
+# `ranger` 팩키지  [^climbeR-ranger-survival] [^survival-ensemble] [^survival-randomforestSRC] {#survival-tree}
+
+[`ranger`](https://github.com/imbs-hl/ranger) 팩키지 명칭은 "RANdom forest GEneRator"에서 나왔다. C++로 작성되어 매우 빠르고 문법도 깔끔하다.
+특히, 생존분석(Survival Analysis)를 위해서 별도 작업 없이 ... random forest 모형을 구축할 수 있다는 점에서 다른 팩키지 `randomForestSRC`와 비교하여 장점이 있다. 
+
+[^climbeR-ranger-survival]: [climbeR: Calculate Average Minimal Depth of a Maximal Subtree for 'ranger' Package Forests](https://cran.r-project.org/web/packages/climbeR/vignettes/climbeR_examples.html)
+
+[^survival-ensemble]: [Survival Ensembles: Survival Plus Classification for Improved Time-Based Predictions in R](https://amunategui.github.io/survival-ensembles/)
+
+[^survival-randomforestSRC]: [Survival Random Forests for Churn prediction](https://pedroconcejero.wordpress.com/2015/11/12/survival-random-forests-for-churn-prediction-3/)
+
+## 고객 이탈 데이터 [^sgi-churn-dataset] {#survival-random-forest-dataset}
+
+[^sgi-churn-dataset]: [Oracle, predicting-customer-churn-with-a-discriminant-analysis](https://www.datascience.com/blog/predicting-customer-churn-with-a-discriminant-analysis)
+
+``` {r survival-tree-dataset}
+# 0. 팩키지 -----
+library(tidyverse)
+# 1. 데이터 -----
+
+download.file(url="https://cdn2.hubspot.net/hubfs/532045/Discriminant-analysis-churn-dataset.csv?t=1537486781722", destfile = "data/sgi-churn.csv")
+
+churn_dat <- read_csv("data/sgi-churn.csv")
+
+churn_df <- churn_dat %>% 
+    mutate(churn = factor(churn, levels=c(0,1), labels = c("No", "Yes")))
+
+churn_df %>% 
+    sample_frac(0.01) %>%
+    DT::datatable()
+
+```
+
+## 생존 랜덤 포레스트 {#survival-random-forest-fit}
+
+생존분석을 위한 랜덤 포레스트 모형을 개발할 경우,
+`survival` 팩키지 `Surv(account_length, churn)` 객체를 생성한 후에 랜덤 포레스트 모형을 적합시킨다.  
+
+```{r survival-random-forest-model}
+library(ranger)
+library(survival)
+library(extrafont)
+loadfonts()
+
+churn_rf <- ranger(Surv(account_length, churn) ~ ., data=churn_df, 
+                    importance = "permutation", write.forest = TRUE)
+
+churn_varimp_df <- churn_rf$variable.importance %>% as.data.frame %>% 
+    rownames_to_column(var="variable") %>% 
+    rename(importance = ".")
+
+churn_varimp_df %>% 
+    ggplot(aes(x=fct_reorder(variable, importance), y=importance)) +
+      geom_col(width=0.5) +
+      coord_flip() +
+      labs(x="", y="변수 중요도", title = "생존 랜덤 포레스트 모형 변수 중요도") +
+      theme_minimal(base_family = "NanumGothic")
+
+plot(timepoints(churn_rf), predictions(churn_rf)[1, ])
+
+```
+

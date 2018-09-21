@@ -42,6 +42,7 @@ title: 데이터 과학 -- 모형
     - [서포트 벡터 머신(SVM)](model_svm.html)
     - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)
     - [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
+        - [나무모형과 생존분석의 만남](model_survival_tree.html)
     - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
 - **[모형 설명](model-explain.html)**
     - [DALEX - mpg(연비 데이터)](model-mpg-dalex.html)
