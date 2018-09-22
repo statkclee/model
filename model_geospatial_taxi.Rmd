@@ -1,0 +1,191 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 나무모형과 지리정보 만남 - 택시
+date: "`r Sys.Date()`"
+author: xwMOOC
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+    lib_dir: gapminder
+editor_options: 
+  chunk_output_type: console
+---
+
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                    comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(here)
+```
+
+
+# 지리정보 - 택시 데이터 {#taxi-data}
+
+[뉴욕 택시요금 예측](https://www.kaggle.com/c/new-york-city-taxi-fare-prediction)이 캐글에 올라와 있다. 
+데이터는 고객 탑승시각, 고객 승하차 위치(위경도), 고객수, 그리고 목표예측변수인 요금인 달러로 구성되어 있다.
+
+서울시에서도 서울 열린 데이터 광장을 통해서 [서울시 택시운행 분석데이터 정보](http://data.seoul.go.kr/dataList/datasetView.do?infId=OA-12066&srvType=F&serviceKind=1)를 제공하고 있다.
+
+
+## 랜덤 데이터 추출 {#taxi-data-random}
+
+`택시운행분석_활용가이드_20150423.pdf`를 참고하여 월별 데이터 분석을 수행할 수 있다. 데이터 크기가 나름 크기 때문에... 일단 쉘환경에서 데이터 100,000건을 임의추출하고 이를 분석 및 모형개발에 활용해보자.
+Git Bash 등을 통해 터미널에서 `shuf` 명령어로 1억건이 넘는 운행정보에서 100,000건만 추출한다.
+
+```{r random-shuffle-sample, eval = FALSE}
+# $ shuf -n 100000 TaxiMach_Link_Dataset_Full_201709.txt  > taxi_100000.txt
+```
+
+
+## 데이터 정제 {#taxi-data-clean}
+
+운행정보 데이터가 있다면 다음 단계로 모형개발을 위한 위경도 데이터를 가져와야 하는데 지리정보가 `.shp` 파일로 제공된다. 따라서 `.shp` 파일에서 위경도 정보를 추출하고 나서 `T_Link_ID`를 키값으로 결합하고 `geometry`를 제거해서 분석과 모형개발을 위한 데이터프레임을 생성시킨다.[^korean-geoinfo] [^geometry-center] [^geometry-lonlat]
+
+[^korean-geoinfo]: [한국 주요 좌표계 EPSG코드 및 proj4 인자 정리](http://www.osgeo.kr/17)
+
+[^geometry-center]: [How to calculate centroid of polygon using sf::st_centroid?](https://stackoverflow.com/questions/46176660/how-to-calculate-centroid-of-polygon-using-sfst-centroid)
+
+[^geometry-lonlat]: [Convert sfc_POINT to x,y columns #231](https://github.com/r-spatial/sf/issues/231)
+
+```{r seoul-taxi-dataset-clean}
+library(tidyverse)
+library(here)
+library(sf)
+library(pryr)
+
+dat <- read_csv("TaxiMach_Link_Dataset_Full_201709/taxi_100000.txt")
+
+seoul_shp <- sf::st_read("Seoul_150M_Only/Link_WGS84_SeoulOnly.shp")
+
+# 위경도 추출: shp 파일의 각 중심점
+seoul_lonlat_shp <- st_transform(seoul_shp, 4166) %>% 
+  st_centroid() %>% 
+  st_transform(., '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs') 
+# 위경도 추출: geometry -> 위경도 좌표
+seoul_coord <- do.call(rbind, st_geometry(seoul_lonlat_shp)) %>% 
+    as_tibble() %>% setNames(c("lon","lat"))
+
+# 데이터 결합
+seoul_map_df <- seoul_lonlat_shp %>% 
+  select(T_Link_ID, ROAD_NAME) %>% 
+  bind_cols(seoul_coord) 
+
+# geometry 제거후 데이터프레임만... 생성
+st_geometry(seoul_map_df) <- NULL
+
+# 목적지가 없는 운행은 제외
+taxi_df <- left_join(dat, seoul_map_df) %>% 
+  filter(!is.na(Dest))
+```
+
+# 탐색적 데이터 분석 {#taxi-data-EDA}
+
+`leaflet`을 팩키지를 사용해서 지리정보와 잘 매칭이 되었는지 시각적으로 확인한다.
+먼저 각 탐승 데이터에 대한 상세 내역을 확인한다.
+
+
+``` {r seoul-taxi-eda}
+library(leaflet)
+library(viridis)
+
+taxi_df %>% 
+  sample_n(100) %>% 
+  leaflet() %>%
+    addTiles() %>%
+    addMarkers(lng=~lon, lat=~lat,
+               popup = ~ as.character(paste0("<strong>", paste0("탑승위치"), "</strong><br><br>",
+                                             "&middot; T_Link_ID: ", T_Link_ID, "<br>",
+                                             "-----------------------------------------------------------<br>",
+                                             "&middot; 요일(Day): ", Day, "<br>",
+                                             "&middot; 시간(Time): ", Time, "<br>",
+                                             "&middot; 날씨(Weather): ", Weather, "<br>",
+                                             "&middot; 목적지(Dest): ", Dest, "<br>",
+                                             "&middot; ROAD_NAME: ", ROAD_NAME, "<br>"
+                   )))    
+```
+
+`leaflet.extras` 팩키지 `addHeatmap()` 함수사 사용해서 히트맵 기능을 사용해서 가장 탑승위치가 많은 곳을 표시한다.
+
+``` {r seoul-taxi-eda-pickup}
+library(leaflet.extras)
+taxi_df %>% 
+  group_by(T_Link_ID, lon, lat) %>% 
+    summarise(pickup_cnt = n()) %>% 
+    leaflet() %>%
+      addTiles() %>%
+      addHeatmap(lng = ~lon, lat = ~lat, intensity = ~pickup_cnt,
+                 blur = 37, max = 0.05, radius = 10)
+
+```
+
+
+
+# 인기 탑승지 예측모형 [^gbm-count] {#taxi-data-randomforest}
+
+[^gbm-count]: [stackoverflow, How can I offset exposures in a gbm model in R?](https://stackoverflow.com/questions/41273430/how-can-i-offset-exposures-in-a-gbm-model-in-r)
+
+예측하고자 하는 것이 특정 지역에 택시 탑승건수를 예측하는 것이라 카운드(Count) 데이터를 예측하는 나무모형을 구축하는데 `gbm` 팩키지가 기능을 제공하고 있어 이를 활용한다. 물론, [mobForest: Model Based Random Forest Analysis](https://cran.r-project.org/web/packages/mobForest/index.html)를 통해 Random Forest로 모형구축도 가능하다. 
+
+
+```{r seoul-taxi-pickup-model}
+taxi_m_df <- taxi_df %>% 
+  group_by(T_Link_ID, lon, lat, Day) %>% 
+    summarise(pickup_cnt = n()) %>% 
+    ungroup() %>% 
+    mutate(Day = factor(Day, levels=c(1,2,3,4,5,6,7), labels=c("월", "화", "수", "목", "금", "토", "일")) )
+
+library(gbm)
+taxi_fmla <- formula(pickup_cnt ~ lon + lat + Day)
+
+taxi_gbm <- gbm(taxi_fmla, distribution = "poisson",
+              data = taxi_m_df,
+              n.trees = 100,
+              interaction.depth = 2,
+              shrinkage = 0.01,
+              verbose = FALSE,
+              train.fraction = .75)
+```
+
+## 변수 중요도 {#taxi-data-randomforest-variable-imp}
+
+`summary()` 함수로 변수 중요도를 확인할 수 있다.
+
+```{r seoul-taxi-pickup-model-varimp}
+summary(taxi_gbm)
+```
+
+## 변수 연관성 {#taxi-data-randomforest-variable-partial}
+
+택시 탑승건수와 앞서 식별된 두 중요변수 위도와 경도 사이 연관성을 파악한다.
+
+```{r seoul-taxi-pickup-model-varimp-explain}
+plot(taxi_gbm, i="lat") 
+plot(taxi_gbm, i="lon") 
+
+```
+
+
+# 탑승 많은 지점 예측 {#taxi-data-randomforest-predict}
+
+`predict()` 함수를 사용해서 탑승 지점이 많은 지점을 GBM을 통해 예측해서 이를 시각화한다.
+
+```{r seoul-taxi-pickup-model-predict}
+## GBM 예측
+taxi_m_df$predict <- predict(object  = taxi_gbm, 
+                             newdata = taxi_m_df, n.trees = 100, type = "response")
+
+## GBM 예측 시각화
+taxi_m_df %>% 
+    leaflet() %>%
+      addTiles() %>%
+      addHeatmap(lng = ~lon, lat = ~lat, intensity = ~predict,
+                 blur = 37, max = 0.05, radius = 10)
+
+```
