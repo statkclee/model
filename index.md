@@ -54,8 +54,9 @@ title: 데이터 과학 -- 모형
         + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
         + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
         + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
-- **모형 평가**
+- **모형 평가 및 활용**
     - [tidyposterior](model-tidyposterior.html)
+    - [예측모형 가치(Business Value)](model-business-value.html)
 - **모형 자동화(AutoML)**
     - [순수 $H_2 O$ AutoML](model-h2o-automl.html)
     - [`dplyr` + $H_2 O$ AutoML](model-dplyr-h2o-automl.html)
