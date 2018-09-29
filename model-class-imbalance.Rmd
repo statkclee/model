@@ -10,6 +10,8 @@ output:
     code_folding: show
     number_section: true
     self_contained: true
+editor_options: 
+  chunk_output_type: console
 ---
  
 ``` {r, include=FALSE}
@@ -18,16 +20,14 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
 library(igraph)
 library(tidyverse)
-library(threejs)
 library(readxl)
 library(ggpubr)
-library(forcats)
 library(extrafont)
 loadfonts()
 
 ```
 
-## 기계학습 클래스 불균형 [^ml-class-imbalance-svds] [^freesearch-class-imbalance] [^analytic-vidhya-class-imbalance] {#ml-class-imbalance-problem}
+# 기계학습 클래스 불균형 [^ml-class-imbalance-svds] [^freesearch-class-imbalance] [^analytic-vidhya-class-imbalance] {#ml-class-imbalance-problem}
 
 [^freesearch-class-imbalance]: [예측 모형에서의 클래스 불균형(class imbalance) 문제](http://freesearch.pe.kr/archives/4506)
 
@@ -361,8 +361,203 @@ ggplot(hacide_lift, values=80) +
     labs(title = "hacide 데이터에 대한 향상도(lift)", 
          subtitle = "희귀한 2% 사례 80%를 탐지하기 하는데 약 5% 정도 노력만 필요",
         x="탐색해야 될 표본비율(% Samples Tested)", y="탐색된 표본비율(% Samples Found)") +
-    scale_x_continuous(breaks = seq(0,100,10)) +
     scale_x_continuous(breaks = seq(0,100,10))
 ```
 
+# 캐글 사례 [^kaggle-class-imbalance] {#kaggle-casestudy}
+
+[^kaggle-class-imbalance]: [Andrew B. Collier(2018-04-21), "Classification: Get the Balance Right"](https://datawookie.netlify.com/blog/2018/04/classification-get-the-balance-right/)
+
+[Medical Appointment No Shows - Why do 30% of patients miss their scheduled appointments?](https://www.kaggle.com/joniarroba/noshowappointments) 병원약속을 했으나
+나타나지 않는 노쇼(No Show) 데이터를 바탕으로 클래스 불균형이 극심한 경우 이를 예측할 수 있는 모형을 개발해보자.
+
+## 데이터 다운로드 및 정제작업 {#kaggle-noshow-data}
+
+먼저 데이터를 다운로드 받아... 변수명에 대한 전처리 작업을 수행한다. `janitor` 팩키지 `clean_names()` 함수를 사용해도 유사한 효과를 기대할 수 있다.
+문자형 변수를 요인형 변수로 변환시키고, 날짜 변수에서 유용한 몇가지 피쳐를 추출하고 예측모형에 불필요한 변수는 제거하여 
+예측모형 데이터프레임을 생성시킨다.
+
+
+```{r kaggle-noshow-data}
+library(lubridate)
+## 데이터 가져오기
+ns_dat <- read_csv(file = "data/KaggleV2-May-2016.csv")
+
+## 변수명 변환
+ns_dat <- ns_dat %>% 
+  setNames(names(.) %>% str_to_lower() %>% str_replace("[.-]", "_")) %>%
+  dplyr::rename(
+    hypertension = hipertension,
+    handicap = handcap
+  )
+
+## 데이터 정제
+ns_df <- ns_dat %>%
+    mutate_at(vars(gender, neighbourhood:no_show), factor) %>% # 자료형 변환: 문자 --> 요인
+    select(-patientid, -appointmentid, -neighbourhood)  %>%  # ID 변수명 제거 및 많은 수준을 갖는 변수 제거
+    mutate(scheduleddow = wday(scheduledday) %>% factor(),
+           hour = hour(scheduledday) + (minute(scheduledday) + second(scheduledday) / 60) / 60,
+           appointmentdow = wday(appointmentday) %>% factor(),
+           advance = difftime(scheduledday, appointmentday, units = "hours") %>% as.numeric()) %>% # 날짜 데이터에서 피처 추출   
+    select(-scheduledday, -appointmentday) %>% 
+    mutate(no_show = relevel(no_show, "Yes")) %>% 
+    select(no_show, everything())
+
+ns_df %>% 
+  sample_n(100) %>% 
+  DT::datatable()
+```
+
+## 예측 모형 개발 {#kaggle-caret-no-show}
+
+훈련/시험 데이터로 데이터를 분할하고, 훈련데이터를 다시 훈련/검증 데이터로 분할시켜 각 예측모형 아키텍처에서 최적의 모형이 개발되도록 한다.
+그리고 나서 윈도우 환경에서 `doSNOW` 팩키지를 통해 병렬처리를 위한 클러스터를 생성시키고 나서,
+GLM, RF, GBM 모형을 적합시켜 최적의 모형을 추출해 낸다.
+
+```{r kaggle-caret-no-show}
+library(caret)
+
+ns_m_df  <- ns_df %>% 
+  sample_frac(0.1)
+
+ns_index <- createDataPartition(ns_m_df$no_show, times =1, p=0.3, list=FALSE)
+
+train_df <- ns_m_df[ns_index, ]
+test_df  <- ns_m_df[-ns_index, ]
+
+## 2.2. 모형 개발/검증 데이터셋 준비 ------
+
+cv_folds <- createMultiFolds(train_df$no_show, k = 10, times = 3)
+
+cv_cntrl <- trainControl(method = "repeatedcv", number = 10,
+                         repeats = 1, 
+                         index = cv_folds,
+                         classProbs = TRUE,
+                         summaryFunction = twoClassSummary)
+
+library(doSNOW)
+# 실행시간
+start.time <- Sys.time()
+
+cl <- makeCluster(8, type = "SOCK")
+registerDoSNOW(cl)
+
+ns_glm   <- train(no_show ~ ., data = train_df, 
+                  method = "glm",
+                  family = "binomial",
+                  metric = "Sens",
+                  trControl = cv_cntrl, 
+                  tuneLength = 3)
+
+# ns_rf    <- train(no_show ~ ., data = train_df, 
+#                    method = "rf",
+#                    metric = "Sens",
+#                    importance = TRUE,
+#                    trControl = cv_cntrl, 
+#                    tuneLength = 7)
+
+ns_gbm <- train(no_show ~ ., data = train_df, 
+                  method = "xgbTree",
+                  metric = "Sens",
+                  trControl = cv_cntrl, 
+                  tuneLength = 1)
+
+stopCluster(cl)
+ 
+total.time <- Sys.time() - start.time
+total.time
+
+```
+
+클래스 불균형으로 예측모형의 성능의 민감도(Sensitivity)가 낮게 나와 이를 클래스를 균형있게 잡아 보정해보자.
+
+```{r kaggle-noshow-class-imbalance}
+ns_df %>% 
+  count(no_show) %>% 
+  mutate(pcnt = scales::percent(n / sum(n)))
+
+confusionMatrix(predict(ns_gbm, test_df), test_df$no_show)
+```
+
+## 클래스 불균형 보정 [^class-imbalance-caret-book] {#kaggle-caret-no-show-class-balance}
+
+[^class-imbalance-caret-book]: [Max Kuhn 2018-05-26, "The caret Package: Subsampling For Class Imbalances"](https://topepo.github.io/caret/subsampling-for-class-imbalances.html)
+
+DMwR 팩키지 `smote`, ROSE 팩키지 `rose`를 `trainControl()`에 적용시켜,
+기존 upsamping, downsampling과 함께 클래스 불균형에 따른 예측모형 성능저하를 보완할 수 있다. [^SMOTE-error]
+
+[^SMOTE-error]: [stackoverflow - "SMOTE length of 'dimnames' [2] not equal to array extent"](https://stackoverflow.com/questions/38616260/smote-length-of-dimnames-2-not-equal-to-array-extent)
+
+
+```{r kaggle-caret-no-show-smote}
+table(train_df$no_show) 
+smote_train <- DMwR::SMOTE(no_show ~ ., data  = as.data.frame(train_df), perc.over = 100, perc.under = 200)
+table(smote_train$no_show) 
+
+# 실행시간
+start.time <- Sys.time()
+
+cl <- makeCluster(8, type = "SOCK")
+registerDoSNOW(cl)
+
+ns_balance_glm   <- train(no_show ~ ., data = train_df, 
+                  method = "glm",
+                  family = "binomial",
+                  metric = "Sens",
+                  trControl = cv_cntrl, 
+                  tuneLength = 3)
+
+# ns_balance_rf    <- train(no_show ~ ., data = train_df, 
+#                    method = "rf",
+#                    metric = "Sens",
+#                    importance = TRUE,
+#                    trControl = cv_cntrl, 
+#                    tuneLength = 7)
+
+ns_balance_gbm <- train(no_show ~ ., data = train_df, 
+                  method = "xgbTree",
+                  metric = "Sens",
+                  trControl = cv_cntrl, 
+                  tuneLength = 3)
+
+stopCluster(cl)
+ 
+total.time <- Sys.time() - start.time
+total.time
+
+```
+
+`rose`, `smote` 클래스 불균형 보완전략을 적용시켜 예측모형의 성능을 파악할 수 있다.
+관심있는 것이 전반적인 정확도 보다는 노쇼에 대한 예측이기 때문에 민감도(Sensitivity)를 높일 수 있는 측도에 방점을 두고 
+예측모형을 개발해 나간다.
+
+```{r smote-implementation}
+confusionMatrix(predict(ns_balance_gbm, test_df), test_df$no_show)
+```
+
+클래스 보완한 것만으로 전반적인 예측(정확도)은 조금 하락(했으나, 노쇼에 대한 예측은 일정부분 개선된 것을 확인할 수 있다.
+
+```{r smote-class-imbalance-comparison}
+orig_conf <- confusionMatrix(predict(ns_gbm, test_df), test_df$no_show)
+balance_conf <- confusionMatrix(predict(ns_balance_gbm, test_df), test_df$no_show)
+
+## 민감도 측도 변경
+orig_conf_df <- orig_conf$byClass %>% as.data.frame %>% 
+  rownames_to_column(var="측도") %>% 
+  rename(원데이터 = ".") %>% 
+  add_row(측도 = "Accuracy", 원데이터 = orig_conf$overall["Accuracy"])
+
+balance_conf_df <- balance_conf$byClass %>% as.data.frame %>% 
+  rownames_to_column(var="측도") %>% 
+  rename(SMOTE = ".") %>% 
+  add_row(측도 = "Accuracy", SMOTE = balance_conf$overall["Accuracy"])
+
+comp_df  <- inner_join(orig_conf_df, balance_conf_df)
+
+comp_df %>% 
+  filter(측도 %in% c("Sensitivity", "Specificity", "Accuracy")) %>% 
+  DT::datatable() %>% 
+  DT::formatRound(c(2:3), digits=3)
+
+```
 
