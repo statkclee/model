@@ -16,7 +16,7 @@ editor_options:
 ---
  
 ``` {r, include=FALSE}
-source("tools/chunk-options.R")
+# source("tools/chunk-options.R")
 
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
                       comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
@@ -115,8 +115,11 @@ exam_viz_df %>%
 
 [^data-science-ml-viz]: [Bernardo Lares(2018), "Machine Learning Results in R: one plot to rule them all! (Part 1 – Classification Models)"](https://datascienceplus.com/machine-learning-results-one-plot-to-rule-them-all/)
 
+### 예측모형 구축 {#gdpr-glm-wiki-fit}
 
-```{r lares-classification}
+[xwMOOC 모형 - 예측모형 가치(Business Value)](https://statkclee.github.io/model/model-business-value.html)에서 사용된 데이터를 재사용하여 예측모형을 구축한다. 데이터가 크면 학습 시간이 오래걸리는 문제가 있어 전체 데이터중에 10%만 무작위로 표본추출하여 예측모형개발에 사용한다.
+
+```{r lares-classification-training-model}
 # 1.2. 불러오기 -----
 bank_dat <- read_delim("data/bank-additional/bank-additional-full.csv", delim=";",
                       col_types = cols(
@@ -134,24 +137,19 @@ bank_dat <- read_delim("data/bank-additional/bank-additional-full.csv", delim=";
 
 
 bank_df <- bank_dat %>% 
-    select_('y','duration','campaign','pdays','previous','euribor3m')
-
-
-bank_df <- bank_df %>% 
-    mutate(y = factor(y, levels=c('no', 'yes')))
-
-bank_df %>% 
-    count(y) %>% 
-    mutate(pcnt = scales::percent(n /sum(n)))
+    select_('y','duration','campaign','pdays','previous','euribor3m') %>% 
+    mutate(y = factor(y, levels=c('no', 'yes'))) %>% 
+    sample_frac(0.1)
 ```
 
-```{r lares-classification}
-# devtools::install_github("laresbernardo/lares")
-library(lares)
+훈련/시험 데이터로 나누고, 일반화선형모형(GLM), 의사결정나무(RPART), GBM모형을 각각 적합시킨다.
+예측모형 개발에 시간이 많이 소요되기 때문에 `doSNOW` 팩키지를 통해 병렬처리 방식으로 예측모형개발을 수행한다.
 
+```{r lares-classification-pm-fit}
 # 2. 예측모형 -----
 ## 2.1. 훈련/시험 데이터 분할 ------
 library(caret)
+library(lares) # devtools::install_github("laresbernardo/lares")
 
 bank_index <- createDataPartition(bank_df$y, times =1, p=0.3, list=FALSE)
 
@@ -160,14 +158,13 @@ test_df  <- bank_df[-bank_index, ]
 
 ## 2.2. 모형 개발/검증 데이터셋 준비 ------
 
-cv_folds <- createMultiFolds(train_df$y, k = 10, times = 3)
+cv_folds <- createMultiFolds(train_df$y, k = 5, times = 1)
 
-cv_cntrl <- trainControl(method = "repeatedcv", number = 10,
-                         repeats = 3, index = cv_folds)
+cv_cntrl <- trainControl(method = "repeatedcv", number = 5,
+                         repeats = 1, index = cv_folds)
 
 
-## 2.2. 모형 개발/검증 데이터셋 준비 ------
-
+## 2.3. 예측모형 아키텍처 ------
 library(doSNOW)
 # 실행시간
 start.time <- Sys.time()
@@ -177,20 +174,24 @@ registerDoSNOW(cl)
 
 bank_rpart <- train(y ~ ., data = train_df, 
                     method = "rpart", 
+                    metric = "Accuracy",
                     trControl = cv_cntrl, 
                     tuneLength = 7)
 
 bank_glm   <- train(y ~ ., data = train_df, 
                     method = "glm",
                     family = "binomial",
+                    metric = "Accuracy",
                     trControl = cv_cntrl, 
                     tuneLength = 7)
 
 bank_gbm    <- train(y ~ ., data = train_df, 
-                   method = "gbm",
-                   trControl = cv_cntrl, 
-                   tuneLength = 7,
-                   importance = TRUE)
+                     method = "xgbTree",
+                     # metric = "Sens",
+                     metric = "Accuracy",
+                     trControl = cv_cntrl, 
+                     tuneLength = 7,
+                     importance = TRUE)
 
 stopCluster(cl)
 
@@ -198,4 +199,91 @@ total.time <- Sys.time() - start.time
 total.time
 
 ```
+
+
+### 예측모형 비교 {#gdpr-pm-business-performance-comparison}
+
+GBM 예측모형의 성능이 정확도 기준 0.94를 넘는 것으로 나와 예측모형 중에서 
+가장 좋은 성능을 보여주고 있다.
+
+```{r gdpr-pm-model-perf-comparison}
+# 3. 모형 아키텍처 평가 ------
+all_samples <- resamples(list("GLM"    = bank_glm, 
+                               "RPART" = bank_rpart, 
+                               "GBM"   = bank_gbm))
+
+parallelplot(all_samples)
+```
+
+### 이득(Gains)과 향상도(Lift) 측도  {#gdpr-pm-business-performance-evaluation-lift-gain}
+
+각 십분위수(Decile) 별로 향상도(Lift)와 이득(Gains)을 계산하여 이를 시각화하여 보완한다.
+
+```{r gdpr-pm-business-performance-evaluation-lift-gain}
+# 4. 사업 평가 -----
+score_df <- tibble(
+    label = train_df$y,
+    gbm_score = predict(bank_gbm, newdata=train_df, type="prob")[,2]
+)
+
+# library(gains)
+# gains(as.integer(score_df$label)-1, score_df$gbm_score)
+
+score_decile_df <- score_df %>% 
+    mutate(decile = ntile(gbm_score, 10)) %>% 
+    count(decile, label) %>% 
+    spread(label,n, fill=0)  %>% 
+    mutate(decile = 11-decile) %>% 
+    arrange(decile) %>% 
+    mutate(total = no + yes, 
+           cum_yes = cumsum(yes),
+           cum_tot = cumsum(total)) %>% 
+    mutate(gain = yes /sum(yes),
+           cum_gains = cum_yes / sum(yes)) %>% 
+    mutate(avg_resp = sum(yes)/sum(total)) %>% 
+    mutate(lift = (yes/total) / avg_resp,
+           cum_lift = (cum_yes/cum_tot) / avg_resp)
+
+cumulative_gain_g <- score_decile_df %>% 
+    ggplot(aes(x=decile, y=cum_gains)) +
+      geom_point() +
+      geom_line() +
+      scale_y_continuous(limits=c(0,1), labels = scales::percent) +
+      scale_x_continuous(breaks = seq(1,10)) +
+      labs(x="십분위수(Decile)", y="누적 이득(Cumulative Gains)", title="누적 이득(Cumulative Gains)") +
+      theme_minimal(base_family="NanumGothic")
+
+cumulative_lift_g <- score_decile_df %>% 
+    ggplot(aes(x=decile, y=cum_lift)) +
+      geom_point() +
+      geom_line() +
+      scale_x_continuous(breaks = seq(1,10)) +
+      labs(x="십분위수(Decile)", y="누적 향상도(Cumulative Lift)", title="누적 향상도(Cumulative Lifts)") +
+      theme_minimal(base_family="NanumGothic")
+
+cowplot::plot_grid(cumulative_gain_g, cumulative_lift_g)
+
+```
+
+
+### 예측모형 사업 평가 {#gdpr-pm-business-performance-evaluation}
+
+`lares` 팩키지 내장된 함수를 사용해서... 사업평가도 수행할 수 있다.
+`mplot_density()`, `mplot_roc()`, `mplot_cuts()`, `mplot_splits()` 함수 기능이 유용한 기능을 제공하고, 
+`mplot_full()` 함수로 분류문제 예측모형에 대한 사업평가는 한장표에 전반적인 정보를 제공하고 있다.
+
+```{r gdpr-pm-business-performance-evaluation, fig.width=10, fig.height=8}
+# 5. 사업 평가 -----
+
+# mplot_density(score_df$label, score_df$gbm_score)
+# mplot_roc(score_df$label, score_df$gbm_score ) 
+# mplot_cuts(score_df$gbm_score, splits=10 )  
+# mplot_splits(score_df$label, score_df$gbm_score,  splits = 10) 
+
+mplot_full(score_df$label, score_df$gbm_score, splits=10) 
+```
+
+
+
+
 
