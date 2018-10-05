@@ -1,0 +1,201 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 예측모형 GDPR 도전
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(knitr)
+library(kableExtra)
+
+```
+
+# 기계학습 알고리즘  {#gdpr-algorithm}
+
+기계학습 알고리즘(예를 들어, 로지스틱 회귀 알고리즘)부터 이야기를 풀어보자.
+
+## `glm` 알고리즘 검증 [^wiki-exam]  [^logistic-reg-algorithm] {#gdpr-glm-wiki}
+
+[^wiki-exam]: [Wikipedia, "Logistic regression"](https://en.wikipedia.org/wiki/Logistic_regression)
+
+[^logistic-reg-algorithm]: [OPEN SOURCE AUTOMATION - Automating everyday tasks with open source code (2018), "HOW TO BUILD A LOGISTIC REGRESSION MODEL FROM SCRATCH IN R"](http://theautomatic.net/2018/10/02/how-to-build-a-logistic-regression-model-from-scratch-in-r/)
+
+
+위키백과사전에 공개된 공부시간에 따른 합격률 데이터를 살펴보자. 
+공부시간은 연속형 변수가 되고 합격여부는 0, 1로 표현된 범주형 변수다. 이를 `glm` 알고리즘을 통해 모형에 적합시켜 공부시간이 합격에 주는 영향도를 살펴보고 시각적으로 확인해 보자.
+
+$$\text{합격 확률} = \frac{1} {1 + \exp \left( - \left( 1.5046 \cdot \text{공부시간} - 4.0777 \right) \right) }$$
+
+
+```{r wikipedia-logistic}
+# 0. 환경설정 ------
+library(tidyverse)
+
+# 1. 데이터 ------
+exam_df <- tribble(~Hours, ~Pass,
+        0.5	,    0,
+        0.75,	0,
+        1    ,	0,
+        1.25,	0,
+        1.5 ,	0,
+        1.75,	0,
+        1.75,	1,
+        2   ,	0,
+        2.25,	1,
+        2.5  ,	0,
+        2.75,	1,
+        3   ,	0,
+        3.25,	1,
+        3.5	,    0,
+        4	   , 1,
+        4.25,	1,
+        4.5	,    1,
+        4.75,	1,
+        5	   , 1,
+        5.5	,    1)
+
+# 2. 예측모형 ------
+exam_glm <- glm(Pass ~ Hours, data=exam_df, family="binomial")
+
+exam_glm %>% broom::tidy()
+```
+
+공부시간 증가에 따른 로그오즈, 오즈, 합격확률 증가는 다음과 같이 표현이 가능하다.
+
+|공부시간 | 로그오즈 |      오즈               |    합격확률 |
+|---------|----------|-------------------------|-------------|
+|   1     | - 2.57   | 0.076 $\approx$ 1:13.1  |  0.07 |
+|   2     | -1.07    | 0.34 $\approx$ 1:2.91   |  0.26 |
+|   3     | 0.44     | 1.55                    |  0.61 |
+|   4     | 1.94     | 6.96                    |  0.87 |
+|   5     | 3.45     | 31.4                    |  0.97 |
+
+이를 `broom` 팩키지를 통해서 시각화를 하여 공부시간 증가에 따른 합격확률 변화를 확인하는 것이 가능하다.
+
+```{r wikipedia-exam-prob}
+# 3. 예측 시각화 ------
+library(broom)
+library(extrafont)
+loadfonts()
+
+exam_viz_df <- augment(exam_glm, exam_df,  type.predict = "prob")
+
+exam_viz_df %>% 
+    ggplot(aes(x=Hours, y=Pass)) +
+      geom_point() +
+      geom_line(aes(x=Hours, y=.fitted)) +
+      labs(x="공부시간", y="합격확률", title="공부시간에 따른 합격율 예측 시각화") +
+      scale_y_continuous(labels=scales::percent) +
+      theme_minimal(base_family="NanumGothic") 
+
+# library(effects)
+# exam_glm_eff <- allEffects(exam_glm)
+# plot(exam_glm_eff)
+
+```
+
+
+## 기계학습 예측모형  [^data-science-ml-viz] {#gdpr-glm-wiki}
+
+[^data-science-ml-viz]: [Bernardo Lares(2018), "Machine Learning Results in R: one plot to rule them all! (Part 1 – Classification Models)"](https://datascienceplus.com/machine-learning-results-one-plot-to-rule-them-all/)
+
+
+```{r lares-classification}
+# 1.2. 불러오기 -----
+bank_dat <- read_delim("data/bank-additional/bank-additional-full.csv", delim=";",
+                      col_types = cols(
+                              .default = col_character(),
+                              age = col_integer(),
+                              duration = col_integer(),
+                              campaign = col_integer(),
+                              pdays = col_integer(),
+                              previous = col_integer(),
+                              emp.var.rate = col_double(),
+                              cons.price.idx = col_double(),
+                              cons.conf.idx = col_double(),
+                              euribor3m = col_double(),
+                              nr.employed = col_double()))
+
+
+bank_df <- bank_dat %>% 
+    select_('y','duration','campaign','pdays','previous','euribor3m')
+
+
+bank_df <- bank_df %>% 
+    mutate(y = factor(y, levels=c('no', 'yes')))
+
+bank_df %>% 
+    count(y) %>% 
+    mutate(pcnt = scales::percent(n /sum(n)))
+```
+
+```{r lares-classification}
+# devtools::install_github("laresbernardo/lares")
+library(lares)
+
+# 2. 예측모형 -----
+## 2.1. 훈련/시험 데이터 분할 ------
+library(caret)
+
+bank_index <- createDataPartition(bank_df$y, times =1, p=0.3, list=FALSE)
+
+train_df <- bank_df[bank_index, ]
+test_df  <- bank_df[-bank_index, ]
+
+## 2.2. 모형 개발/검증 데이터셋 준비 ------
+
+cv_folds <- createMultiFolds(train_df$y, k = 10, times = 3)
+
+cv_cntrl <- trainControl(method = "repeatedcv", number = 10,
+                         repeats = 3, index = cv_folds)
+
+
+## 2.2. 모형 개발/검증 데이터셋 준비 ------
+
+library(doSNOW)
+# 실행시간
+start.time <- Sys.time()
+
+cl <- makeCluster(4, type = "SOCK")
+registerDoSNOW(cl)
+
+bank_rpart <- train(y ~ ., data = train_df, 
+                    method = "rpart", 
+                    trControl = cv_cntrl, 
+                    tuneLength = 7)
+
+bank_glm   <- train(y ~ ., data = train_df, 
+                    method = "glm",
+                    family = "binomial",
+                    trControl = cv_cntrl, 
+                    tuneLength = 7)
+
+bank_gbm    <- train(y ~ ., data = train_df, 
+                   method = "gbm",
+                   trControl = cv_cntrl, 
+                   tuneLength = 7,
+                   importance = TRUE)
+
+stopCluster(cl)
+
+total.time <- Sys.time() - start.time
+total.time
+
+```
+
