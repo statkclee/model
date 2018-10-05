@@ -68,6 +68,13 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
 </div>
 
 
+# GDPR 예측모형{#gdpr-predictive-model}
+
+GDPR 대응 예측모형은 투명성과 신뢰성을 달성해야 되는데, 우선 기계학습 알고리즘이 검증되어야 하고 이를 바탕으로 기계학습 예측모형을 개발하고 이를 활용하기 위해서 수익성과 위험에 대한 평가도 동시에 이뤄저야 하고 이렇게 도출된 기계학습 예측에 대한 검토도 확인된 후에 예측모형을 실제 적용하여 효과 여부가 판정된다. 
+
+<img src="fig/gdpr-predictive-model.png" alt="GDPR 예측모형" width="100%" />
+
+
 
 # 예측모형 [^iml-christophM] [^dalex-github] {#model-explain-predictive-model}
 
