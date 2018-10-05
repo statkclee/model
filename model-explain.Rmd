@@ -1,7 +1,7 @@
 ---
 layout: page
 title: xwMOOC 모형
-subtitle: 모형 이해와 설명
+subtitle: GDPR과 모형 이해와 설명
 date: "`r Sys.Date()`"
 output:
   html_document: 
@@ -23,6 +23,51 @@ library(knitr)
 library(kableExtra)
 
 ```
+
+# GDPR [^gdpr-gov] [^gdpr-paper] {#gdpr-algorithm}
+
+[^gdpr-gov]: [개인정보보호 종합포털(GDPR): https://www.privacy.go.kr/](https://www.privacy.go.kr/gdpr)
+[^gdpr-paper]: [Bryce Goodman, Seth Flaxman (2016), "European Union regulations on algorithmic decision-making and a right to explanation"](https://arxiv.org/abs/1606.08813)
+
+**GDPR(General Data Protection Regulation)**은 2018년 5월 25일부터 시행되는 EU(유럽연합)의 개인정보보호 법령이며, 
+동 법령 위반시 과징금 등 행정처분이 부과될 수 있어 EU와 거래하는 우리나라 기업도 동법에 영향을 받는다.
+법을 위반할 경우 해당 기업은 세계 연매출의 4% 또는 2,000만 유로 중 높은 쪽의 과징금을 부과받게 된다.
+
+GDPR은 종래의 Directive가 아니라 Regulation이라는 법 형식으로 규율되어 법적 구속력(binding)을 가지며 모든 EU 회원국들에게 직접적으로 적용(directly applicable)된다.
+GDPR은 2016년 5월 제정되었고, 2018년 5월 25일부터 시행되고 있다.
+
+특히, 기계학습/인공지능 알고리즘과 관련된 규정은 다음과 같고 '설명을 요구할 권리'를 통해 정보주체가 알고리즘이 내리는 
+자동화된 의사결정에 대해 설명을 요구할 수 있는 근거가 된다.
+
+- 제13조/제14조: 정보를 제공받을 권리(Right to be informed)
+- 제22조: 자동화된 결정 및 프로파일링 관련 권리 (Right to related to automated decision making and profiling)
+
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
+</style>
+<div class = "blue">
+
+- 용어정리 
+    - **개인정보 (Personal data)** (제1항)
+        - ‘개인정보’란 식별되었거나 또는 식별가능한 자연인(정보주체)과 관련된 모든 정보 의미
+        - ‘식별가능한 자연인’은 직접적 또는 간접적으로 식별될 수 있는 사람을 의미하며, 특히 이름, 식별번호, 위치정보, 온라인 식별자(online identifier) 등의 식별자를 참조하거나, 하나 또는 그 이상의 신체적․생리적․유전적․정신적․경제적․문화적 또는 사회적 정체성에 대한 사항들을 참조하여 식별할 수 있는 사람을 뜻함
+    - **컨트롤러 (Controller)** (제7항)
+        - 컨트롤러란 개인정보의 처리 목적 및 수단을 단독 또는 제3자와 공동으로 결정하는 자연인, 법인, 공공 기관(public authority), 에이전시(agency), 기타 단체(other body) 를 의미
+        - 이러한 처리의 목적 및 수단이 EU 또는 회원국 법률에 의해 결정되는 경우, 컨트롤러의 지명 또는 지명을 위한 특정 기준(specific criteria)은 EU 또는 회원국 법률에서 규정될 수 있음  
+    - **프로세서 (Processor)** (제8항)
+        - 프로세서란 컨트롤러를 대신하여 개인정보를 처리하는 자연인, 법인, 공공 기관(public authority), 에이전시(agency), 기타 단체(other body)를 의미
+        - **Processing** is “any operation or set of operations which is performed on personal data or on sets of personal data, whether or not by automated means”
+    - **수령인 (Recipient)과 제3자 (Third party)** (제9항, 제10항)
+        - 수령인(recipient)은 제3자(third party)인지 여부와 관계없이, 개인정보를 공개․제공받는 (disclosed) 자연인, 법인, 공공 기관(public authority), 에이전시(agency), 기타 단체(other body)를 의미
+        - 제3자(third party)는 정보주체, 컨트롤러, 컨트롤러 또는 프로세서의 직접적인 권한에 따라 개인정보를 처리할 수 있는 자를 제외한 모든 자연인, 법인, 공공 기관(public authority), 에이전시(agency), 기타 단체(other body)를 의미
+    - **프로파일링 (Profiling)** (제4항)
+        - 프로파일링은 자연인의 특정한 개인적 측면(certain personal aspects)을 평가하기 위해, 특히 개인의 업무 수행(performance at work), 경제적 상황(economic situation), 건강(health), 개인 선호(personal preferences), 관심사(interests), 신뢰도(reliability), 행동(behaviour), 위치(location), 이동(movement)에 관한 측면을 분석(analyse) 또는 예측(predict)하기 위해 개인정보를 사용하는 모든 형태의 자동화된 개인정보(any form of automated processing of personal data) 처리를 의미
+        - 프로파일링은 프로세싱이 자동화 되어야 하고, 프로세싱이 평가를 목적으로 해야 한다.
+
+</div>
+
+
 
 # 예측모형 [^iml-christophM] [^dalex-github] {#model-explain-predictive-model}
 
