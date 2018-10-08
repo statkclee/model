@@ -67,6 +67,12 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
 
 </div>
 
+## 예측 알고리즘 [^mckinsey-report] {#gdpr-algorithm-in-practice}
+
+[^mckinsey-report]: [Ian MacKenzie, Chris Meyer, and Steve Noble(2013), "How retailers can keep up with consumers", McKnsey&Company](https://www.mckinsey.com/industries/retail/our-insights/how-retailers-can-keep-up-with-consumers)
+
+2013년 매킨지 보고서에 따르면 아마존에서 고객이 구매하는 것의 35%, 넷플리스에서 구독자가 구매하는 것의 75%가 예측 알고리즘에서 나온다고 적시하고 있다.
+
 
 # GDPR 예측모형{#gdpr-predictive-model}
 
