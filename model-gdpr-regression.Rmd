@@ -1,0 +1,103 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 예측모형 GDPR 도전
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(knitr)
+library(kableExtra)
+
+```
+
+# 연속형 회귀모형 설명 [^explainable-regression-model] {#continuous-regression}
+
+[^explainable-regression-model]: [Bernardo Lares(July 24, 2018), "Machine Learning Results in R: one plot to rule them all! (Part 2 – Regression Models)"](https://datascienceplus.com/machine-learning-results-in-r-one-plot-to-rule-them-all-part-2-regression-models/)
+
+
+# 회귀분석 모형 {#explainable-ai-regression-model}
+
+`car` 팩키지에서 `Prestiage` 데이터프레임을 바탕으로 소득에 대한 회귀모형을 적합시켜 소득예측을 하는 모형을 개발한다.
+
+```{r cars-dataset}
+# 0. 환경설정 ------
+library(tidyverse)
+library(car)
+library(MASS)
+
+# 1. 데이터 정제 ------
+prestige_df <- Prestige %>% tbl_df %>% 
+    filter(complete.cases(.))
+
+# 2. 회귀모형 ------
+prestige_lm <- lm(income ~ education + prestige + women + type, data=prestige_df)
+
+prestige_best_lm <- stepAIC(prestige_lm)
+```
+
+
+# 회귀분석 설명 {#explainable-ai-regression-model-explain}
+
+`lares` 팩키지 회귀모형 설명 기능을 통해 소득이 15,000 이하일 경우 나름 회귀모형의 예측이 있는 것으로 파악되지만, 소득이 매우 높은 경우 예측력이 떨어지는 것이 파악된다.
+
+```{r cars-dataset-explain, fig.width=10, fig.height=8}
+library(lares)
+library(broom)
+
+prestige_df <- augment(prestige_best_lm, prestige_df)
+
+# lares::mplot_lineal(tag = prestige_df$income, 
+#                     score = prestige_df$.fitted,
+#                     subtitle = "소득에 대한 회귀모형",
+#                     model_name = "linear regression model with stepAIC")
+
+lares::mplot_full(tag = prestige_df$income, 
+                    score = prestige_df$.fitted,
+                    splits = 10,
+                    subtitle = "소득에 대한 회귀모형",
+                    model_name = "linear regression model with stepAIC")
+
+```
+
+
+# Random Forest 모형 {#explainable-ai-regression-rf-model}
+
+선형회귀 모형이 아닌 Random Forest 모형을 적합시켜 예측성능을 높여보자.
+소득이 큰 경우 오차가 커서 척도를 로그척도로 변환시킨 후에 회귀모형을 적합시킨다.
+그리고 나서 동일한 방법으로 예측모형을 시각화하여 설명가능한 형태로 나타낸다.
+
+```{r cars-dataset-model-rf, fig.width=10, fig.height=8}
+library(randomForest)
+
+prestige_rf <- randomForest(log(income) ~ education + prestige + women + type, data=prestige_df)
+
+prestige_df$pred <- predict(prestige_rf, newdata = prestige_df, type="response") %>% exp
+
+lares::mplot_full(tag = prestige_df$income, 
+                    score = prestige_df$pred,
+                    splits = 10,
+                    subtitle = "소득에 대한 RandomForest 모형",
+                    model_name = "random forest with broomstick")
+
+```
+
+
+
+
+
