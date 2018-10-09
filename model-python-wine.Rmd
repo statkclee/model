@@ -1,7 +1,7 @@
 ---
 layout: page
 title: xwMOOC 모형
-subtitle: 파이썬 + R - 포도주 데이터
+subtitle: 파이썬 + R - 포도주 품질
 author:
     name: xwMOOC
     url: https://www.facebook.com/groups/tidyverse/
@@ -72,7 +72,7 @@ R과 파이썬 장점을 살펴보자. R은 컴퓨터 과학 전문가나 소프
 ```{r setup-python-work-environment}
 library(reticulate)
 conda_list()
-use_condaenv("ANACON~1")
+use_condaenv("anaconda3")
 ```
 
 혹시 빠진 라이브러리가 있는 경우, 관리자 권한으로 윈도우 터미널(cmd.exe,쉘)을 실행하게 되면 `conda` 명령어를 통해서 `pandas`, `sklearn` 라이브러리를 설치하여 기계학습에 사용할 수 있다.
