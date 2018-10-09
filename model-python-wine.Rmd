@@ -149,11 +149,12 @@ print(clf.best_params_)
 
 # 예측
 y_pred = clf.predict(X_test)
-
-y_test2 = y_test
 ```
 
 ## 예측모형 시각화 {#r-python-workflow-predictive-model-viz}
+
+`py$`으로 파이썬 환경 데이터를 R환경으로 빼서 티블 데이터프레임을 생성시킨다. 그리고 나서 이를 ggplot으로 시각화한다.
+
 
 ```{r wine-python-pm-viz}
 library(tidyverse)
@@ -162,6 +163,18 @@ results_tbl <- tibble(
     y_test = py$y_test,
     y_pred = py$y_pred
 ) 
+
+# 시각화
+results_tbl %>%
+    ggplot(aes(y_test, y_pred)) +
+    geom_jitter(alpha = 0.5) +
+    geom_smooth() + 
+    theme_minimal(base_family = "AppleGothic") +
+    labs(
+        title = "포도주 품질 예측값과 실제값",
+        subtitle = "포도주 품질 수준",
+        x = "실제 포도주 품질", y = "예측모형 포도주 품질"
+    )
 ```
 
 
