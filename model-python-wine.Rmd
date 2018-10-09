@@ -146,6 +146,11 @@ clf = GridSearchCV(pipeline, hyperparameters, cv = 10)
 clf.fit(X_train, y_train)
 
 print(clf.best_params_)
+
+# 예측
+y_pred = clf.predict(X_test)
+
+y_test2 = y_test
 ```
 
 ## 예측모형 시각화 {#r-python-workflow-predictive-model-viz}
