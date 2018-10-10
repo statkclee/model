@@ -48,10 +48,11 @@ title: 데이터 과학 -- 모형
 - **[GDPR - 모형 설명](model-explain.html)**
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
         - [연속형 변수 - 회귀모형](model-gdpr-regression.html)
-    - [DALEX - mpg(연비 데이터)](model-mpg-dalex.html)
-    - [DALEX - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-dalex.html)
-    - [DALEX + `caret` - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-caret-dalex.html)
-    - [DALEX - $H_2O$, `mpg`와 `attrition` 데이터](model-h2o-dalex.html)
+    - [예측모형 (caret+DALEX+biz) - 뉴욕과 SF 부동산](model-r2d3-dalex-with-biz.html) 
+        + [DALEX - mpg(연비 데이터)](model-mpg-dalex.html)
+        + [DALEX - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-dalex.html)
+        + [DALEX + `caret` - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-caret-dalex.html)
+        + [DALEX - $H_2O$, `mpg`와 `attrition` 데이터](model-h2o-dalex.html)
     - **모형 시각화**
         + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
         + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
