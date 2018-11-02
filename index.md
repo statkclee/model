@@ -45,7 +45,6 @@ title: 데이터 과학 -- 모형
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
     - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
-    - [파이썬 + R - 포도주 품질](model-python-wine.html) 
 - **[GDPR - 모형 설명](model-explain.html)**
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
         - [연속형 변수 - 회귀모형](model-gdpr-regression.html)
@@ -58,6 +57,8 @@ title: 데이터 과학 -- 모형
         + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
         + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
         + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
+    - **클라우데라 설명가능한 기계학습**
+        + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
 - **모형 평가 및 활용**
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
@@ -68,6 +69,9 @@ title: 데이터 과학 -- 모형
     - [기계학습 모형 배포](model-deploy.html)
 - **컴퓨팅 환경**
     - [예측모형 AWS EC2](model-aws-ec2.html) 
+- **R + 파이썬**
+    - [파이썬 + R - 포도주 품질](model-python-wine.html) 
+    - [파이썬 + R - 고객이탈 (xgBoost)](model-python-churn.html) 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
 
