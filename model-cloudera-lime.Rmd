@@ -199,7 +199,7 @@ plot(pdp_glm, pdp_rf)
 
 예측에 기여한 변수와 가중치를 각 관측점별로 식별한다. `plot_explanations()` 함수를 통해서 관측점별로 긍정적인 부정적인 영향을 주는 변수가 어떤 것인지도 시각화를 통해 판별한다.
 
-```{r lime-hr-ggrandomforests-explain-lime}
+```{r lime-hr-ggrandomforests-explain-lime, fig.height=10}
 library(lime)
 set.seed(777)
 predict_obs <- test_df %>% 
