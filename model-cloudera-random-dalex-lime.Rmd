@@ -1,0 +1,247 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "Cloudera: 고객이탈 - LIME"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+
+# 고객이탈 설명 {#black-box-model-explain}
+
+예측성능이 좋은 예측모형을 설명하기 위해서 예측모형 자체를 설명하는 것과 함께 이를 활용하는 사업에 대한 설명을 넘어 고객에게 설명하는 부분까지 확장해 나가고 있다.
+
+- 예측모형 제작자
+- 예측모형 활용
+- 예측모형 대상 고객
+
+# 고객이탈 데이터 정제 {#lime-hr-dataset-clean}
+
+`.csv` 데이터를 `read_csv()`를 통해 불러와서 변수명과 변수 자료형을 향수 분석에 맞게 조정한다.
+
+```{r lime-dataset}
+library(tidyverse)
+library(janitor)
+library(skimr)
+
+churn_dat <- read_csv("data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+
+churn_dat <- churn_dat %>% 
+  clean_names()
+
+churn_list <- skim_to_list(churn_dat)
+
+churn_df <- churn_dat %>% 
+  mutate(churn = factor(churn, levels = c("No", "Yes"))) %>% 
+  mutate(senior_citizen = factor(senior_citizen)) %>% 
+  mutate(multiple_lines    = ifelse(str_detect(multiple_lines, "No"), "No", "Yes"),
+         internet_service  = ifelse(str_detect(internet_service, "No"), "No", "Yes"),
+         online_security   = ifelse(str_detect(online_security, "No"), "No", "Yes"),
+         online_backup     = ifelse(str_detect(online_backup, "No"), "No", "Yes"),
+         device_protection = ifelse(str_detect(device_protection, "No"), "No", "Yes"),
+         tech_support      = ifelse(str_detect(tech_support, "No"), "No", "Yes"),
+         streaming_tv      = ifelse(str_detect(streaming_tv, "No"), "No", "Yes"),
+         streaming_movies  = ifelse(str_detect(streaming_movies, "No"), "No", "Yes")) %>% 
+  select(-customer_id) %>% 
+  mutate_if(is.character, as.factor) %>% 
+  filter(complete.cases(.))
+  
+```
+
+# 예측모형 생성 {#lime-hr-dataset-turnover-predictive-model}
+
+## 훈련/시험 데이터 생성 {#lime-hr-dataset-feature-split}
+
+`caret` 팩키지를 활용하여 훈련데이터와 검증데이터로 분리한다.
+
+```{r lime-hr-dataset-train-test-split}
+library(caret)
+
+index_train <- createDataPartition(churn_df$churn, p = 0.5, list = FALSE)
+
+train_df <- churn_df[index_train, ]
+test_df  <- churn_df[-index_train, ]
+
+## 2.2. 모형 개발/검증 데이터셋 준비 ------
+
+cv_folds <- createMultiFolds(train_df$churn, k = 5, times = 3)
+
+cv_ctrl <- trainControl(method = "repeatedcv", number = 5,
+                         repeats = 3, 
+                         index = cv_folds)
+
+
+## 2.2. 모형 개발/검증 데이터셋 준비 ------
+
+library(doSNOW)
+# 실행시간
+start.time <- Sys.time()
+
+cl <- makeCluster(8, type = "SOCK")
+registerDoSNOW(cl)
+
+
+churn_rf  <- train(churn ~ ., data = train_df, 
+                   method = "rf",
+                   trControl = cv_ctrl, 
+                   tuneLength = 15,
+                   importance = TRUE)
+
+churn_glm  <- train(churn ~ ., data = train_df, 
+                    method = "glm",
+                    family="binomial")
+
+
+stopCluster(cl)
+ 
+total.time <- Sys.time() - start.time
+total.time
+
+```
+
+<!-- ## 초모수 설정 {#lime-hr-dataset-predictive-model} -->
+
+<!-- ```{r lime-hr-dataset-variable-selection-vif} -->
+<!-- churn_rf$bestTune -->
+
+<!-- varImp(churn_rf, scale = FALSE) -->
+
+<!-- # churn_rf %>% write_rds("data/churn_rf.rds") -->
+
+<!-- churn_rf <- read_rds("data/churn_rf.rds") -->
+
+<!-- ``` -->
+
+
+# 모형설명 {#lime-hr-dataset-predictive-model-explain}
+
+## 모형 아키텍처 {#lime-hr-dataset-predictive-model-explain-arch}
+
+예측모형을 개발할 경우 가능하면 다른 조건이 동일하다면 단순한 예측모형이 좋다. 블랙박스 예측모형의 성능이 일반화 선형모형과 별차이가 없다면 당연히 일반화 선형모형을 사용하는 것이 최선일 수 있다.
+따라서, 가장 먼저 예측모형 아키텍처를 모형성능에 따라 선정하는 과정을 거친다.
+
+```{r lime-hr-ggrandomforests-explain-arch}
+library(DALEX)
+# 3. DALEX 설정 -----
+## 3.1. explainer 사전 설정
+prob_fun <- function(object, newdata) { 
+    predict(object, newdata=newdata, type="prob")[,2]
+}
+
+test_v <- as.numeric(test_df$churn)
+
+## 3.2. explainer 실행
+explainer_glm <- DALEX::explain(churn_glm, label = "GLM", 
+                                data = test_df[, !(colnames(test_df) %in% c("churn"))], y = test_v,
+                                predict_function = prob_fun)
+
+explainer_rf <- DALEX::explain(churn_rf, label = "RF",
+                               data = test_df[, !(colnames(test_df) %in% c("churn"))], y = test_v,
+                               predict_function = prob_fun)
+
+# 4. 예측 모형 이해와 설명 -----
+## 4.1. 모형 성능
+mp_glm <- model_performance(explainer_glm)
+mp_rf  <- model_performance(explainer_rf)
+
+plot(mp_rf, mp_glm, geom = "boxplot", show_outliers = 3) +
+    theme(legend.position = "top")
+```
+
+
+## 중요변수 추출 {#lime-hr-dataset-predictive-model-explain-vip}
+
+예측모형마다 예측성능에 사용된 중요변수가 차이가 있다. 각 모형 아키텍처마다 중요변수를 추출하여 각 예측모형에 공통적으로 선택되고 중요 변수 순위를 식별한다.
+
+```{r lime-hr-ggrandomforests-explain-vip}
+## 4.2. 중요 변수 
+vi_glm <- variable_importance(explainer_glm, n_sample = -1, type = "raw")
+vi_rf  <- variable_importance(explainer_rf,  n_sample = -1, type = "raw")
+
+plot(vi_glm, vi_rf, max_vars = 6)
+```
+
+## 반응변수 연관 {#lime-hr-dataset-predictive-model-explain-relation}
+
+추려진 중요변수를 뽑아서 중요변수와 반응변수 사이 연관성을 살펴본다.
+
+```{r lime-hr-ggrandomforests-explain-dependence}
+## 4.3. 변수 반응도
+pdp_glm <- variable_response(explainer_glm, variable = "tenure", type = "pdp")
+pdp_rf  <- variable_response(explainer_rf,  variable = "tenure", type = "pdp")
+
+plot(pdp_glm, pdp_rf)
+```
+
+
+# 예측설명 [^ml-lime] {#lime-hr-dataset-predictive-model-explain-lime}
+
+[^ml-lime]: [Visualizing ML Models with LIME](https://uc-r.github.io/lime)
+
+예측에 기여한 변수와 가중치를 각 관측점별로 식별한다. `plot_explanations()` 함수를 통해서 관측점별로 긍정적인 부정적인 영향을 주는 변수가 어떤 것인지도 시각화를 통해 판별한다.
+
+```{r lime-hr-ggrandomforests-explain-lime}
+library(lime)
+set.seed(777)
+predict_obs <- test_df %>% 
+  sample_n(6)
+
+explainer_caret <- lime(train_df, churn_rf, n_bins = 5)
+
+explanation_caret <- explain(
+  x = predict_obs, 
+  explainer = explainer_caret, 
+  n_permutations = 5000,
+  dist_fun = "gower",
+  kernel_width = .75,
+  n_features = 10, 
+  feature_select = "highest_weights",
+  labels = "Yes")
+
+plot_explanations(explanation_caret)
+
+plot_features(explanation_caret)
+```
+
+# 사업 예측설명 {#lime-hr-dataset-predictive-model-explain-biz}
+
+최근에 `mlr` 뿐만 아니라 `caret`에 대한 지원도 시작했다. 
+이를 통해서 Lift, Gain 등 예측모형에 대한 사업적인 설명도 한층 탄력을 받게 되었다.
+
+```{r lime-hr-ggrandomforests-explain-lime-biz}
+library(modelplotr) # install_github("modelplot/modelplotr")
+
+prepare_scores_and_deciles(datasets=list("train_df","test_df"),
+  dataset_labels = list("train data","test data"),
+  models = list("churn_glm","churn_rf"),
+  model_labels = list("GLM", "Random Forest"),
+  target_column="churn")
+
+plotting_scope(select_model_label = 'Random Forest', select_dataset_label = 'test data')
+
+plot_cumgains(highlight_decile = 2)
+plot_cumlift(highlight_decile = 2)
+plot_response(highlight_decile = 2)
+```
+
+
+
