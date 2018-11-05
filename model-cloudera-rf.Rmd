@@ -157,25 +157,45 @@ which_two_pcnt <- tolerance(churn_rf$results, metric = "ROC",
 churn_rf$results[which_two_pcnt,]
 ```
 
-# 예측모형 생성 및 설명 {#rf-hr-dataset-turnover-predictive-model-best}
+# 예측모형 생성 및 설명 [^rf-explain] [^rf-vip] {#rf-hr-dataset-turnover-predictive-model-explain}
 
-<!-- http://rpubs.com/vishal1310/QuickIntroductiontoPartialDependencePlots -->
+[^rf-explain]: [Vishal Sharma(June 9, 2017), "Quick Introduction to Partial Dependence Plots"](http://rpubs.com/vishal1310/QuickIntroductiontoPartialDependencePlots)
 
-```{r rf-hr-dataset-variable-selection-fit}
+[^rf-vip]: [vip: Variable Importance Plots](https://koalaverse.github.io/vip/index.html)
+
+## 변수중요도 {#rf-hr-dataset-turnover-predictive-model-explain-vi}
+
+`xgboost`, `ranger`, `rpart`... 모두 변수 중요도를 나타내는 함수를 갖고 있지만, 데이터도 다르고 함수명도 다르다. [`vip`](https://github.com/koalaverse/vip/) 팩키지는 이런 면에서 변수중요도를 기반 의사결정 나무모형과 독립적으로 변수중요도만 추출해 준다는 점에서 의미가 있다.
+
+
+```{r rf-hr-dataset-variable-prediction-vi}
 library(randomForest)
-library(ggRandomForests)
 library(pdp)
+library(vip)
 
-churn_best_rf <- randomForest(churn ~ dependents + tenure + internet_service + online_security +
-                              online_backup + tech_support + contract + monthly_charges +
-                              total_charges, data = train_df, mtry=2)
+# churn_vi <- vi(churn_rf$finalModel, method="ice")
 
-churn_best_rf %>% 
-  partial(pred.var = c("monthly_charges"), chull = TRUE, progress = "text", prob = TRUE) %>% 
-  autoplot(contour = TRUE, rug = TRUE, pred.data = test_df)
-
-gg_error(churn_best_rf) %>% plot
-
-plot(gg_vimp(churn_best_rf))
-     
+vip(churn_rf$finalModel, num_features=10L, width = 0.5, fill = "green3", color="green1")
 ```
+
+
+# 목표 응답변수 연관 {#hr-dataset-predictive-model-explain-dependency}
+
+```{r rf-hr-ggrandomforests-explain-dependency, eval=FALSE}
+
+features <- churn_rf$finalModel$importance %>% as.data.frame() %>%
+  rownames_to_column(var="variable") %>% top_n(10, wt=No) %>% 
+  arrange(desc(No)) %>% 
+  pull(variable)
+
+pdps <- lapply(features, FUN = function(feature) {
+  pd <- partial(churn_rf$finalModel, pred.var = feature, train = test_df)
+    autoplot(pd) + 
+    theme_light()
+})
+
+partial(churn_rf$finalModel, pred.var = monthly_charges, train = train_df)
+
+grid.arrange(grobs = pdps, ncol = 5)
+```
+
