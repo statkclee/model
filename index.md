@@ -59,6 +59,8 @@ title: 데이터 과학 -- 모형
         + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
     - **클라우데라 설명가능한 기계학습**
         + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
+        + [고객이탈 - Random Forest](model-cloudera-rf.html)
+        + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
 - **모형 평가 및 활용**
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
