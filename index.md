@@ -74,6 +74,8 @@ title: 데이터 과학 -- 모형
 - **R + 파이썬**
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
     - [파이썬 + R - 고객이탈 (xgBoost)](model-python-churn.html) 
+- **텍스트, 이미지, 시계열**
+    - [캐글 - 전자상거래 옷 리뷰](model-kaggle-text.html) 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
 
