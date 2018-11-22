@@ -74,8 +74,9 @@ title: 데이터 과학 -- 모형
 - **R + 파이썬**
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
     - [파이썬 + R - 고객이탈 (xgBoost)](model-python-churn.html) 
-- **텍스트, 이미지, 시계열**
+- **네트워크, 텍스트, 이미지, 시계열**
     - [캐글 - 전자상거래 옷 리뷰](model-kaggle-text.html) 
+    - [예측모형 - 네트워크](model-network.html) 
 - **사기 탐지(Fraud Detection)**
     - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
     - [어노말리(Anomaly) 탐지](model-anomaly.html) 
