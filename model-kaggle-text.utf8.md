@@ -6,7 +6,7 @@ author:
     name: xwMOOC
     url: https://www.facebook.com/groups/tidyverse/
     affiliation: Tidyverse Korea
-date: "`r Sys.Date()`"
+date: "2018-11-22"
 output:
   html_document: 
     toc: yes
@@ -19,11 +19,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
-                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
 
-```
 
 
 # 캐글 데이터셋 {#kaggle-datasets}
@@ -47,7 +43,8 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 - Class Name: Categorical name of the product class name.
 
 
-```{r ecommerce-clothing-datasets}
+
+```r
 library(tidyverse)
 library(janitor)
 
@@ -55,9 +52,11 @@ cloth_dat <- read_csv("data/Womens Clothing E-Commerce Reviews.csv")
 
 cloth_dat %>% 
   clean_names() %>% 
-  sample_n(5) %>% 
+  sample_n(100) %>% 
   DT::datatable()
 ```
+
+preservee5051b3ed6d3fb44
 
 
 ## 데이터 전처리 {#data-dictionary-preprocessing}
@@ -67,8 +66,10 @@ cloth_dat %>%
 
 <img src="fig/kaggle-cloth-review.png" alt="텍스트" width="100%" />
 
+### 텍스트 빼고 전처리 {#data-dictionary-preprocessing-no-text}
 
-```{r ecommerce-clothing-datasets-preprocessing-text}
+
+```r
 cloth_dat <- cloth_dat %>% 
   clean_names() %>% 
   filter(complete.cases(.)) %>% 
@@ -79,64 +80,42 @@ cloth_df <- cloth_dat %>%
   mutate_if(is.character, as.factor) %>% 
   select(y, age, title, review_text, division_name, department_name, class_name) %>% 
   mutate(class = fct_lump(class_name, 9)) %>% 
-  mutate(text = str_c(title, " ", review_text)) %>% 
-  select(y, age, division = division_name, department = department_name, class, text)
-
+  select(y, age, division = division_name, department = department_name, class)
 ```
 
-캐글 옷 리뷰 데이터에서 텍스트 관련 변수(`Title`, `Review`)를 별도 구성하여 `text` 필드를 만드고, 텍스트를 DTM으로 변환시킨 후에 예측모형 구축에 활용한다.
+### 텍스트 전처리 {#data-dictionary-preprocessing-with-text}
 
-```{r ecommerce-clothing-datasets-preprocessing-text}
+캐글 옷 리뷰 데이터에서 텍스트 관련 변수(`Title`, `Review`)를 별도 구성하여 텍스트를 DTM으로 변환시킨 후에 예측모형 구축헤 활용한다.
+
+
+```r
 library(tm)
 library(text2vec)
 library(SnowballC)
 library(tidytext)
-library(qdap)
-library(quanteda)
 
-# SMS 메시지 토큰화
-review_tokens <- tokens(cloth_df$text, what = "word", 
-                       remove_numbers = TRUE, remove_punct = TRUE,
-                       remove_symbols = TRUE, remove_hyphens = TRUE)
-
-# 불용어 처리
-review_tokens <- tokens_select(review_tokens, stopwords(), 
-                              selection = "remove")
-
-# 어간추출(stemming)
-review_tokens <- tokens_wordstem(review_tokens, language = "english")
-
-## 단어주머니 접근법으로 DTM 행렬로 변환
-review_tokens_dfm <- dfm(review_tokens, tolower = FALSE)
-
-## Word Cloud
-# review_tokens_m <- as.matrix(review_tokens_dfm)
-
-review_tokens_dfm <- dfm_trim(review_tokens_dfm, min_termfreq = 5)  
-review_tokens_idf <- dfm_tfidf(review_tokens_dfm) 
-review_df <- review_tokens_idf %>% as.matrix() %>% as.data.frame()
-```
-
-텍스트에 대한 Feature 추출작업이 완료되면 이를 모형설계행렬과 붙여 `caret` 기계학습을 통한 예측모형 개발을 준비한다.
-
-```{r ecommerce-clothing-datasets-preprocessing-cbind}
-cloth_m_df <- bind_cols(cloth_df, review_df)
+cloth_dat %>% 
+  # unnest_tokens(output=word, input = title) %>% 
+  # anti_join(get_stopwords()) %>% 
+  cast_dtm(review_text, term, count)
 ```
 
 
 # 예측모형 {#data-predictive-model}
 
-## 예측모형 적합 {#data-predictive-model-setting}
 
-```{r ecommerce-clothing-predictive-model}
+## 텍스트 제외 예측모형 {#data-predictive-model}
+
+
+```r
 # 2. 예측모형 -----
 ## 2.1. 훈련/시험 데이터 분할 ------
 library(caret)
 
-xy_index <- createDataPartition(cloth_m_df$y, times =1, p=0.5, list=FALSE)
+xy_index <- createDataPartition(cloth_df$y, times =1, p=0.5, list=FALSE)
 
-train_df <- cloth_m_df[xy_index, ]
-test_df  <- cloth_m_df[-xy_index, ]
+train_df <- cloth_df[xy_index, ]
+test_df  <- cloth_df[-xy_index, ]
 
 ## 2.2. 모형 개발/검증 데이터셋 준비 ------
 cv_folds <- createMultiFolds(train_df$y, k = 5, times = 1)
@@ -176,7 +155,13 @@ stopCluster(cl)
 
 total.time <- Sys.time() - start.time
 total.time
+```
 
+```
+Time difference of 24.993 secs
+```
+
+```r
 # 3. 예측모형 성능 -----
 ## GLM
 glm_pred_df <- predict(cloth_glm, newdata=test_df, type="prob") %>%
@@ -185,13 +170,73 @@ glm_pred_df <- predict(cloth_glm, newdata=test_df, type="prob") %>%
          prob  = yes)
 
 confusionMatrix(glm_pred_df$class, test_df$y)
+```
 
+```
+Confusion Matrix and Statistics
+
+          Reference
+Prediction  yes   no
+       yes 3262  609
+       no  4781 1178
+                                          
+               Accuracy : 0.4517          
+                 95% CI : (0.4418, 0.4616)
+    No Information Rate : 0.8182          
+    P-Value [Acc > NIR] : 1               
+                                          
+                  Kappa : 0.034           
+ Mcnemar's Test P-Value : <2e-16          
+                                          
+            Sensitivity : 0.4056          
+            Specificity : 0.6592          
+         Pos Pred Value : 0.8427          
+         Neg Pred Value : 0.1977          
+             Prevalence : 0.8182          
+         Detection Rate : 0.3318          
+   Detection Prevalence : 0.3938          
+      Balanced Accuracy : 0.5324          
+                                          
+       'Positive' Class : yes             
+                                          
+```
+
+```r
 ## randomForest
 rf_pred_df <- predict(cloth_rf, newdata=test_df) %>% 
   tbl_df %>% 
   rename(class = value)
 
 confusionMatrix(rf_pred_df$class, test_df$y)
+```
+
+```
+Confusion Matrix and Statistics
+
+          Reference
+Prediction  yes   no
+       yes 3757  768
+       no  4286 1019
+                                          
+               Accuracy : 0.4859          
+                 95% CI : (0.4759, 0.4958)
+    No Information Rate : 0.8182          
+    P-Value [Acc > NIR] : 1               
+                                          
+                  Kappa : 0.0212          
+ Mcnemar's Test P-Value : <2e-16          
+                                          
+            Sensitivity : 0.4671          
+            Specificity : 0.5702          
+         Pos Pred Value : 0.8303          
+         Neg Pred Value : 0.1921          
+             Prevalence : 0.8182          
+         Detection Rate : 0.3822          
+   Detection Prevalence : 0.4603          
+      Balanced Accuracy : 0.5187          
+                                          
+       'Positive' Class : yes             
+                                          
 ```
 
 
