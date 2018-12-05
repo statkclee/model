@@ -1,0 +1,394 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "`caret` 예측모형"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+
+# 예측모형 개요 {#predictive-modeling}
+
+기계학습 알고리즘에 기반한 예측모형(Predictive Model)은 데이터로부터 학습 알고리즘을 만들어 활용하는 것을 기본으로 삼는다.
+데이터에 경험으로 충분히 축적되어 데이터가 많아지면 성능은 자연히 좋아지게 된다. 
+예측모형 제작을 위한 기본 데이터프레임 구조는 다음과 같다. 즉, 예측하고자 하는 표식/결과값과 예측에 동원되는 변수/특징/피처(Feature)로 칼럼이 구성되고, 
+관측점은 다시 훈련데이터와 시험데이터로 구분된다.
+
+<img src="fig/ml-basic-intro.png" alt="기계학습 데이터 구조" width="77%" />
+
+기계학습을 위한 자료구조는 보통 데이터프레임으로 구현된다. 데이터프레임은 변수/특징을 나타내는 열과
+관측점으로 표현되는 행으로 구성되는데, 특정 변수가 표식/결과값에 대한 정보를 담고 있다. 즉, 여러 특징으로 표현되는 
+관측점을 바탕으로 표식/결과값을 예측하는 모형을 데이터에서 찾아내는 것이 기계학습을 좀더 구체화한 것으로 볼 수 있다.
+
+<img src="fig/ml-basic-pm.png" alt="기계학습 예측모형" width="77%" />
+
+입력 데이터를 넣어 함수값을 계산하면 출력결과값이 도출되는 것이다. 
+키와 몸무게 정보를 넣어 성별을 예측하고자 하면
+기계학습이 잘된 알고리즘이 함수로 들어가 있다면, 키와 몸무게 정보를 넣으면 출력 예측값이 도출된다.
+
+> **통계와 기계학습의 차이점**
+>
+> 통계와 기계학습의 가장 큰 차이점은 통계는 **설명과 이해** 를 위해 데이터를 활용하는 것이고,
+> 기계학습은 **예측(prediction)** 을 위한다는 점에서 차이가 있다. 
+> 즉, 예측력(Predictive Power)과 설명력(Descriptive Power)에 초점을 달리 두고 있다.
+
+
+[예측모형(Predictive Model)](https://en.wikipedia.org/wiki/Predictive_modelling)은 정확도가 높은 모형을 개발하는 과정이다. 
+따라서, 전통적 통계학에서 강조하는 추론, 타당성, 유의성, 가정과 같은 개념적인 것보다는 "실질적으로 정확하게 예측을 할 수 있는가?" 라는 문제늘 더 중요하게 다루고 있다.
+
+> **예측모형 정의(Predictive Modeling)**
+>
+> "Predictive Modeling is the process of creating a model whose primary goal is to achieve high
+levels of accuracy."  
+> 
+> -- Max Kuhn from Pfizer R&D
+
+**예측모형에서 중요하게 고려되는 사항**
+
+* 예측모형 성능
+* 예측의 단순성
+* 복잡성과 컴퓨팅 비용을 줄이도록 변수(특성, Feature) 축소
+* 예측수식 평활(smoothness)
+* 예측모형의 강건성
+
+<img src="fig/ml-parameter-tuning.png" alt="예측모형 개발과정" width="70%" >
+
+
+## 고빈도 예측모형 알고리즘 {#high-frequency-algorithm}
+
+예측모형으로 활용도가 높은 기계학습 알고리즘이 자주 적용되는 문제는 다음과 같이 구분된다.
+
+* 분류 (Classification)
+* 회귀 (Regression)
+* 군집화 (Clustering)
+
+**분류 문제** 는 의료진단을 통해 병을 진단(결핵 혹은 결핵아님)하거나, 
+손글씨로 쓴 숫자(0~9)를 분류하는 것을 예를 들 수 있는데 중요한 것은 예측하고자 하는 
+결과값이 이산형이라는 점이다. **회귀 문제** 는 사전에 입력과 출력이 정의되어 있고, 
+이 관계를 통해 연속형 결과값을 예측하는 문제로 귀결된다. **군집 문제** 는 
+유사한 관측점은 군집내에 군집간은 서로 다르게 군집화하는 알고리즘으로 
+표식/결과값이 없어 정답이 없어 군집화 결과값은 다양하게 정의된다.
+
+
+## 예측모형 성능 측정 {#predictive-model-performance}
+
+함수, 즉 기계학습 모형은 데이터가 주어지면 다양하게 개발할 수 있는데 **정확도**, **계산 시간**, 
+**해석 용이성** 에 따라 자주 사용되는 기계학습의 유용성을 판단하게 된다.
+기계학습 모형의 성능은 기계학습 알고리즘에 따라 달리 평가하게 된다.
+
+* 분류 문제: 혼동 행렬(Confusion Matrix)을 통해 **정확도(Accuracy)**, **정밀도(Precision)**, **재현율(Recall)** 을 계산해서 성능평가.
+* 회귀 문제: 평균 제곱근 오차(Root Mean Squared Error, RMSE)로 $\sqrt{\frac{1}{N} \Sigma_{i=1}^{N} {(y_i - \hat{y_i})^2}}$ 을 계산해서 성능평가.
+* 군집화: 정답이 없는 문제로 관측점들 간 거리측도를 정의해서 측정한다. 
+군집내 관측점 유사도는 크게 하고, 군집간 유사도는 떨어뜨리는 방향으로 성능을 평가. 
+즉, 집단내(Within Sum of Squares) 거리는 최소화하고 집단간(Between Sum of Square) 거리는 최대가 되게 한다. 
+Dunn 지수(Dunn''s Index), $\frac {\text{군집간 거리}}{\text{군집내 거리}}$를 활용한다.
+
+## 예측모형 개발 과정 {#predictive-model-workflow}
+
+기계학습 예측 모형개발과정과 전통적 통계 자료 분석과정은 데이터 분석을 통해 설명력을 극대화하는 결과를 도출하느냐 
+가장 좋은 예측모형을 개발하느냐에 따라 차이가 난다.
+전체 데이터를 예측 모형에 사용하는 것이 아니라 훈련 데이터와 검증 데이터로 나누고, 
+이를 1회 실시하는 것이 아니라 N차 반복하여 교차검증(Cross Validation) 과정을 통해 예측력이 가장 좋은 모형을 개발한다.
+
+<img src="fig/ml-basic-stat-vs-ml.png" alt="기계학습 모형과 통계학 비교" width="70%" />
+
+## 예측 모형 최적화 {#predictive-model-optimization}
+
+예측모형은 오차가 적은 모형이 좋은데 오차는 다음과 같이 분해된다.
+
+* 오차 = 줄일 수 있는 오차 + 줄일 수 없는 오차
+    * 줄일 수 있는 오차(Reducible Error): 모형을 정교화해서 줄여나갈 수 있음.
+    * 줄일 수 없는 오차(Irreducible Error): 잡음으로 아무리 노력해도 줄일 수 없음.
+* 줄일 수 있는 오차(Reducible Error) = 편의와 분산
+    * 편의(Bias): 참값과 예측값의 차이
+    * 분산(Variance): 훈련 데이터의 표집에 기인한 오차    
+
+줄일 수 있는 오차는 편의와 분산으로 분리되고 변의와 분산 간에는 거래 교환(Tradeoff)가 존재한다. 
+**편의가 적으면** **분산이 크게되고**, 반대로 **편의가 크게으면** **분산이 적게 되다**.
+고성능 예측모형은 편의와 분산을 모두 줄이고자 하는 노력의 결과로 전통적인 회귀기반의 통계모형으로는 
+상상할 수 없는 성능을 배깅(bagging), 부스팅(boosting), 스택킹(stacking)등 각종 기법을 동원하여 불가능이 가능으로 뒤바뀌었다.
+
+## `caret` 팩키지  {#predictive-model-caret}
+
+`caret` 팩키지와 같은 예측모형 전용 팩키지가 필요한 이유는 너무나 많은 예측모형이 존재하고,
+더 큰 문제는 사용법과 해석이 모두 다르다는데 있다. 너무 많은 사람이들이 오랜기간에 걸쳐 개발하다보니 어쩌면 
+당연한 문제라고 볼 수도 있다.
+
+### R 팩키지 구문 {#predictive-model-caret-pkg}
+
+기계학습에서 가장 많이 작업하는 것 중에 하나가 분류문제에 대한 예측 알고리즘을 제시하는 것이다.
+데이터도 다양하지만, 분류문제에 대한 다양한 이론이 존재하고, R로 구현된 팩키지도 정말 다양한다.
+예를 들어, `lda`는 판별분석(Linear Discrimant Analsyis)을 돌릴 때 사용되는 것으로 `MASS` 팩키지에 포함되어 있고, 
+훈련데이터 혹은 검증데이터에 예측값을 구할 경우 `predict` 함수에 `lda` 반환값을 넣어주면 되고 추가설정은 필요없다.
+`glm`은 일반화 선형모형을 적합할 때 특히 링크함수로 `logit`을 넣어 설정하고 `stats` 팩키지에 포함되어 있고,
+구문은 `lda`와 확연한 차이를 볼 수 있다.
+
+`gbm`, `mda`, `rpart`, `Weka`, `LogitBoost`등 다양한 예측 알고리즘이 존재한다. 다음은 **Max Kuhn** 박사가 
+`caret`을 개발한 주요한 사유로 정리한 표다. 
+이를 일관된 인터페이스로 제공하고 나아가 각 모형의 성능을 객관적으로 비교할 수 있는 성능평가 지표 도출 및 
+확정을 위해서 꼭 필요한 것으로 판단된다. 
+(본인이 필요해서 개발하지 않았을까 생각되고, 
+누구나 이런 코드는 갖고 있는데 체계적으로 정리해서 공개한 후, 10년에 걸쳐 시간을 투여한 Kuhn 박사님께 감사드립니다.) 
+
+| 예측함수명    | 팩키지명  | `predict` 함수 예측구문                 |
+|:----------:|:------:|--------------------------------------|
+| lda        |MASS    | predict(obj) (추가 인자설정 불필요)     |
+| glm        |stats   | predict(obj, type = "response")      |
+| gbm        |gbm     | predict(obj, type = "response", n.trees) |  
+| mda        |mda     | predict(obj, type = "posterior")     |
+| rpart      |rpart   | predict(obj, type = "prob")          |
+| Weka       |RWeka   | predict(obj, type = "probability")   |
+| LogitBoost |caTools | predict(obj, type = "raw", nIter)    |
+
+`caret`에서 지원하는 예측모형 목록 중 일부는 다음과 같고, 
+전체 목록은 [예측모형 caret 목록](http://topepo.github.io/caret/modelList.html)을 참조한다. 
+2014년 2월 기준 예측모형과 예측함수 147개, 2016년 1월 기준 216개 폭증.
+
+|    모형   | 예측함수명  |  팩키지 | 세부조정 모수 |
+|----------|----------|--------|--------------------------|
+|재귀적 분할 | rpart | rpart | maxdepth |
+| Boosted trees | gbm | gbm | interaction.depth, n.trees, shrinkage |
+| Random forests | rf | randomForest | mtry |
+| 신경망 | nnet | nnet | decay, size |
+| Support Vector Machine (RBF 커널) | svmRadial | kernlab | sigma, C |
+| Support Vector Machine (다항식 커널) | svmPoly | kernlab | scale, degree, C |
+| 선형회귀 | lm | stats | 없음 |
+| ... | ... | ... | ... |
+
+
+# 예측모형 관측점 {#predictive-model-observation}
+
+예측모형 개발에 필수적으로 이해가 되어야 하는 개념이 관측점에 대한 것이다.
+내표본(in-sample), 외표본(out-sample), 교차검증(cross-validation) 표본에 대한 이해와 
+함께 훈련(train)/시험(test) 데이터를 쪼개기도 이해하고 이를 바탕으로 
+다양한 예측모형에 넣었을 때 나온 모형을 평가하는데 필수적인 혼동행렬(Confusion Matrix)도 이해가 필요하다.
+더불어 이런 작업을 자동화할 수 있도록 하는 `caret` 팩키지 개발 배경도 이해가 필요하다.
+
+
+## 찾으려는 예측모형 특성 {#predictive-model-best}
+
+오랜기간 좋은 예측모형을 찾으려고 백방으로 수소문하여 현재까지 가장 좋은 예측모형은 
+지금까지 보지 않던 표본 데이터에 가장 좋은 성능을 보여주는 예측모형이 답이다.
+
+주어진 데이터에서 다양한 예측모형을 개발하지만, 결국 예측모형이 처음으로 접하는 
+데이터에도 좋은 성능을 내는, 즉 외표본 오차를 최소화하는 예측모형이 찾고자하는 모형이다.
+
+이를 위해서 내표본에서 과대적합(Overfitting)하지 말하야 되고, 일반적/강건한 모형이 되어야 한다.
+교차검증(Cross-Validation, CV) 방법이 이 문제에 대한 열쇠를 쥐고 있다.
+
+<img src="fig/ml-predictive-model-cv.png" alt="예측모형 오라클" width="77%" />
+
+### 내표본 오차 {#in-sample-error}
+
+과대적합에 대한 치료법으로 교차검증이 많이 활용되는데 먼저 내표본(In-sample) 오차를 계산한다.
+가장 먼저 선형회귀모형을 보스톤 집값 데이터에 적합을 시키기 위해서 모형에 들어갈 변수를 선정하고,
+예측모형을 `lm` 함수에 밀어 넣는데, 첫번째부터 100개 관측점만 모형에 사용한다. 
+
+그리고 나서, 선형 회귀식에 예측값을 산출하고 실제값과 RMSE 오차를 계산한다.
+
+``` {r ml-overfitting-cv-in-sample-error}
+library(tidyverse)
+library(caret)
+library(mlbench)
+library(C50)
+data(BostonHousing)
+
+glimpse(BostonHousing)
+
+# 1. 독립변수 선택
+ind <- dput(names(BostonHousing))
+ind_sel <- setdiff(ind, c("medv", "chas"))
+
+# 2. 모형 개발
+housing_formula <- as.formula(paste("medv", "~", paste(ind_sel, collapse="+"),collapse=""))
+
+# 3. 모형 적합
+model <- lm(housing_formula, data=BostonHousing[1:100,])
+
+# 4. 내표본 예측값 산출
+predicted <- predict(model, BostonHousing[1:100, ], type = "response") 
+
+# 5. RMSE 오차 계산
+actual <- BostonHousing[1:100, "medv"] 
+sqrt(mean((predicted - actual)^2)) 
+```
+
+### 외표본 오차 {#out-sample-error}
+
+내표본 오차가 최소화되는 모형이 좋지만, 결국 중요한 것은 지금까지 보지 못한 사례 외표본에 대한
+RMSE 오차를 계산하는 것이 성능이 좋은 예측모형인지 판단하는 근거가 된다.
+
+``` {r ml-overfitting-cv-out-of-sample-errors}
+#-------------------------------------------------------------------------------------------
+# 03.02. 외표본 오차 
+#-------------------------------------------------------------------------------------------
+
+# 4. 내표본 예측값 산출
+predicted <- predict(model, BostonHousing[101:200, ], type = "response") 
+
+# 5. RMSE 오차 계산
+actual <- BostonHousing[101:200, "medv"] 
+sqrt(mean((predicted - actual)^2)) 
+```
+
+### 교차검증 {#cross-validation-error}
+
+앞서 내표본과 외표본을 나눠 예측모형을 적합시키게 되면 단 한번만 모형을 만들어 이를 활용하게 되니 경우에 따라서 운이 나쁜 경우를 생각하면 위험이 무척이나 크다. 
+대신에 내표본을 10조각 내서 9개를 모형개발에 사용하고 나머지 한조각으로 예측모형 성능을 평가하는 방법이 많이 사용된다. 이에 대한 부작용으로 예측모형을 1번만 만드는 대신에 10번 반복하고 가장 성능이 좋은 모형을 다시 한번 적합시켜 11번 모형을 적합시키는 단점도 함께 존재하지만, 컴퓨팅 기술과 자원으로 이는 충분히 극복이 가능하다.
+내표본 오차와 외표본 오차 개념을 바탕으로 교차검증을 통해 선형회귀모형에 적용한 후 가장 좋은 모형을 자동으로 뽑아낸다.
+`caret` 팩키지 `train()` 함수에 `method = "cv"`, `number = 10` 인자를 설정하여 교차검증 방법을 적용한 선형회귀모형을 실행시킨다.
+
+``` {r ml-overfitting-cv}
+#-------------------------------------------------------------------------------------------
+# 03.03. Cross Validation
+#------------------------------------------------------------------------------------------
+set.seed(77) 
+model <- train(housing_formula, BostonHousing, 
+               method = "lm",
+               trControl = trainControl(method = "cv", number = 10, verboseIter = TRUE)
+               )
+model
+```
+
+### 데이터 쪼개기 {#cross-validation-error-split}
+
+데이터 중심 예측모형을 개발하는 경우 데이터를 훈련 데이터와 검증 데이터로 나누어야 한다.
+`base` 팩키지에 준비된 `sample` 함수를 활용하여 7:3 테스트:검증 비율을 정해 데이터를 준비하는 것도 가능하다.
+
+다른 한가지 방법은 `caret` 팩키지의 `createDataPartition` 팩키지 함수에 인자를 던져 7:3 테스트:검증 데이터를 생성하는 것이다. 
+
+``` {r ml-overfitting-cv-out-of-sample-error, warning=FALSE}
+#-------------------------------------------------------------------------------------------
+# 03.01. 데이터 쪼개기
+#-------------------------------------------------------------------------------------------
+# 1. 데이터 랜덤 정렬
+set.seed(77)
+BostonHousing <- BostonHousing[sample(nrow(BostonHousing)), ]
+
+# 2. 70:30 데이터 분리
+idx <- round(nrow(BostonHousing) * .7)
+train <- BostonHousing[1:idx, ]
+test <- BostonHousing[(idx+1):nrow(BostonHousing), ]
+
+# 3. 70:30 데이터 검증
+nrow(train) / nrow(BostonHousing)
+nrow(test) / nrow(BostonHousing)
+
+#-------------------------------------------------------------------------------------------
+# 03.02. 데이터 쪼개기: caret
+#-------------------------------------------------------------------------------------------
+# 1. 70:30 데이터 분리
+
+idx <- createDataPartition(BostonHousing$medv, p = .70, list= FALSE) 
+
+caret_train <- BostonHousing[idx, ]
+caret_test <- BostonHousing[-idx, ]
+
+# 2. 70:30 데이터 검증
+nrow(caret_train) / nrow(BostonHousing)
+nrow(caret_test) / nrow(BostonHousing)
+```
+
+
+### 혼동 행렬(Confusion Matrix) {#caret-predictive-model-confusion-matrix}
+
+범주형 특히, 채무불이행과 정상과 같은 두가지 범주를 예측하는 경우 예측모형을 사용해서 도출된 값은 0과 1사이 확률값으로 나타난다.
+`glm` 함수에 `family = "binomial"` 인자를 넣어 로지스틱 모형을 개발하고,
+`predict` 함수에 모형과 검증 데이터를 넣게 되면 검증 데이터의 확률값이 생성된다.
+
+``` {r ml-overfitting-cv-confusion-matrix}
+library(mlbench)
+data(Sonar)
+##==========================================================================================
+## 03. 모형적합
+##==========================================================================================
+
+#-------------------------------------------------------------------------------------------
+# 03.01. 데이터 쪼개기
+#-------------------------------------------------------------------------------------------
+# 1. 데이터 랜덤 정렬
+set.seed(77)
+Sonar <- Sonar[sample(nrow(Sonar)), ]
+
+# 2. 70:30 데이터 분리
+idx <- round(nrow(Sonar) * .7)
+train <- Sonar[1:idx, ]
+test <- Sonar[(idx+1):nrow(Sonar), ]
+
+# 3. 70:30 데이터 검증
+nrow(train) / nrow(Sonar)
+nrow(test) / nrow(Sonar)
+
+#-------------------------------------------------------------------------------------------
+# 03.02. 이항회귀 모형
+#-------------------------------------------------------------------------------------------
+# 모형적합
+
+model_logit <- glm(Class ~ ., family = "binomial", data=train)
+```
+
+`ifelse` 함수를 사용해서 컷오프 기준(예를 들어, 0.5)을 정하고 기뢰("M"), 바위("R")를 예측한다.
+이를 검증데이터 실제값과 교차분석 표를 생성하게 되면 오차행렬을 통해 예측모형에 대한 성능이 도출된다.
+
+`confusionMatrix` 행렬을 사용하게 되면 훨씬 더 유용한 정보가 많이 도출된다.
+매번 절단값(`cutoff`)를 수작업으로 정하는 것이 사람이 할 일이 아님으로 `caTools` 팩키지 
+`colAUC()` 함수를 사용해서 AUC를 구하고 시각화할 수 있다.
+
+``` {r ml-overfitting-cv-class-prediction, warning=FALSE}
+##==========================================================================================
+## 04. 성능평가
+##==========================================================================================
+
+#-------------------------------------------------------------------------------------------
+# 04.01. 이항회귀 모형 성능평가: 기본
+#-------------------------------------------------------------------------------------------
+# 확률 -> 범주예측값 전환
+logit_prob <- predict(model_logit, test, type = "response") 
+logit_prob_class <- ifelse(logit_prob > .5, "M", "R") %>% as.factor
+
+# 오차행렬
+table(logit_prob_class, test[["Class"]])
+
+#-------------------------------------------------------------------------------------------
+# 04.02. 이항회귀 모형 성능평가: `caret`
+#-------------------------------------------------------------------------------------------
+# install.packages("e1071")
+confusionMatrix(logit_prob_class, test[["Class"]]) 
+
+library(caTools)
+colAUC(logit_prob, test[["Class"]], plotROC = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

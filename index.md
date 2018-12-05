@@ -35,6 +35,8 @@ title: 데이터 과학 -- 모형
 - **모형 인프라(Model Infrastructure)**
     - [`rsampling`](model-rsampling.html) 
     - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
+- **Oldest but Goodies - `caret`**
+    - [`caret` 예측모형](model-caret.html)
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형](tidyverse-model.html)**
