@@ -168,10 +168,10 @@ train <- credit_df[train_test_index, ]
 test <- credit_df[-train_test_index, ]
 
 ### 모형 개발/검증 데이터셋 준비 ------
-cv_folds <- createMultiFolds(train$class, k = 10, times = 1)
+cv_folds <- createMultiFolds(train$class, k = 5, times = 3)
 
-cv_ctrl <- trainControl(method = "cv", number = 10,
-                         repeats = 1, 
+cv_ctrl <- trainControl(method = "cv", number = 5,
+                         repeats = 3, 
                          index = cv_folds, 
                          verboseIter = TRUE)
 
@@ -215,14 +215,14 @@ colAUC(gc_pred, test[["class"]], plotROC = TRUE, alg=c("ROC"))
 
 ```{r german-credit-data-auc-apply}
 ### 모형 개발/검증 데이터셋 준비 ------
-cv_folds <- createMultiFolds(train$class, k = 10, times = 1)
+cv_folds <- createMultiFolds(train$class, k = 10, times = 3)
 
 cv_ctrl <- trainControl(method = "cv", number = 10,
-                        repeats = 1, 
+                        repeats = 3, 
                         index = cv_folds, 
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE, # 매우 중요
-                        verboseIter = TRUE)
+                        verboseIter = FALSE)
 
 ## 3.2. 예측모형 적용
 gc_model <- train(class ~., train,
@@ -264,14 +264,14 @@ colAUC(gc_pred, test[["class"]], plotROC = TRUE, alg=c("ROC"))
 
 ```{r german-credit-model-ranger}
 ### 모형 개발/검증 데이터셋 준비 ------
-cv_folds <- createMultiFolds(train$class, k = 5, times = 1)
+cv_folds <- createMultiFolds(train$class, k = 5, times = 3)
 
 cv_ctrl <- trainControl(method = "cv", number = 5,
-                        repeats = 1, 
+                        repeats = 3, 
                         index = cv_folds, 
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE, # 매우 중요
-                        verboseIter = TRUE)
+                        verboseIter = FALSE)
 
 ## 3.2. 예측모형 적용
 gc_model <- train(class ~., train,
@@ -299,14 +299,14 @@ confusionMatrix(gc_pred_class, test$class)
 
 ```{r german-credit-model-ranger-tuning}
 ### 모형 개발/검증 데이터셋 준비 ------
-cv_folds <- createMultiFolds(train$class, k = 5, times = 1)
+cv_folds <- createMultiFolds(train$class, k = 5, times = 3)
 
 cv_ctrl <- trainControl(method = "cv", number = 5,
-                        repeats = 1, 
+                        repeats = 3, 
                         index = cv_folds, 
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE, # 매우 중요
-                        verboseIter = TRUE)
+                        verboseIter = FALSE)
 
 tune_grid <- data.frame(
   .mtry = c(2,16,31,46),
@@ -359,14 +359,14 @@ credit_formula <- as.formula(paste('class', paste(credit_var, collapse=' + '), s
 
 ```{r german-credit-basline-predictive-model-glmnet}
 ### 모형 개발/검증 데이터셋 준비 ------
-cv_folds <- createMultiFolds(train$class, k = 5, times = 1)
+cv_folds <- createMultiFolds(train$class, k = 5, times = 3)
 
 cv_ctrl <- trainControl(method = "cv", number = 5,
-                        repeats = 1, 
+                        repeats = 3, 
                         index = cv_folds, 
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE, # 매우 중요
-                        verboseIter = TRUE)
+                        verboseIter = FALSE)
 
 tune_grid <- expand.grid(
   alpha = 0:1,
@@ -398,12 +398,18 @@ confusionMatrix(gc_pred_class, test$class)
 
 이항회귀모형, 의사결정나무, 확률숲(randomForest), GBM, xgBoost 모형등 다양한 모형을 적합시켜 최고 성능이 나는 예측모형을 식별해보자. 신용평가 예측모형을 개발할 때 아무래도 부실 징후가 높은 고객을 찾아내는 것이라 이에 초점을 두고 모형을 개발해 낸다.
 
+이를 위해서 `glmnet`, `ranger` 두가지 모형 아키텍처를 염두에 두고 초모수 튜닝도 반영하여 최적모형을 선정한다.
+특히 "Sens"를 예측모형에서 최적화해야 되는 대상으로 삼아서 최적화한다.
+단일 코어를 사용하는 것과 멀티코어 병렬컴퓨팅을 적용하는 것과 비교하기 위해서 예측모형 실행시간 측정도 함께 한다.
+
 ```{r german-credit-choose-model}
+start_time <- Sys.time()
+
 ### 모형 개발/검증 데이터셋 준비 ------
-cv_folds <- createMultiFolds(train$class, k = 5, times = 1)
+cv_folds <- createMultiFolds(train$class, k = 5, times = 3)
 
 cv_ctrl <- trainControl(method = "cv", number = 5,
-                        repeats = 1, 
+                        repeats = 3, 
                         index = cv_folds, 
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE, # 매우 중요
@@ -444,57 +450,186 @@ model_list <- list(
 resamps <- resamples(model_list)
 
 summary(resamps)
-dotplot(resamps, metric = "ROC")
+dotplot(resamps, metric = "Sens")
 
 # 5. 모형성능 평가 -----
-# 
-# ## 2.3. 모형 아키텍처 선정 
-# model_arch <- validation %>%
-#     mutate(GLM = predict(glm_m, validation),
-#            CART = predict(cart_m, validation),
-#            RF = predict(rf_m, validation),
-#            XGB = predict(xgboost_m, validation),
-#            GBM = predict(gbm_m, validation))
-# 
-# metrics(model_arch, truth = Class, estimate = GLM)
-# metrics(model_arch, truth = Class, estimate = CART)
-# metrics(model_arch, truth = Class, estimate = RF)
-# metrics(model_arch, truth = Class, estimate = GBM)
-# metrics(model_arch, truth = Class, estimate = XGB)
-# 
-# ## 혼동행렬 -----
-# confusionMatrix(gc_pred_class, test$class)
-# 
+gc_pred_class <- predict(gc_glmnet_model, newdata = test, type="raw")
+## 혼동행렬 -----
+confusionMatrix(gc_pred_class, test$class)
 
-
-
-# predict(glm_m, validation, type="prob")
+total_time <- Sys.time() - start_time
+total_time
 ```
 
 사실 모형 아키텍처에 포함된 모든 모형이 동일한 값을 주지는 않는다.
 차이가 크다고 하더라도 확률적인 요인에 의한 차이로 밝혀질 수도 있다. 
 이런 경우 쌍체 $t$-검증 (paired t-test)을 사용하여 모형간 유의성을 검증한다.
-만약 차이점이 없다면 가장 단순한 모형을 선택한다.
+만약 차이점이 없다면 가장 단순한 모형, baseline `glmnet`을 사용한다.
+"Sensitivity"관점에서는 큰 차이가 보이지 않고 ROC와 "Specificity"에서 0.05 유의수준에서 차이가 있는 것으로 나타난다.
 
 ```{r german-credit-choose-model-test}
-diff_test <- resamples(list(GLM = glm_m, 
-                            XGB = xgboost_m))
-summary(diff_test)
+diff_test <- resamples(list(glmnet = gc_glmnet_model, 
+                            ranger = gc_ranger_model))
 
 diff(diff_test) %>% summary
 ```
 
-## 3.6. 최종 모형 성능 {#german-credit-model-choose}
+# `basetable` 전처리 &rarr; `preProcess` {#german-credit-model-preprocess}
 
-최종적으로 모형의 성능을 `testing` 검증데이터를 통해서 사전에 선정한 측도(정확도, `accuracy`)를 통해 반영한다.
-`xgboost` 모형과 `GLM` 모형의 차이만큼을 모형 성능으로 보고 이를 예측모형으로 적용시킨다.
+예측모형을 위해 마련된 특별한 데이터프레임을 `basetable`이라고 일컫는다. 
+`basetable`에서 예측정확도 향상에 사용되는 연속형 범주형 변수에 대해서 전처리 작업을 수행할 경우 예측성능 향상을 기대할 수 있다.
 
-```{r german-credit-model-performance}
-# 3. 모형성능 ------
-testing_perf <- testing %>%
-    mutate(GLM = predict(glm_m, testing),
-           XGB = predict(xgboost_m, testing))
+이를 위해서 `caret`에서 `preProcess` 기능을 넣게 되면 추가적으로 예측성능 향상과 더불어 예측모형 적합 속도도 높아진다. 이유는 변수들간의 상관관계가 높은 경우 수렴이 늦어지는 문제가 있는데 전처리 기능을 통해서 비유의적인 변수에 대해서 사전에 적절한 조치를 취하여 두면 예측성능도 높아지고 학습에 걸리는 시간도 대폭 줄일 수 있다.
 
-metrics(testing_perf, truth = Class, estimate = GLM)
-metrics(testing_perf, truth = Class, estimate = XGB)
+결측값이 있는 경우 "mediaImpute", "knnImpute" &rarr; "zv", "nzv" &rarr; "center", "scale" &rarr; "pca", "spatialSign" 순으로 전처리 과정을 거친다. 이를 통해 다소 "Sens" 값이 올라간 것을 확인할 수 있다.
+
+```{r german-credit-formula-preprocess}
+start_time <- Sys.time()
+
+### 모형 개발/검증 데이터셋 준비 ------
+cv_folds <- createMultiFolds(train$class, k = 5, times = 3)
+
+cv_ctrl <- trainControl(method = "cv", number = 5,
+                        repeats = 3, 
+                        index = cv_folds, 
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE, # 매우 중요
+                        verboseIter = FALSE)
+
+ranger_tune_grid <- expand.grid(
+  .mtry = c(2,16,31,46),
+  .splitrule = c("gini","extratrees"),
+  .min.node.size = c(5, 10)
+)
+
+glmnet_tune_grid <- expand.grid(
+  alpha = 0:1,
+  lambda = seq(0.0001, 1, length=10)
+)
+
+## 3.2. 예측모형 적용
+### glmnet
+gc_glmnet_model <- train(class ~., train,
+                  method = "glmnet",
+                  metric = "Sens",
+                  preProcess = c("nzv", "center", "scale", "spatialSign"),
+                  tuneGrid = glmnet_tune_grid,
+                  trControl = cv_ctrl)
+
+### ranger
+gc_ranger_model <- train(class ~., train,
+                  method = "ranger",
+                  metric = "Sens",
+                  preProcess = c("nzv", "center", "scale", "pca"),
+                  # tuneGrid = ranger_tune_grid,
+                  tuneLength = 7,
+                  trControl = cv_ctrl)
+
+# 4. 모형 비교평가-----
+model_list <- list(
+  glmnet = gc_glmnet_model,
+  rf = gc_ranger_model
+)
+
+resamps <- resamples(model_list)
+
+summary(resamps)
+dotplot(resamps, metric = "Sens")
+
+# 5. 모형성능 평가 -----
+gc_pred_class <- predict(gc_glmnet_model, newdata = test, type="raw")
+## 혼동행렬 -----
+confusionMatrix(gc_pred_class, test$class)
+
+total_time <- Sys.time() - start_time
+total_time
+```
+
+# 예측모형 개발속도 향상 &rarr; `doSNOW` {#german-credit-model-parallel}
+
+동일한 예측모형을 교차검증 데이터를 만들어서 데이터만 달리해서 적합시키는 것이라 멀티코어를 갖춘 최근 컴퓨터 환경에 적합하다. 이를 위해서 멀티코어를 활용하여 병렬컴퓨팅으로 예측모형을 개발하여 예측모형 개발에 소요되는 시간을 대폭 줄인다.
+
+예측모형 `caret` 주요 함수를 실행하기에 앞서 `doSNOW` 팩키지를 사용하는데 우선 코어숫자를 파악해야 되기 때문에 `parallel:::detectCores()` 함수로 예측모형 구축에 활용되는 하드웨어 CPU에서 코어숫자를 파악하고 클러스터를 구축해서 예측모형을 돌리면 된다.
+
+
+```{r german-credit-formula-preprocess-doSNOW}
+library(doSNOW)
+
+num_cores <- parallel:::detectCores()
+
+start_time <- Sys.time()
+
+cl <- makeCluster(num_cores, type = "SOCK")
+registerDoSNOW(cl)
+
+### 모형 개발/검증 데이터셋 준비 ------
+cv_folds <- createMultiFolds(train$class, k = 5, times = 3)
+
+cv_ctrl <- trainControl(method = "cv", number = 5,
+                        repeats = 3, 
+                        index = cv_folds, 
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE, # 매우 중요
+                        verboseIter = FALSE)
+
+ranger_tune_grid <- expand.grid(
+  .mtry = c(2,16,31,46),
+  .splitrule = c("gini","extratrees"),
+  .min.node.size = c(5, 10)
+)
+
+glmnet_tune_grid <- expand.grid(
+  alpha = 0:1,
+  lambda = seq(0.0001, 1, length=10)
+)
+
+## 3.2. 예측모형 적용
+### glmnet
+gc_glmnet_model <- train(class ~., train,
+                  method = "glmnet",
+                  metric = "Sens",
+                  preProcess = c("nzv", "center", "scale", "spatialSign"),
+                  tuneGrid = glmnet_tune_grid,
+                  trControl = cv_ctrl)
+
+### ranger
+gc_ranger_model <- train(class ~., train,
+                  method = "ranger",
+                  metric = "Sens",
+                  preProcess = c("nzv", "center", "scale", "pca"),
+                  # tuneGrid = ranger_tune_grid,
+                  tuneLength = 7,
+                  trControl = cv_ctrl)
+
+# 4. 모형 비교평가-----
+model_list <- list(
+  glmnet = gc_glmnet_model,
+  rf = gc_ranger_model
+)
+
+resamps <- resamples(model_list)
+
+summary(resamps)
+dotplot(resamps, metric = "Sens")
+
+# 5. 모형성능 평가 -----
+gc_pred_class <- predict(gc_glmnet_model, newdata = test, type="raw")
+## 혼동행렬 -----
+confusionMatrix(gc_pred_class, test$class)
+
+mc_total_time <- Sys.time() - start_time
+mc_total_time
+```
+
+`r total_time`와 `r mc_total_time`만큼 멀티코어를 활용하여 예측모형 개발에 소요되는 시간을 줄여 더 많은 모형을 테스트하여 최고 성능 예측모형 개발에 투여되는 시간을 벌어드릴 수 있다.
+
+# 앙상블 예측모형 &rarr; `stacking` {#german-credit-model-parallel}
+
+귀중한 컴퓨팅 자원을 사용해서 예측모형을 개발했는데 이를 사용해서 다시 예측모형을 만드는 것은 `stacking`이라고 한다. 이 기법을 사용하여 예측모형을 추가로 개발한다. `caretEnsemble`을 활용하는 것이 가능하다.
+
+```{r german-credit-formula-caretEnsemble, eval=FALSE}
+library(caretEnsemble)
+
+stack <- caretStack(model_list, method="ranger")
+summary(stack)
 ```
