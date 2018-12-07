@@ -1,0 +1,125 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "`caret` 예측모형 개발"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+
+# 기계학습 예측모형 기본기 [^best-algorithm] [^applied-predictive-modeling] {#predictive-model}
+
+
+```{r taste-predictive-model}
+# 0. 환경설정 ------
+library(caret)
+library(tidyverse)
+library(janitor)
+library(doSNOW)
+
+# 1. 데이터 ------
+data(GermanCredit)
+
+# 2. 데이터 전처리 ------
+## 변수명 정리 -----
+credit_dat <- GermanCredit %>% 
+  clean_names() %>% 
+  tbl_df
+
+## 예측모형에 사용되는 변수정리 -----
+all_variables <- names(credit_dat)
+remove_variables <- names(credit_dat)[nearZeroVar(credit_dat)]
+
+credit_df <- credit_dat[ , setdiff(all_variables, remove_variables)]
+
+# 3. 예측모형 ------
+## 3.1. 병렬처리 환경설정
+num_cores <- parallel:::detectCores()
+start_time <- Sys.time()
+
+cl <- makeCluster(num_cores, type = "SOCK")
+registerDoSNOW(cl)
+
+## 3.2. 훈련 vs 검증/시험
+train_test_index <- createDataPartition(credit_df$class, p = 0.7, list = FALSE)
+
+train <- credit_df[train_test_index, ]
+test <- credit_df[-train_test_index, ]
+
+## 3.3. 모형 개발/검증 데이터셋 준비 ------
+cv_folds <- createMultiFolds(train$class, k = 10, times = 5)
+
+cv_ctrl <- trainControl(method = "cv", number = 10,
+                        index = cv_folds, 
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE, # 매우 중요
+                        verboseIter = TRUE)
+
+ranger_tune_grid <- expand.grid(
+  .mtry = c(2,16,31,48),
+  .splitrule = c("gini","extratrees"),
+  .min.node.size = c(5, 10)
+)
+
+glmnet_tune_grid <- expand.grid(
+  alpha = 0:1,
+  lambda = seq(0.0001, 1, length=10)
+)
+
+## 3.2. 예측모형 적용
+### glmnet
+gc_glmnet_model <- train(class ~., train,
+                  method = "glmnet",
+                  metric = "Sens",
+                  preProcess = c("zv", "center", "scale", "spatialSign"),
+                  tuneGrid = glmnet_tune_grid,
+                  trControl = cv_ctrl)
+
+### ranger
+gc_ranger_model <- train(class ~., train,
+                  method = "ranger",
+                  metric = "Sens",
+                  preProcess = c("zv", "center", "scale", "spatialSign"),
+                  tuneGrid = ranger_tune_grid,
+                  # tuneLength = 7,
+                  trControl = cv_ctrl)
+
+# 4. 모형 비교평가-----
+model_list <- list(
+  glmnet = gc_glmnet_model,
+  rf = gc_ranger_model
+)
+
+resamps <- resamples(model_list)
+
+summary(resamps)
+dotplot(resamps, metric = "Sens")
+
+# 5. 모형성능 평가 -----
+gc_pred_class <- predict(gc_glmnet_model, newdata = test, type="raw")
+## 혼동행렬 -----
+confusionMatrix(gc_pred_class, test$class)
+
+mc_total_time <- Sys.time() - start_time
+mc_total_time
+
+```
