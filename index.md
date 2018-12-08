@@ -38,6 +38,7 @@ title: 데이터 과학 -- 모형
 - **Oldest but Goodies - `caret`**
     - [`caret` 예측모형 맛보기](model-caret-intro.html)
     - [`caret` 예측모형 개발](model-caret-build.html)
+    - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형](tidyverse-model.html)**

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: xwMOOC 모형
-subtitle: "`caret` 예측모형 개발"
+subtitle: "`caret` 예측모형 실전코드"
 author:
     name: xwMOOC
     url: https://www.facebook.com/groups/tidyverse/
