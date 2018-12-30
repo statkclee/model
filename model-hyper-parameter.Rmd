@@ -1,0 +1,82 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "초모수 미세조정(Hyper Parameter Tuning)"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+
+# 모수와 초모수 {#hyper-parameter}
+
+모수(parameter)는 예측모형을 데이터를 통해 훈련시키면서 찾게되는데 흔히 회귀계수(regression coefficient)로 쉽게 이해될 수 있으며,
+초모수(Hyperparameter)는 데이터를 통해 훈련시키기 전에 사전에 설정된다는 점에서 차이가 있다.
+
+- 선형 회귀모형에서 회귀 계수, 기계학습에서 weigths, bias가 대표적.
+- 기계학습에서 학습율(learning rate), Random Forest에서 나무 갯수, `mtry` 등을 들 수 있다.
+
+# 예측모형 프레임워크 {#framework-predictive-model}
+
+R의 대표적인 예측모형 프레임워크로 다음 3개를 많이 사용한다.
+3가지 프레임워크 모두 서로 추구하는 바가 뿌렸하여 본인 업무에 가장 적합한 것을 확인해서 사용한다.
+
+- [caret](https://cran.r-project.org/web/packages/caret/vignettes/caret.html)
+- [$H_2 O$](https://www.h2o.ai/)
+- [mrl](https://mlr.mlr-org.com/)
+
+# 예측모형 초모수 {#framework-predictive-model-hyper-parameter}
+
+[caret](https://cran.r-project.org/web/packages/caret/vignettes/caret.html),
+[$H_2 O$](https://www.h2o.ai/), [mrl](https://mlr.mlr-org.com/) 예측모형 프레임워크 모두 다음 세가지 사항을 지정해야만 된다.
+
+1. 초모수 검색공간(search space): `mtry`, 활성화 함수 등
+1. 재표집 방법(resampling method)
+1. 미세조정 방법: 격자 검색(grid search), 무작위 검색(random search), Adaptive Resampling 등
+
+
+초모수 검색공간 즉, 초모수 설정 대상은 [caret - 예측모형 사전](https://topepo.github.io/caret/available-models.html) 사이트에서 
+"Tuning Parameters"를 통해 각 예측모형별로 검색하여 지정하면된다.
+예를 들어 Random Forest 모형의 대표적인 팩키지 `ranger`의 경우 미세조정 초모수는 `mtry`, `splitrule`, `min.node.size`가 된다.
+유사한 방식으로 예측모형에 적용할 모형을 [caret - 예측모형 사전](https://topepo.github.io/caret/available-models.html) 사이트에서 
+찾아 `Tuning Parameters`를 보고 확인하여 지정하면 된다.
+
+| Model         | `method` Value | Type                       | Libraries             | Tuning Parameters              |
+|---------------|----------------|----------------------------|-----------------------|--------------------------------|
+| Random Forest |  ranger        | Classification, Regression | e1071, ranger, dplyr  | mtry, splitrule, min.node.size |
+|Stochastic Gradient Boosting | gbm | Classification, Regression | gbm, plyr   n.trees, interaction.depth, shrinkage, n.minobsinnode |
+
+재표집 방법은 `caret`의 경우 `trainControl`을 통해 설정한다. `repeatedcv` 방법으로 10 조각을 내서 표본을 추출해서 각각 예측모형 접합을 시키고 
+이를 총 5회 반복한다. 재표집 방법은 `repeatedcv`외에서 `? trainControl` 명령어를 통해서 
+ "boot", "boot632", "optimism_boot", "boot_all", "cv", "repeatedcv", "LOOCV", 
+ "LGOCV", "none", "oob", timeslice, "adaptive_cv", "adaptive_boot", "adaptive_LGOCV" 등 다양하게 설정할 수 있다.
+
+``` {r hyperparameter-resampling, eval=FALSE}
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 10,
+                           repeats = 5)
+```                           
+
+미세조정 방법은 격자 검색(grid search), 무작위 검색(random search), Adaptive Resampling 3가지를 `caret`에서 지정하는데 
+최적 초모수 조합을 찾아내는 것은 동일하다고 볼 수 있으나 최적 초모수 조합을 찾는 효율성의 측면에서는 Adaptive Resampling이 
+더 낫다고 볼 수 있다.
+
+

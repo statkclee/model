@@ -65,7 +65,8 @@ title: 데이터 과학 -- 모형
         + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
         + [고객이탈 - Random Forest](model-cloudera-rf.html)
         + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
-- **모형 평가 및 활용**
+- **모형 최적화 및 평가**
+    - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
 - **모형 자동화(AutoML)**
