@@ -80,3 +80,176 @@ fitControl <- trainControl(method = "repeatedcv",
 더 낫다고 볼 수 있다.
 
 
+# 예측모형 - `caret` {#framework-predictive-model-hyper-parameter-caret}
+
+예측모형 개발을 위해서 데이터를 불러오고 이를 `janitor` 팩키지로 칼럼명을 깔끔히 정리하고 특히 정보가 매우 적은 변수는 `nearZeroVar()` 함수로 전처리 단계에서 제거한다.
+그리고 나서, 훈련/시험 데이터로 나누고, 멀티코어를 활용하여 훈련시간을 단축시키기 위해서 클러스터를 구축한다.
+
+```{r predictive-model-caret}
+library(tidyverse)
+library(caret)
+library(tictoc)
+library(janitor)
+library(doSNOW)
+
+# 1. 데이터 ------
+data(GermanCredit)
+
+# 2. 데이터 전처리 ------
+## 변수명 정리 -----
+credit_dat <- GermanCredit %>% 
+  clean_names() %>% 
+  tbl_df
+
+## 예측모형에 사용되는 변수정리 -----
+all_variables <- names(credit_dat)
+remove_variables <- names(credit_dat)[nearZeroVar(credit_dat)]
+
+credit_df <- credit_dat[ , setdiff(all_variables, remove_variables)]
+
+# 3. 예측모형 ------
+## 3.1. 훈련 vs 검증/시험
+train_test_index <- createDataPartition(credit_df$class, p = 0.7, list = FALSE)
+
+train <- credit_df[train_test_index, ]
+test <- credit_df[-train_test_index, ]
+```
+
+## 격자탐색(grid search) {#framework-predictive-model-hyper-parameter-caret-grid}
+
+`tictoc` 팩키지를 통해 `tic()`, `toc()` 함수로 모형 훈련시간을 측정하고 
+교차검증(cross validation)을 위해서 `k=3`, `repeats=1`로 설정한다. 
+앞서 [caret - 예측모형 사전](https://topepo.github.io/caret/available-models.html)에서 검색한 `ranger` 팩키지 초모수를 찾아 `expand.grid`를 통해 격자 탐색 공간을 설정한다.
+
+예를 들어 `mtry = 48`, `splitrule = extratrees`, `min.node.size = 10` 초모수가 선정되고 이에 해당되는 모형 성능도 나타나게 된다.
+
+```{r predictive-model-caret-grid}
+## 3.2. 병렬처리 환경설정
+num_cores <- parallel:::detectCores()
+tic()
+
+cl <- makeCluster(num_cores, type = "SOCK")
+registerDoSNOW(cl)
+
+## 3.3. 모형 개발/검증 데이터셋 준비 ------
+cv_folds <- createMultiFolds(train$class, k = 3, times = 1)
+
+fit_ctrl <- trainControl(method = "repeatedcv", 
+                        number = 3,
+                        repeats = 1,
+                        index = cv_folds, 
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE, # 매우 중요
+                        verboseIter = TRUE)
+
+ranger_tune_grid <- expand.grid(
+  .mtry = c(2,25,48),
+  .splitrule = c("gini","extratrees"),
+  .min.node.size = 10
+)
+
+## 3.2. 예측모형 적용
+### ranger
+gc_grid_ranger_model <- train(class ~., train,
+                  method = "ranger",
+                  metric = "Sens",
+                  preProcess = c("zv", "center", "scale", "spatialSign"),
+                  tuneGrid = ranger_tune_grid,
+                  # tuneLength = 7,
+                  trControl = fit_ctrl)
+
+# 4. 모형 비교평가-----
+gc_grid_ranger_model
+
+toc()
+```
+
+## 무작위  검색 (random search) {#framework-predictive-model-hyper-parameter-caret-random}
+
+무작위 검색(random search)은 `trainControl()` 함수에 `search = "random"`을 지정하고 
+실무에서 `tuneLength = 100`와 같은 값을 지정하게 되면 
+`caret` 팩키지 `train()` 함수에서 선택한 예측모형 `ranger`의 초모수를 찾아 각 모수별로 100개 난수값을 발생시켜 모형을 적합시켜 최고 성능을 내는 조합을 찾아준다.
+
+```{r predictive-model-caret-random}
+tic()
+## 3.3. 모형 개발/검증 데이터셋 준비 ------
+cv_folds <- createMultiFolds(train$class, k = 3, times = 1)
+
+fit_ctrl <- trainControl(method = "repeatedcv", 
+                        number = 3,
+                        repeats = 1,
+                        index = cv_folds, 
+                        search = "random",
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE, # 매우 중요
+                        verboseIter = TRUE)
+
+## 3.2. 예측모형 적용
+### ranger
+gc_ranger_model <- train(class ~., train,
+                  method = "ranger",
+                  metric = "Sens",
+                  preProcess = c("zv", "center", "scale", "spatialSign"),
+                  trControl = fit_ctrl,
+                  tuneLength = 7)
+
+# 4. 모형 비교평가-----
+gc_ranger_model
+
+stopCluster(cl)
+toc()
+```
+
+
+## 적응 재표집 (adaptive resampling) {#framework-predictive-model-hyper-parameter-caret-adaptive}
+
+무작위 검색 방법과 유사하고 다만 `trainControl()`에 `method="adaptive_cv"`를 지정하고,
+`adaptive=`에 인자값을 지정하면 된다. 적응 재표집에 대한 자세한 사항은 [Max Kuhn (2014), "Futility Analysis in the Cross-Validation of Machine Learning Models"](https://arxiv.org/abs/1405.6974)를 참조한다.
+
+```{r predictive-model-caret-adaptive, eval=FALSE}
+tic()
+## 3.3. 모형 개발/검증 데이터셋 준비 ------
+cv_folds <- createMultiFolds(train$class, k = 3, times = 1)
+
+fit_ctrl <- trainControl(method = "adaptive_cv", 
+                        number = 3,
+                        repeats = 1,
+                        index = cv_folds, 
+                        search = "random",
+                        adaptive = list(min = 3, alpha = 0.05, method = "BT", complete = FALSE),
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE, # 매우 중요
+                        verboseIter = TRUE)
+
+## 3.2. 예측모형 적용
+### ranger
+gc_ranger_model <- train(class ~., train,
+                  method = "ranger",
+                  metric = "Sens",
+                  preProcess = c("zv", "center", "scale", "spatialSign"),
+                  trControl = fit_ctrl,
+                  tuneLength = 7)
+
+# 4. 모형 비교평가-----
+gc_ranger_model
+
+toc()
+```
+
+# 초모수 모형 성능 평가 {#framework-predictive-model-hyper-parameter-evaluation}
+
+`caret` 예측모형 객체를 `plot`, `ggplot` 함수에 넣으면 시각화를 통해 최적의 초모수를 선정하는데 도움이 된다. 다르게 설정된 초모수 조합이 모형 성능에 어떤 영향을 주는지를 초모수 모형성능 평가를 통해서 확인할 수 있고 특히 어떤 초모수가 예측모형 성능에 크고 작은 영향을 미치는지도 이해할 수 있다. 물론 초모수 공간에 수렴하는지 파악하여 최적 초모수 조합(Optimal Hyperparameter Combinatin)을 발견하는데 단초를 제공한다.
+
+``` {r hyper-parameter-evaluation}
+ggplot(gc_grid_ranger_model)
+```
+
+`Kappa` 값을 시각화하여 높은 `Kappa` 값을 통해 추가로 탐색할 수 있는 초모수 공간에 대한 힌트를 얻을 수도 있다.
+
+``` {r hyper-parameter-evaluation-kappa, eval=FALSE}
+plot(gc_grid_ranger_model,
+     metric = "Kappa",
+     plotType = "level")
+```
+
+

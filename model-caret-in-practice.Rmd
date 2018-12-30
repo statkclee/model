@@ -122,4 +122,5 @@ confusionMatrix(gc_pred_class, test$class)
 mc_total_time <- Sys.time() - start_time
 mc_total_time
 
+stopCluster(cl)
 ```

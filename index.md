@@ -38,6 +38,7 @@ title: 데이터 과학 -- 모형
 - **Oldest but Goodies - `caret`**
     - [`caret` 예측모형 맛보기](model-caret-intro.html)
     - [`caret` 예측모형 개발](model-caret-build.html)
+    - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)    
     - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
@@ -65,8 +66,7 @@ title: 데이터 과학 -- 모형
         + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
         + [고객이탈 - Random Forest](model-cloudera-rf.html)
         + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
-- **모형 최적화 및 평가**
-    - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)
+- **모형 평가**
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
 - **모형 자동화(AutoML)**
