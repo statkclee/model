@@ -29,17 +29,18 @@ title: 데이터 과학 -- 모형
 
 ## 학습목차 
 
-- **모형 데이터 전처리 - Feature Engineering(피처 공학)**
-    - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
-    - [피처 공학(Feature Engineering)](model-feature-engineering.html)
-- **모형 인프라(Model Infrastructure)**
-    - [`rsampling`](model-rsampling.html) 
-    - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
 - **Oldest but Goodies - `caret`**
     - [`caret` 예측모형 맛보기](model-caret-intro.html)
     - [`caret` 예측모형 개발](model-caret-build.html)
     - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)    
     - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
+- **모형 인프라(Model Infrastructure)**
+    - [`rsampling`](model-rsampling.html) 
+    - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
+- **모형 데이터 전처리 - Feature Engineering(피처 공학)**
+    - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
+    - [피처 공학(Feature Engineering)](model-feature-engineering.html)
+    - [피처 공학 기법 - 직사각형 데이터프레임](model-feature-engineering-tech.html)
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형](tidyverse-model.html)**

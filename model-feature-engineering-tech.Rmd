@@ -1,0 +1,179 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 피처 공학 기법 - 직사각형 데이터프레임
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+```{r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+```
+
+
+# 범주형 변수 {#categorical-one-hot-encoding}
+
+## One Hot Encoding - `ifelse` {#categorical-one-hot-encoding-ifelse}
+
+`data(package="ggplot2")` 명령어를 통해서 `ggplot2` 팩키지에 내장된 데이터셋을 확인할 수 있다. `dataset` 팩키지 `mtcars` 데이터셋을 새롭게 만든 `mpg` 데이터셋을 활용하여 **One Hot Encoding** 기법을 통해서 범주형 변수를 기계학습 예측모형에 활용할 수 있는  Feature로 만들어 보자.
+
+One Hot Encoding을 통계학에서는 가변수(dummy variable)을 만든다고 한다. 즉, 변수에 특성이 있느냐 없느냐를 가지고 두가지 수준을 갖는 범주의 차이를 계량화한다. 예를 들어 1999년 양산차와 2008년 양산차간의 연비향상이 얼마나 있었는지를 하나의 Feature로 넣는 것을 상정할 수 있다.
+
+```{r mtcars-one-hot-encoding}
+library(tidyverse)
+
+mpg <- mpg %>% tbl_df
+
+mpg %>% 
+  select(year) %>% 
+  table()
+```
+
+시내주행연비(`cty`)와 고속도로연비(`hwy`)에 영향을 주는 변수는 많다. 그중 10년이라는 시간이라는 요인이 연비향상에 얼마나 기여를 했는지 요약통계량을 다음과 같이 구할 수 있다.
+
+```{r mtcars-one-hot-encoding-summary}
+mpg %>% 
+  group_by(year) %>% 
+  summarise(mean_cty = mean(cty),
+            mean_hwy = mean(hwy))
+```
+
+`ifelse` 문을 사용해서 1999년을 기준으로 회귀계수(가중치, `w`)를 통해 연비에 주는 효과를 계량화해서 넣을 수 있다.
+
+```{r mtcars-one-hot-encoding-summary-encode}
+mpg %>% 
+  mutate(decade = ifelse(year == 1999, 0, 1)) %>% 
+  select(cty, year, decade)
+```
+
+
+## 유의미한 범주 - `case_when` {#categorical-one-hot-encoding-case_when}
+
+`case_when()`을 사용하여 `ifelse`를 여러번 중첩시켜 사용하는 대신 범주를 깔끔하게 정리할 수 있다.
+
+```{r mtcars-case-when}
+mpg %>% 
+  select(class) %>% 
+  table()
+```
+
+자동차를 소형, 중형, 중소형 등 다양하게 구분할 수 있는데 이를 다음과 같이 범주를 나눠서 정리하는 것이 예측모형의 유의미한 Feature로 탈바꿈시킬 수도 있다.
+
+- minivan, pickup - 영업용
+- subcompact, compact - 소형
+- midsize - 중형
+- 2seater, suv - 여가용
+
+```{r mtcars-case-when-class}
+mpg %>% 
+  mutate(`차량범주` = case_when(str_detect( class, pattern="minivan|pickup") ~ "영업용",
+                              str_detect( class, pattern="compact") ~ "소형",
+                              str_detect( class, pattern="midsize") ~ "중형",
+                              TRUE ~ "여가용")) %>% 
+  select(`차량범주`) %>% 
+  table()
+```
+
+
+## 범주가 많은 경우 - 비율(`prop.table`) {#categorical-one-hot-encoding-prop-table}
+
+시내주행연비를 평균보다 높은 경우 "high", 낮은 경우 "low"로 두고 `prop.table()` 함수를 통해 제조사(`manufacturer`) 비율을 계산한다. 이를 `hl_prop` 변수로 결합시켜 너무 범주가 많아서 사용하기 어려웠던 범수형 변수를 새로운 feature로 만들어 냈다.
+
+
+```{r mtcars-prop-table}
+manufacturer_tbl <- mpg %>% 
+  mutate(hl_mpg = ifelse(cty >17, "high", "low")) %>% 
+  select(manufacturer, hl_mpg) %>% 
+  table
+
+manufacturer_prop_tbl <- prop.table(manufacturer_tbl, 1) %>% tbl_df %>% 
+  filter(hl_mpg == "high") %>% 
+  rename(hl_prop = n)
+
+mpg <- inner_join(mpg, manufacturer_prop_tbl, by="manufacturer")
+
+mpg %>% 
+  DT::datatable()
+```
+
+
+# 연속형 변수 &rarr; 범주형 변수 {#categorical-numerical-to-categorical}
+
+## 연속형 변수 &rarr; 범주형 변수 - 절대값(`cut`) {#categorical-numerical-to-categorical-cut}
+
+연속형 변수의 경우 히스토그램을 통해서 분포를 확인할 수 있고, 비선형적인 특성을 적절한 범주로 표현하여 잡아내는 것이 가능하다.
+
+```{r mtcars-numerical-categorical-histogram}
+mpg %>% 
+  ggplot(aes(x=displ)) +
+    geom_histogram(bins = 30)
+```
+
+
+`cut()` 함수를 사용해서 배기량(`displ`)을 2000cc 기준으로 나눠본다. 배기량에 대한 자세한 사항은 [나무위키 배기량](https://namu.wiki/w/%EB%B0%B0%EA%B8%B0%EB%9F%89)을 참고한다.
+
+```{r mtcars-numerical-categorical-bins}
+mpg <- mpg %>% 
+  mutate(displ_cat = cut(displ, breaks = seq(1, 7.0, by=2)))
+
+mpg %>% 
+  select(displ_cat) %>% 
+  table()
+```
+
+`model.matrix` 함수를 사용해서 가변수화한 후에 이를 범주형 변수로 변환하여 `cbind()` 함수로 결합시킨다.
+
+
+```{r mtcars-numerical-categorical-bins-matrix}
+mpg <- cbind(mpg, model.matrix(~ displ_cat -1, data = mpg))
+
+mpg %>% 
+  select(contains("disp")) %>% 
+  head()
+```
+
+
+## 연속형 변수 &rarr; 범주형 변수 - 분위수(`quantile`) {#categorical-numerical-to-categorical-quantile}
+
+연속형 변수를 범주형 변수로 변환시킬 때 앞서 `cut()` 함수의 절대값을 기준으로 나누는 대신에 **분위수(quantile)**를 사용해서 나누는 것이 적절할 때가 있다. 대표적으로 일일이 사람이 보는 대신에 기계적으로 자동화를 할 경우 도움이 된다.
+
+이런 경우 `ntile()` 함수를 사용하면 관측점을 예를 들어 배기량(`displ`) 기준으로 3개 범주집단으로 동일하게 나눠준다.
+
+
+```{r mtcars-numerical-categorical-quantile}
+mpg %>% 
+  mutate(displ_tile = ntile(displ, 3) %>% as.factor) %>% 
+  select(displ_tile) %>% 
+  table()
+```
+
+`ntile()` 함수로 연속형 변수 배기량(`displ`)을 범주형 변수로 변환시킨 후에 이를 `model.matrix()` 함수로 가변수화하여 예측모형을 위한 `basetable`에 일원으로 편입시킨다.
+역행렬 변환이 가능한 `full rank`를 맞추고자 할 경우 `-1`을 빼서 넣어준다.
+
+```{r mtcars-numerical-categorical-quantile-dummy}
+mpg <- mpg %>% 
+  mutate(displ_tile = ntile(displ, 3) %>% as.factor)
+
+# mpg <- cbind(mpg, model.matrix(~ displ_tile -1, data = mpg))
+mpg <- cbind(mpg, model.matrix(~ displ_tile, data = mpg)) # full rank
+
+mpg %>% 
+  select(contains("disp")) %>% 
+  head()
+```
+
+
+
+
