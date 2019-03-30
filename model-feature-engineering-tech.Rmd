@@ -175,5 +175,102 @@ mpg %>%
 ```
 
 
+# 변수 변환 (Transformation) {#categorical-numerical-to-categorical}
 
+연속형 변수 중 치우침이 심한 변수가 많다. 이를 변수변환하여 정규분포에 가까운 형태로 맞추게 되면 예측모형의 성능 향상과 안정성을 기대할 수 있다. [^power-transformation]
 
+[^power-transformation]: [Wikipedia, "Power Transform"](https://en.wikipedia.org/wiki/Power_transform)
+
+멱변환(Power transformation)은 멱함수(power function)를 사용하여 데이터를 단조변환시키는데 이를 통해서 분산을 안정화시키고, 정규분포에 가까운 형태로 만들 수 있어 통계학에서 유용한 도구 중 하나다. 박스-콕스 변환(Box-Cox Transformation)은 Yeo–Johnson 변환과 비교하여 0 혹은 음수인 경우에 적용에 한계가 있다.
+
+$$y_i^{(\lambda)} = \begin{cases} ((y_i+1)^\lambda-1)/\lambda                      &  \text{if }\lambda \neq 0, y \geq 0 \\ 
+                                \log(y_i + 1)                                    &  \text{if }\lambda =    0, y \geq 0 \\ 
+                                -[(-y_i + 1)^{(2-\lambda)} - 1] / (2 - \lambda)  &  \text{if }\lambda \neq 2, y <    0 \\ 
+                                -\log(-y_i + 1)                                  &  \text{if }\lambda =    2, y <    0 
+                  \end{cases}
+$$
+
+`caret` 팩키지 `preProcess()` 함수에 `method="YeoJohnson"`을 통해서 한쪽으로 치우친 배기량 변수를 Yeo-Johnson 변환을 통해 치우친 분포를 바로잡을 수 있게 된다.
+
+```{r mtcars-power-transformation}
+library(caret)
+
+mpg_before <- mpg %>% 
+  ggplot(aes(x=displ)) +
+    geom_density() +
+    labs(title="변환 전 배기량")
+
+## 변수변환  
+mpg_displ <- mpg %>% 
+  select(displ)
+  
+mpg_displ_transformed <- preProcess(mpg_displ, method="YeoJohnson")
+
+mpg_df <- predict(mpg_displ_transformed, mpg)
+
+mpg_after <- mpg_df %>% 
+  ggplot(aes(x=displ)) +
+    geom_density() +
+    labs(title="변환 후 배기량")
+
+cowplot::plot_grid(mpg_before, mpg_after)
+
+```
+
+# 정규화(Normalization) {#normalization}
+
+정규화는 변수의 특성에 따라 다음과 같이 크게 세가지 경우로 정규화를 통해 변환시킨다.
+
+- 0 ~ 1 사이 범위(range): $\text{신규 생성 변수} = \frac{x - min(x)}{max(x) - min(x)}$
+    - 변수가 하한과 상한을 갖고 있고, 이상점(outlier)가 많지 않고, 일양균등분포를 갖는 경우 적절한 변환
+- 평균 중심화(Mean centering): $\text{신규 생성 변수} = x - mean(x)$
+    - 이상점이 있을 경우에도 유용하고 특히, 모형 설명에 장점이 있음.
+    - 평균 중심화는 값들을 평균을 중심으로 이동시키지만 척도(scale)는 변경시키지 않음.
+- z-점수 표준화: $\text{신규 생성 변수} = \frac{x - mean(x)}{\sigma}$
+    - 이상점이 존재하는데 변수 척도가 상이한 경우
+    - 척도(scale)를 단위 분산으로 조정함.
+
+## 정규화 - 범위(`range`) {#normalization-range}
+
+가장 먼저 `range`를 통해 배기량(`displ`) 척도를 0 -- 1 사이로 조정시킨다.    
+    
+```{r mtcars-scale-range}    
+mpg_displ_range <- preProcess(mpg_displ, method="range")
+
+mpg_df <- predict(mpg_displ_range, mpg)
+
+mpg_df %>% 
+  select(displ) %>% 
+  bind_cols(mpg %>% select(displ)) %>% 
+  summary()
+```
+
+## 정규화 - 평균 중심화(`center`)  {#normalization-center}
+
+평균 중심화(mean centering)을 `preProcess` 함수 `center`를 통해 배기량(`displ`) 변수를 평균이 0을 중심으로 값들을 변환시킨다.
+    
+```{r mtcars-scale-center}    
+mpg_displ_center <- preProcess(mpg_displ, method="center")
+
+mpg_df <- predict(mpg_displ_center, mpg)
+
+mpg_df %>% 
+  select(displ) %>% 
+  bind_cols(mpg %>% select(displ)) %>% 
+  summary()
+```
+
+## 정규화 - Z-변환  {#normalization-z-변환}
+
+z-점수 표준화를 `preProcess` 함수 `c("center", "scale")` 콤보를 통해 배기량(`displ`) 변수를 평균이 0, 분산이 1인 값들로 변환시킨다.
+    
+```{r mtcars-scale-center-unit}    
+mpg_displ_z_tranform <- preProcess(mpg_displ, c("center", "scale"))
+
+mpg_df <- predict(mpg_displ_z_tranform, mpg)
+
+mpg_df %>% 
+  select(displ) %>% 
+  bind_cols(mpg %>% select(displ)) %>% 
+  summary()
+```
