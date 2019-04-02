@@ -1,0 +1,53 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 피처 공학 - 선택 혹은 추출
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+```{r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+```
+
+
+# Feature 선택 혹은 추출 [^feature-engineering] {#feature-selection-extraction}
+
+[^feature-engineering]: [Max Kuhn and Kjell Johnson, (2019-02-22), "Feature Engineering and Selection: A Practical Approach for Predictive Models"](http://www.feat.engineering/index.html)
+
+Feature를 선택하는 것과 Feature를 추출하는 것은 다른 얘기가 된다.
+Feature를 선택하는 것을 `feature seleciton`, Feature를 추출하는 것은 `feature extraction`으로 피처 선택의 사례로 다양한 변수 선택기법을 들 수 있고, 피처 추출 사례로 주성분 분석(PCA)를 예로 들면 이해가 쉬을 듯 싶다.
+
+# Feature 선택 {#feature-selection}
+
+[미군 신체측정 데이터셋(Anthropometric Survey of US Army Personnel, ANSUR 2)](http://www.openlab.psu.edu/ansur2/)은 2012년 내부에 공개되었고 2017년에 대중에 공개되었다. 
+총 6,000명 군인(남자 4,082, 여자 1,986)에 대한 측정정보를 담고 있다.
+
+
+```{r ansur-dataset}
+library(tidyverse)
+male_dat <- read_csv("http://tools.openlab.psu.edu/publicData/ANSUR_II_MALE_Public.csv")
+female_dat <- read_csv("http://tools.openlab.psu.edu/publicData/ANSUR_II_MALE_Public.csv")
+
+soldier_dat <- bind_rows(male_dat, female_dat)
+
+soldier_dat %>% write_rds("data/soldier_dat.rds")
+
+```
+
+
+
+
+
