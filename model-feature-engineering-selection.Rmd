@@ -20,6 +20,8 @@ source("tools/chunk-options.R")
 
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
                       comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(tidyverse)
 ```
 
 
@@ -30,24 +32,160 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 Feature를 선택하는 것과 Feature를 추출하는 것은 다른 얘기가 된다.
 Feature를 선택하는 것을 `feature seleciton`, Feature를 추출하는 것은 `feature extraction`으로 피처 선택의 사례로 다양한 변수 선택기법을 들 수 있고, 피처 추출 사례로 주성분 분석(PCA)를 예로 들면 이해가 쉬을 듯 싶다.
 
-# Feature 선택 {#feature-selection}
+## 데이터셋 - 미군 신체측정 {#feature-selection-dataset}
 
 [미군 신체측정 데이터셋(Anthropometric Survey of US Army Personnel, ANSUR 2)](http://www.openlab.psu.edu/ansur2/)은 2012년 내부에 공개되었고 2017년에 대중에 공개되었다. 
 총 6,000명 군인(남자 4,082, 여자 1,986)에 대한 측정정보를 담고 있다.
 
-
-```{r ansur-dataset}
+```{r ansur-dataset, eval=FALSE}
 library(tidyverse)
 male_dat <- read_csv("http://tools.openlab.psu.edu/publicData/ANSUR_II_MALE_Public.csv")
-female_dat <- read_csv("http://tools.openlab.psu.edu/publicData/ANSUR_II_MALE_Public.csv")
+female_dat <- read_csv("http://tools.openlab.psu.edu/publicData/ANSUR_II_FEMALE_Public.csv")
 
 soldier_dat <- bind_rows(male_dat, female_dat)
 
 soldier_dat %>% write_rds("data/soldier_dat.rds")
+```
 
+다운로드 받은 남녀 데이터를 결합하여 남자군인, 여자군인을 분류하는데 사용되는 `X` 설계행렬을 추출한다.
+
+```{r ansur-dataset-filter}
+soldier_dat <- read_rds("data/soldier_dat.rds")
+
+soldier_X_df <- soldier_dat %>% 
+  select(-c("subjectid","SubjectId", "Gender", "Date", "Installation",  "Component", "Branch", "PrimaryMOS", "SubjectsBirthLocation",  "SubjectNumericRace", "Ethnicity", "DODRace", "Age", "Heightin", "Weightlbs", "WritingPreference"))
+
+soldier_X_df
+```
+
+# 변수 선택 {#feature-selection}
+
+## 결측점 {#feature-selection-missing-value}
+
+Feature 선택에 있어 가장 먼저 결측점이 있는지 파악하고 각 feature별로 결측점 비율을 파악해서 특정 결측비율이상되면 제외시키도록한다.
+
+가장 먼저 데이터프레임 변수별로 결측값이 있는 다음 무명함수로 확인한다.
+
+```{r feature-selection-missing}
+soldier_X_df %>% 
+   select_if(function(x) any(is.na(x))) 
+```
+
+결측값 갯수를 각 변수별로 산출하고 이를 데이터프레임으로 변환시킨다.
+다행히 결측값은 하나도 없는 것으로 판정되어 제거할 feature도 없다.
+
+```{r feature-selection-missing-check}
+soldier_na_vec <- sapply(soldier_X_df, function(y) sum(length(which(is.na(y)))))
+soldier_na_df  <- tibble(na_cnt = soldier_na_vec)
+
+soldier_na_df %>% 
+  mutate(na_pcnt = na_cnt / nrow(soldier_na_df) * 100) %>% 
+  arrange(desc(na_pcnt))
+```
+
+## 산포 거의 0 {#feature-selection-variance}
+
+산포가 거의 0인 변수는 의미가 없다. 따라서 각 변수 분산을 구한 후에 분산이 0 혹은 분산이 거의 0인 변수를 제거한다. 이번 경우에도 산포가 0인 변수가 없어 제거할 변수가 없다.
+
+```{r feature-selection-variance}
+soldier_X_df %>% 
+  gather(variable, value) %>% 
+  group_by(variable) %>% 
+  summarise(variance = sd(value),
+            na_cnt = sum(length(which(is.na(value))))) %>% 
+  arrange(variance)
 ```
 
 
+## 상관계수 {#feature-selection-correlation}
 
+도량형이 달라 화씨 온도를 섭씨 온도로 바꾼다든가 파운드를 KG으로 바꾸는 경우 동일한 정보를 변수를 달리하여 데이터프레임에 포함되는 경우가 있다. 이런 경우 상관계수는 0이 되고 키와 몸무게처럼 매우 상관관계가 높은 경우 BMI지수 등을 통해 따로 추출해내는 것이 여러모로 유리한 경우가 많다.
 
+`soldier_X_df` 데이터프레임은 `r ncol(soldier_X_df)` 변수로 구성되어 있어 수작업으로 일일이 상관관계를 파악하는 것은 불가능하다고 보고 `corrr` 팩키지를 사용해서 상관관계를 계산하고 상관관계가 높은 변수를 뽑아낸다.
 
+```{r feature-selection-correlation}
+library(corrr)
+soldier_X_df %>% 
+  correlate() %>% 
+  shave() %>% 
+  stretch() %>% 
+  arrange(desc(r))
+```
+
+# Feature 추출 {#feature-extraction}
+
+Feature 추출은 PCA의 사례를 통해 이해하면 쉬울 듯 싶다. 즉 기존 변수를 조합해서 신규 변수를 추출하는 것을 생각하면 될 듯 싶다.
+
+## 축소 차원 {#feature-extraction-dimension}
+
+`prcomp` 함수로 PCA를 수행하고 팔꿈치 그래프를 통해서 적절한 차원수를 결정한다.
+
+```{r feature-extraction-dimension}
+soldier_pca <- soldier_X_df %>% 
+  prcomp(scale = TRUE, center = TRUE)
+
+soldier_pca_summary <- summary(soldier_pca)
+
+soldier_pca_df <- soldier_pca_summary$importance %>% 
+  tbl_df() %>% 
+  mutate(names = rownames(soldier_pca_summary$importance)) %>% 
+  gather(PC, value, -names) %>% 
+  arrange(names, PC)
+
+soldier_pca_df %>% 
+  filter(str_detect(names, "Variance")) %>% 
+  mutate(PC_dimension = parse_number(PC)) %>% 
+  ggplot(aes(x=PC_dimension, y=value)) +
+    geom_point() +
+    geom_line()
+```
+
+## Feature 추출 {#feature-extraction-dimension-dimension}
+
+다음 단계로 정해진 차원에 맞춰 Feature를 추출한다.
+그리고 목적으로 하고 있는 예측할 변수(`Gender`)를 붙여 basetable을 구성한다.
+
+```{r feature-extraction}
+soldier_pca_X_df <- soldier_pca$x[,1:3] %>% 
+  tbl_df
+
+soldier_df <- soldier_dat %>% 
+  select(Gender) %>% 
+  bind_cols(soldier_pca_X_df)
+
+soldier_df %>% 
+  sample_n(100) %>% 
+  DT::datatable()
+```
+
+## 추출된 Feature 시각화 {#feature-extraction-dimension-viz}
+
+추출된 Feature에 대한 시각화를 수행한다.
+PC1, PC2 추출된 Feature로 남자군인과 여성군인 특성차를 나름대로 확인할 수 있다.
+
+```{r feature-extraction-viz}
+soldier_df %>% 
+  ggplot(aes(x=PC1, y=PC2, color=Gender)) +
+    geom_point(alpha=0.3)
+```
+
+## 추출된 Feature 설명 {#feature-extraction-dimension-viz-explain}
+
+추출된 Feature에 대해서 원본데이터에서 요인을 추가로 붙여 추가 설명도 가능하다.
+BMI 변수를 새로 도입하여 추가하는 것도 흥미로울 듯 싶은데, 기존에 있던 연령 정보를 활용하여 신규로 5개 연령집단으로 나눠 남녀군인을 겹쳐 추출된 Feature를 설명하는 것도 좋을 듯 싶다.
+
+```{r feature-extraction-viz-explain}
+soldier_dat %>% 
+  select(Component) %>% 
+  bind_cols(soldier_pca_X_df) %>% 
+    ggplot(aes(x=PC1, y=PC2, color=Component)) +
+    geom_point(alpha=0.3)
+
+soldier_dat %>% 
+  mutate(Age_group = ntile(Age, 5) %>% as.factor) %>% 
+  select(Gender, Age_group) %>% 
+    bind_cols(soldier_pca_X_df) %>% 
+    ggplot(aes(x=PC1, y=PC2, color=Gender)) +
+    geom_point(alpha=0.3) +
+    facet_wrap(~Age_group)
+```
