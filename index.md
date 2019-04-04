@@ -41,6 +41,7 @@ title: 데이터 과학 -- 모형
     - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
     - [피처 공학(Feature Engineering)](model-feature-engineering.html)
     - [피처 공학 기법 - 직사각형 데이터프레임](model-feature-engineering-tech.html)
+    - [피처 공학 - 선택 혹은 추출](model-feature-engineering-selection.html)
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형](tidyverse-model.html)**
@@ -86,7 +87,7 @@ title: 데이터 과학 -- 모형
 - **사기 탐지(Fraud Detection)**
     - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
     - [어노말리(Anomaly) 탐지](model-anomaly.html) 
-
+- **[파이썬 실무 예측모형](model-python-predictive-model.html)**
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
 
