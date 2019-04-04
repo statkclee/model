@@ -87,6 +87,7 @@ dry_run_nb.predict(features.head(5))
 
 ## 시운전 예측모형 평가 {#ansur-feature-skeleton-dryrun}
 
+`train_test_split`으로 훈련/시험 데이터로 쪼개고 `RandomForestClassifier`를 추가해서 두가지 예측모형의 성능을 비교할 수 있는 `accuracy_score` 함수로 측정한다.
 
 ```{python ansur-feature-pm-skeleton-dryrun}
 from sklearn.model_selection import train_test_split
@@ -114,9 +115,86 @@ nb_predictions = nb_model.predict(X_test)
 accuracies['Naive Bayes'] = accuracy_score(y_test, nb_predictions)
 
 accuracies
-
 ```
 
 
+# 예측모형 후처리 [^hyper-paramter] {#ansur-pm-tuning}
 
+[^hyper-paramter]: [Will Koehrsen(Jan 10, 2018), "Hyperparameter Tuning the Random Forest in Python"](https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74)
 
+## 초모수 튜닝 {#ansur-pm-tuning-hyper-parameter}
+
+Random Forest 예측모형은 초모수(hyper parameter)를 탐색하여 예측모형의 성능을 추가로 더 끌어올릴 수 있다. 이를 위해서 랜덤탐색(random search)도 있고, 격자탐색(grid search)도 더불어 많이 사용된다.   
+
+<img src="fig/hypter-parameter.png" alt="초모수 튜닝" width="55%" />
+
+`RandomForestClassifier`, Random Forest 모형의 경우 다음 초모수가 성능에 영향을 미치는 것으로 연구결과가 공개되어 있다.
+
+- n_estimators = 의사결정나무 갯수
+- max_features = 노드를 쪼갤 때 고려되는 최대 feature 갯수
+- max_depth = 각 의사결정나무 최대 깊이
+
+```{python ansur-hyper-paramter}
+from pprint import pprint
+
+print('기본설정 디폴트 모형에 사용된 모수 목록:\n')
+pprint(rf_model.get_params())
+```
+
+Random Forest 예측모형에 가장 영향을 많이 미치는 초모수 3개에 대해서 아래와 같이 값을 부여하고, `param_grid`를 통해 격자탐색을 작업을 수행하여 최적모수를 찾아낸다.
+
+```{python ansur-hyper-paramter-fit}
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {'n_estimators' : list(range(10, 50, 10)),
+              'max_features' : ['auto', 'sqrt'],
+              'max_depth'    : list(range(2, 10, 2))}
+
+grid = GridSearchCV(RandomForestClassifier(), param_grid, cv=3)
+grid.fit(X_train, y_train)
+grid.best_params_
+```
+
+`grid.best_params_` 딕셔너리에는 최적화된 초모수가 포함되어 있다. 해당 값들을 꺼내 초모수에 넣어 Random Forest 모형에 넣어 다시 훈련데이터에 적합시키게 되면 예측모형의 성능이 소폭 향상된 것을 확인할 수 있다.
+
+```{python ansur-hyper-paramter-fit-refit}
+rf_hyper_model = RandomForestClassifier(n_estimators = grid.best_params_['n_estimators'],
+                                        max_features = grid.best_params_['max_features'],
+                                        max_depth    = grid.best_params_['max_depth']).fit(X_train, y_train)
+
+rf_hyper_predictions = rf_hyper_model.predict(X_test)
+accuracies['rf hyper parameter'] = accuracy_score(y_test, rf_hyper_predictions)
+
+accuracies
+```
+
+## 변수선택 {#ansur-pm-tuning-feature-selection}
+
+`SelectKBest`를 통해 예측에 효과가 큰 feature를 추출해낸다. 앞서 선택된 초모수를 함께 넣어 예측모형을 만들어낸다. 가장 영향력이 큰 feature 30개를 대상으로 예측모형 성능을 평가한다.
+
+```{python ansur-feature-selection}
+from sklearn.feature_selection import SelectKBest, f_classif
+
+select_k_best_classifier = SelectKBest(f_classif, k='all').fit(X_train, y_train)
+
+rf_selectK_model = RandomForestClassifier(n_estimators = grid.best_params_['n_estimators'],
+                                        max_features = grid.best_params_['max_features'],
+                                        max_depth    = grid.best_params_['max_depth']).fit(select_k_best_classifier.transform(X_train), y_train)
+
+rf_selectK_predictions = rf_selectK_model.predict(X_test)
+accuracies['rf hyper selectK'] = accuracy_score(y_test, rf_selectK_predictions)
+
+accuracies
+```
+
+`SelectKBest`를 통해 어떤 feature가 추출되었는지 살펴본다. 먼저 매스크(mask)를 생성시키고 성성된 매스크를 넣어 변수명과 함께 확인할 수 있도록 코드를 작성한다.
+
+```{python ansur-feature-selection-bestK}
+
+mask = select_k_best_classifier.get_support() # 부울값 리스트
+
+best_features = X_train.columns[mask]        
+        
+print("Feature 총계:", len(best_features), "\n",  "선택된 30개 feature:", best_features)
+        
+```        
