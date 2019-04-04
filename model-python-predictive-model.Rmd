@@ -27,9 +27,96 @@ use_condaenv("anaconda3")
 ```
 
 
-# 예측모형 {#maria-db}
+# 데이터와 모형정의 {#ansur-dataset-model}
 
-```{python hello-python}
-print("...hello")
+## 데이터셋 - ANSUR II {#ansur-dataset}
+
+[미군 신체측정 데이터셋(Anthropometric Survey of US Army Personnel, ANSUR 2)](http://www.openlab.psu.edu/ansur2/)은 2012년 내부에 공개되었고 2017년에 대중에 공개되었다. 
+총 6,000명 군인(남자 4,082, 여자 1,986)에 대한 측정정보를 담고 있다. 실제 데이터를 받아보면 6,068명 행으로 되어있고, 108 칼럼으로 구성되어 있다. R에서 불필요하다고 판단되는 변수를 일부 제고하고 남은 99개 변수를 대상으로 예측모형 구축작업을 수행해 나간다.
+
+`pd.read_csv()` 함수로 데이터프레임으로 불러온 후에 `.shape`, `.dtypes`, `.head` 를 사용해서 데이터프레임과 친숙해진다.
+
+```{python ansur-python}
+import pandas as pd
+
+ansur_pd = pd.read_csv("data/soldier_df.csv")
+
+ansur_pd.shape
+
+ansur_pd.dtypes
+
+ansur_pd.head(3)
 ```
+
+## 모형정의 {#ansur-pm}
+
+데이터에 대한 확인이 되었으면 다음으로 모형을 정의한다. 즉, 남성과 여성이 Label 이 되고, 남성과 여성을 신체특성 변수 feature로 예측하는 모형이다.
+
+$$\text{남자 혹은 여자} = f(x_1 , x_2 , \cdots, x_n) + \epsilon$$
+
+# 예측모형 시운전(Dry-Run) {#ansur-pm-dry-run}
+
+## Feature 공학 {#ansur-feature}
+
+데이터프레임에서 범주형 변수로 정의한 칼럼명을 리스트로 정의한 후에 `LabelEncoder`를 사용해서 예측모형에서 사용할 수 있는 형태로 변환시킨다.
+
+```{python ansur-feature}
+from sklearn.preprocessing import LabelEncoder
+
+category_columns = ["Gender", "Component", "Branch", "DODRace", "WritingPreference"]
+
+for column in category_columns:
+    le = LabelEncoder()
+    ansur_pd[column] = le.fit_transform(ansur_pd[column])
+
+print(ansur_pd.dtypes)
+```
+
+## 시운전 예측모형 {#ansur-feature-skeleton}
+
+`BernoulliNB` 나이브 베이즈모형을 신체측정 feature를 바탕으로 시운전 개념으로 적합시켜본다.
+
+```{python ansur-feature-pm-skeleton}
+from sklearn.naive_bayes import BernoulliNB
+
+features, labels = ansur_pd.drop('Gender', 1), ansur_pd['Gender']
+dry_run_nb = BernoulliNB() 
+dry_run_nb.fit(features, labels) 
+dry_run_nb.predict(features.head(5))
+```
+
+## 시운전 예측모형 평가 {#ansur-feature-skeleton-dryrun}
+
+
+```{python ansur-feature-pm-skeleton-dryrun}
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# 성능비교를 위한 딕셔너리
+accuracies = {}
+
+X_train, X_test, y_train, y_test = train_test_split(
+  features, labels, test_size = 0.3, random_state=7)
+
+# Random Forest ------------------------------
+rf_model = RandomForestClassifier(random_state = 77).fit(
+  X_train, y_train)
+
+rf_predictions = rf_model.predict(X_test)
+accuracies['rf'] = accuracy_score(y_test, rf_predictions)
+
+# 나이브베이즈 ------------------------------
+nb_model = BernoulliNB().fit(
+  X_train, y_train)
+
+nb_predictions = nb_model.predict(X_test)
+accuracies['Naive Bayes'] = accuracy_score(y_test, nb_predictions)
+
+accuracies
+
+```
+
+
+
 

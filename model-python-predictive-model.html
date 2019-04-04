@@ -370,10 +370,213 @@ div.tocify {
 </div>
 
 
-<div id="maria-db" class="section level1">
-<h1><span class="header-section-number">1</span> 예측모형</h1>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="bu">print</span>(<span class="st">&quot;...hello&quot;</span>)</code></pre></div>
-<pre><code>...hello</code></pre>
+<div id="ansur-dataset-model" class="section level1">
+<h1><span class="header-section-number">1</span> 데이터와 모형정의</h1>
+<div id="ansur-dataset" class="section level2">
+<h2><span class="header-section-number">1.1</span> 데이터셋 - ANSUR II</h2>
+<p><a href="http://www.openlab.psu.edu/ansur2/">미군 신체측정 데이터셋(Anthropometric Survey of US Army Personnel, ANSUR 2)</a>은 2012년 내부에 공개되었고 2017년에 대중에 공개되었다. 총 6,000명 군인(남자 4,082, 여자 1,986)에 대한 측정정보를 담고 있다. 실제 데이터를 받아보면 6,068명 행으로 되어있고, 108 칼럼으로 구성되어 있다. R에서 불필요하다고 판단되는 변수를 일부 제고하고 남은 99개 변수를 대상으로 예측모형 구축작업을 수행해 나간다.</p>
+<p><code>pd.read_csv()</code> 함수로 데이터프레임으로 불러온 후에 <code>.shape</code>, <code>.dtypes</code>, <code>.head</code> 를 사용해서 데이터프레임과 친숙해진다.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> pandas <span class="im">as</span> pd
+
+ansur_pd <span class="op">=</span> pd.read_csv(<span class="st">&quot;data/soldier_df.csv&quot;</span>)
+
+ansur_pd.shape</code></pre></div>
+<pre><code>(6068, 99)</code></pre>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">ansur_pd.dtypes</code></pre></div>
+<pre><code>abdominalextensiondepthsitting     int64
+acromialheight                     int64
+acromionradialelength              int64
+anklecircumference                 int64
+axillaheight                       int64
+balloffootcircumference            int64
+balloffootlength                   int64
+biacromialbreadth                  int64
+bicepscircumferenceflexed          int64
+bicristalbreadth                   int64
+bideltoidbreadth                   int64
+bimalleolarbreadth                 int64
+bitragionchinarc                   int64
+bitragionsubmandibulararc          int64
+bizygomaticbreadth                 int64
+buttockcircumference               int64
+buttockdepth                       int64
+buttockheight                      int64
+buttockkneelength                  int64
+buttockpopliteallength             int64
+calfcircumference                  int64
+cervicaleheight                    int64
+chestbreadth                       int64
+chestcircumference                 int64
+chestdepth                         int64
+chestheight                        int64
+crotchheight                       int64
+crotchlengthomphalion              int64
+crotchlengthposterioromphalion     int64
+earbreadth                         int64
+                                   ...  
+shoulderlength                     int64
+sittingheight                      int64
+sleevelengthspinewrist             int64
+sleeveoutseam                      int64
+span                               int64
+stature                            int64
+suprasternaleheight                int64
+tenthribheight                     int64
+thighcircumference                 int64
+thighclearance                     int64
+thumbtipreach                      int64
+tibialheight                       int64
+tragiontopofhead                   int64
+trochanterionheight                int64
+verticaltrunkcircumferenceusa      int64
+waistbacklength                    int64
+waistbreadth                       int64
+waistcircumference                 int64
+waistdepth                         int64
+waistfrontlengthsitting            int64
+waistheightomphalion               int64
+weightkg                           int64
+wristcircumference                 int64
+wristheight                        int64
+Gender                            object
+Component                         object
+Branch                            object
+DODRace                            int64
+Age                                int64
+WritingPreference                 object
+Length: 99, dtype: object</code></pre>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">ansur_pd.head(<span class="dv">3</span>)</code></pre></div>
+<pre><code>   abdominalextensiondepthsitting        ...          WritingPreference
+0                             266        ...                 Right hand
+1                             233        ...                  Left hand
+2                             287        ...                  Left hand
+
+[3 rows x 99 columns]</code></pre>
+</div>
+<div id="ansur-pm" class="section level2">
+<h2><span class="header-section-number">1.2</span> 모형정의</h2>
+<p>데이터에 대한 확인이 되었으면 다음으로 모형을 정의한다. 즉, 남성과 여성이 Label 이 되고, 남성과 여성을 신체특성 변수 feature로 예측하는 모형이다.</p>
+<p><span class="math display">\[\text{남자 혹은 여자} = f(x_1 , x_2 , \cdots, x_n) + \epsilon\]</span></p>
+</div>
+</div>
+<div id="ansur-pm-dry-run" class="section level1">
+<h1><span class="header-section-number">2</span> 예측모형 시운전(Dry-Run)</h1>
+<div id="ansur-feature" class="section level2">
+<h2><span class="header-section-number">2.1</span> Feature 공학</h2>
+<p>데이터프레임에서 범주형 변수로 정의한 칼럼명을 리스트로 정의한 후에 <code>LabelEncoder</code>를 사용해서 예측모형에서 사용할 수 있는 형태로 변환시킨다.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> LabelEncoder
+
+category_columns <span class="op">=</span> [<span class="st">&quot;Gender&quot;</span>, <span class="st">&quot;Component&quot;</span>, <span class="st">&quot;Branch&quot;</span>, <span class="st">&quot;DODRace&quot;</span>, <span class="st">&quot;WritingPreference&quot;</span>]
+
+<span class="cf">for</span> column <span class="kw">in</span> category_columns:
+    le <span class="op">=</span> LabelEncoder()
+    ansur_pd[column] <span class="op">=</span> le.fit_transform(ansur_pd[column])
+
+<span class="bu">print</span>(ansur_pd.dtypes)</code></pre></div>
+<pre><code>abdominalextensiondepthsitting    int64
+acromialheight                    int64
+acromionradialelength             int64
+anklecircumference                int64
+axillaheight                      int64
+balloffootcircumference           int64
+balloffootlength                  int64
+biacromialbreadth                 int64
+bicepscircumferenceflexed         int64
+bicristalbreadth                  int64
+bideltoidbreadth                  int64
+bimalleolarbreadth                int64
+bitragionchinarc                  int64
+bitragionsubmandibulararc         int64
+bizygomaticbreadth                int64
+buttockcircumference              int64
+buttockdepth                      int64
+buttockheight                     int64
+buttockkneelength                 int64
+buttockpopliteallength            int64
+calfcircumference                 int64
+cervicaleheight                   int64
+chestbreadth                      int64
+chestcircumference                int64
+chestdepth                        int64
+chestheight                       int64
+crotchheight                      int64
+crotchlengthomphalion             int64
+crotchlengthposterioromphalion    int64
+earbreadth                        int64
+                                  ...  
+shoulderlength                    int64
+sittingheight                     int64
+sleevelengthspinewrist            int64
+sleeveoutseam                     int64
+span                              int64
+stature                           int64
+suprasternaleheight               int64
+tenthribheight                    int64
+thighcircumference                int64
+thighclearance                    int64
+thumbtipreach                     int64
+tibialheight                      int64
+tragiontopofhead                  int64
+trochanterionheight               int64
+verticaltrunkcircumferenceusa     int64
+waistbacklength                   int64
+waistbreadth                      int64
+waistcircumference                int64
+waistdepth                        int64
+waistfrontlengthsitting           int64
+waistheightomphalion              int64
+weightkg                          int64
+wristcircumference                int64
+wristheight                       int64
+Gender                            int64
+Component                         int64
+Branch                            int64
+DODRace                           int64
+Age                               int64
+WritingPreference                 int64
+Length: 99, dtype: object</code></pre>
+</div>
+<div id="ansur-feature-skeleton" class="section level2">
+<h2><span class="header-section-number">2.2</span> 시운전 예측모형</h2>
+<p><code>BernoulliNB</code> 나이브 베이즈모형을 신체측정 feature를 바탕으로 시운전 개념으로 적합시켜본다.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.naive_bayes <span class="im">import</span> BernoulliNB
+
+features, labels <span class="op">=</span> ansur_pd.drop(<span class="st">'Gender'</span>, <span class="dv">1</span>), ansur_pd[<span class="st">'Gender'</span>]
+dry_run_nb <span class="op">=</span> BernoulliNB() 
+dry_run_nb.fit(features, labels) </code></pre></div>
+<pre><code>BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)</code></pre>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">dry_run_nb.predict(features.head(<span class="dv">5</span>))</code></pre></div>
+<pre><code>array([1, 1, 0, 1, 0])</code></pre>
+</div>
+<div id="ansur-feature-skeleton-dryrun" class="section level2">
+<h2><span class="header-section-number">2.3</span> 시운전 예측모형 평가</h2>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split
+<span class="im">from</span> sklearn.ensemble <span class="im">import</span> RandomForestClassifier
+<span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score
+
+<span class="co"># 성능비교를 위한 딕셔너리</span>
+accuracies <span class="op">=</span> {}
+
+X_train, X_test, y_train, y_test <span class="op">=</span> train_test_split(
+  features, labels, test_size <span class="op">=</span> <span class="fl">0.3</span>, random_state<span class="op">=</span><span class="dv">7</span>)
+
+<span class="co"># Random Forest ------------------------------</span>
+rf_model <span class="op">=</span> RandomForestClassifier(random_state <span class="op">=</span> <span class="dv">77</span>).fit(
+  X_train, y_train)
+
+rf_predictions <span class="op">=</span> rf_model.predict(X_test)
+accuracies[<span class="st">'rf'</span>] <span class="op">=</span> accuracy_score(y_test, rf_predictions)
+
+<span class="co"># 나이브베이즈 ------------------------------</span>
+nb_model <span class="op">=</span> BernoulliNB().fit(
+  X_train, y_train)
+
+nb_predictions <span class="op">=</span> nb_model.predict(X_test)
+accuracies[<span class="st">'Naive Bayes'</span>] <span class="op">=</span> accuracy_score(y_test, nb_predictions)
+
+accuracies</code></pre></div>
+<pre><code>{'rf': 0.9912136188907194, 'Naive Bayes': 0.6924766611751785}</code></pre>
+</div>
 </div>
 
 
