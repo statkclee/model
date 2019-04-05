@@ -484,14 +484,11 @@ grid_cost_pipeline <span class="op">=</span> GridSearchCV(ansur_pipe, param_grid
 <p><code>ansur_deploy_model</code> 예측모형을 <code>data/ansur_rf_model.pkl</code> 파일명으로 저장시킨다.</p>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> pickle
 
-ansur_rf_model <span class="op">=</span> grid_cost_pipeline.fit(X_train, y_train)
-
-ansur_deploy_model <span class="op">=</span> RandomForestClassifier(n_estimators <span class="op">=</span> ansur_rf_model.best_params_[<span class="st">'rf__n_estimators'</span>],
-                                        max_features <span class="op">=</span> ansur_rf_model.best_params_[<span class="st">'rf__max_features'</span>],
-                                        max_depth    <span class="op">=</span> ansur_rf_model.best_params_[<span class="st">'rf__max_depth'</span>]).fit(X_train, y_train)
+ansur_deploy_model <span class="op">=</span> grid_cost_pipeline.fit(X_train, y_train)
 
 <span class="cf">with</span> <span class="bu">open</span>(<span class="st">'data/ansur_rf_model.pkl'</span>, <span class="st">'wb'</span>) <span class="im">as</span> <span class="bu">file</span>:
-    pickle.dump(ansur_deploy_model, <span class="bu">file</span><span class="op">=</span><span class="bu">file</span>)</code></pre></div>
+    pickle.dump(ansur_deploy_model, <span class="bu">file</span><span class="op">=</span><span class="bu">file</span>)
+    </code></pre></div>
 <p><code>pickle</code> 모듈을 사용해서 <code>data/ansur_rf_model.pkl</code> 이름으로 예측모형 객체를 <code>ansur_deploy_model</code>을 메모리에서 끌어내려 하드디스크에 저장시킨다.</p>
 <p>이를 다음 명령어로 확인할 수 있다.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dir</span>(<span class="st">&quot;data/&quot;</span>, <span class="dt">pattern=</span><span class="st">&quot;*.pkl&quot;</span>)</code></pre></div>

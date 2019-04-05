@@ -156,14 +156,11 @@ print("비용 점수: ", grid_cost_pipeline.fit(X_train, y_train).best_params_)
 ```{python ansur-deployment}
 import pickle
 
-ansur_rf_model = grid_cost_pipeline.fit(X_train, y_train)
-
-ansur_deploy_model = RandomForestClassifier(n_estimators = ansur_rf_model.best_params_['rf__n_estimators'],
-                                        max_features = ansur_rf_model.best_params_['rf__max_features'],
-                                        max_depth    = ansur_rf_model.best_params_['rf__max_depth']).fit(X_train, y_train)
+ansur_deploy_model = grid_cost_pipeline.fit(X_train, y_train)
 
 with open('data/ansur_rf_model.pkl', 'wb') as file:
     pickle.dump(ansur_deploy_model, file=file)
+    
 ```
 
 `pickle` 모듈을 사용해서 `data/ansur_rf_model.pkl` 이름으로 예측모형 객체를 `ansur_deploy_model`을 메모리에서 끌어내려 하드디스크에 저장시킨다.
