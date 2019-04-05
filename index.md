@@ -87,7 +87,10 @@ title: 데이터 과학 -- 모형
 - **사기 탐지(Fraud Detection)**
     - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
     - [어노말리(Anomaly) 탐지](model-anomaly.html) 
-- **[파이썬 실무 예측모형](model-python-predictive-model.html)**
+- **파이썬 실무 예측모형**
+    - [파이썬 예측모형 - 시운전(Dry-Run)](model-python-predictive-model.html)
+    - [파이썬 예측모형 - 생애주기(lifecycle)](model-python-predictive-model-lifecycle.html)
+
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
 

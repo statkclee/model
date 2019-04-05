@@ -1,7 +1,7 @@
 ---
 layout: page
-title: "데이터 사이언스를 위한 소프트웨어 공학"
-subtitle: "데이터 과학 -- 모형"
+title: "데이터 과학 -- 모형"
+subtitle: "파이썬 예측모형 - 시운전(Dry-Run)"
 author:
     name: xwMOOC
 date: "`r Sys.Date()`"
