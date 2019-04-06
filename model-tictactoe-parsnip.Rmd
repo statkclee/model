@@ -1,0 +1,30 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: 틱택토(Tic-Tac-Toe) - `parsnip`
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+```{r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+```
+
+
+# Feature 선택 혹은 추출 [^feature-engineering] {#feature-selection-extraction}
+
+
+
+

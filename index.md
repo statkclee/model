@@ -51,6 +51,7 @@ title: 데이터 과학 -- 모형
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
     - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
+    - [틱택토(Tic-Tac-Toe) - `parsnip`](model-tictactoe-parsnip.html) 
 - **[GDPR - 모형 설명](model-explain.html)**
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
         - [연속형 변수 - 회귀모형](model-gdpr-regression.html)
