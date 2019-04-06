@@ -23,7 +23,64 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 ```
 
 
-# Feature 선택 혹은 추출 [^feature-engineering] {#feature-selection-extraction}
+# 틱택토 게임 데이터 {#tic-tac-toe-game-data}
+
+[tic-tac-toe](https://github.com/datasets/tic-tac-toe) 게임에 대한 결과가 깔끔하게 정리되어 있다.
+feature는 9개로 구성되어 있고, 라벨은 `class`로 승리/패배로 구성되어 있다.
+전형적인 예측모형 문제로, 9개의 변수로 틱택토 게임 승패를 예측하는 기계학습 모형을 구축하기 적합한 데이터셋이다.
+
+- TL : top left square {x,o,b}
+- TM : top middle square {x,o,b}
+- TR : top right square {x,o,b}
+- ML : middle left square {x,o,b}
+- MM : middle middle square {x,o,b}
+- MR : middle right square {x,o,b}
+- BL : bottom left square {x,o,b}
+- BM : bottom middle square {x,o,b}
+- BR : bottom right square {x,o,b}
+- class : 
+    - true: x 승리
+    - false: x 패배
+
+```{r tic-tac-toe-game-dataset}
+library(tidyverse)
+
+ttt_df <- read_csv("https://raw.githubusercontent.com/datasets/tic-tac-toe/master/data/tic-tac-toe.csv")
+
+DT::datatable(ttt_df)
+```
+
+
+# `parsnip` 예측모형 {#tic-tac-toe-parsnip}
+
+`caret`, `mlr` 이후 새롭게 개발되고 있는 `parsnip` 팩키지를 활용하여 간결하고 담백하게 틱택토 예측모형을 개발해 본다.
+
+```{r ttt-parsnip}
+library(parsnip)
+library(tidymodels)
+
+# feature 공학
+ttt_df <- ttt_df %>% 
+  mutate(class = as.factor(class))
+
+# 데이터 분할: 훈련/시험
+ttt_split <- initial_split(ttt_df, props = 7/10)
+
+ttt_train <- training(ttt_split)
+ttt_test  <- testing(ttt_split)
+
+# 예측모형 적합
+ttt_rf <- rand_forest(trees = 1000, mtry = round(sqrt(ncol(ttt_df)-1),0), mode = "classification") %>%
+  set_engine("ranger", seed = 63233) %>% 
+  fit(class ~ ., data = ttt_train)
+
+# 예측모형 성능평가
+ttt_rf_prob  <- predict(ttt_rf, ttt_test, type="prob")
+ttt_rf_class <- ifelse(ttt_rf_prob[,2] > .6, TRUE, FALSE) %>% as.factor
+
+caret::confusionMatrix(ttt_rf_class, ttt_test$class)
+
+```
 
 
 
