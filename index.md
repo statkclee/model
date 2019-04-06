@@ -91,6 +91,7 @@ title: 데이터 과학 -- 모형
 - **파이썬 실무 예측모형**
     - [파이썬 예측모형 - 시운전(Dry-Run)](model-python-predictive-model.html)
     - [파이썬 예측모형 - 생애주기(lifecycle)](model-python-predictive-model-lifecycle.html)
+    - [파이썬 예측모형 - 교차검증(cross-validation)](model-python-cross-validation.html)
 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)

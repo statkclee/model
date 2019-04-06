@@ -1,0 +1,197 @@
+---
+layout: page
+title: "데이터 과학 -- 모형"
+subtitle: "파이썬 예측모형 - 교차검증(cross-validation)"
+author:
+    name: xwMOOC
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+library(reticulate)
+use_condaenv("anaconda3")
+# reticulate::repl_python()
+```
+
+
+# 틱택토 예측모형 시운전 {#ttt-dry-run}
+
+틱택토(tic-tac-toe) 데이터셋을 GitHub에서 불러와서 One-Hot 인코딩으로 피처공학 기법을 적용하여 준비를 한 뒤에 
+`RandomForestClassifier` 모형으로 승부를 예측한다.
+
+```{python ttt-python}
+# 예측모형 관련 모듈 불러오기
+import pandas as pd # 데이터셋
+from sklearn.preprocessing import LabelEncoder # Feature 공학
+from sklearn.model_selection import train_test_split # 훈련/시험 데이터셋 분할
+from sklearn.feature_selection import SelectKBest, f_classif # 변수선택
+from sklearn.ensemble import RandomForestClassifier # 예측모형
+from sklearn.metrics import accuracy_score # 성능측정
+from sklearn.model_selection import GridSearchCV # 초모수 탐색
+from sklearn.pipeline import Pipeline # 파이프라인
+from sklearn.metrics import f1_score, make_scorer # 평가지표
+from sklearn.metrics import confusion_matrix # 비용 오차행렬
+
+# 원본 데이터 가져오기
+ttt_pd = pd.read_csv("https://raw.githubusercontent.com/datasets/tic-tac-toe/master/data/tic-tac-toe.csv")
+
+# 피처 공학 
+ttt_pd = pd.get_dummies(ttt_pd)
+
+# 예측변수와 Label 구분, 훈련/시험 데이터 분할
+features, labels = ttt_pd.drop('class', 1), ttt_pd['class']
+
+X_train, X_test, y_train, y_test = train_test_split(
+  features, labels, test_size = 0.3, random_state=7)
+
+# 성능비교를 위한 딕셔너리
+accuracies = {}
+
+# Random Forest ------------------------------
+rf_model = RandomForestClassifier(random_state = 77).fit(
+  X_train, y_train)
+
+rf_predictions = rf_model.predict(X_test)
+
+pd.Series(rf_predictions).value_counts()
+
+accuracies['rf'] = accuracy_score(y_test, rf_predictions)
+
+accuracies
+```
+
+예측모형이 `X_test`를 바탕으로 시험데이터(`y_test`)를 예측하여 정확도를 파악한다.
+
+```{python ttt-metrics}
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+model_metrics = {}
+
+model_metrics['rf: 정확도'] = accuracy_score(y_test, rf_predictions)
+model_metrics['rf: Precision'] = precision_score(y_test, rf_predictions)
+model_metrics['rf: Recall'] = recall_score(y_test, rf_predictions)
+
+pd.DataFrame([model_metrics])
+```
+
+혼동행렬(confusion matrix)를 `confusion_matrix()` 함수를 사용해서 예측모형이 정확히 예측한 것과 오차가 생긴 곳을 비교할 수 있다.
+
+```{python ttt-confusion-matrix}
+from sklearn.metrics import confusion_matrix
+
+ttt_cm = confusion_matrix(y_test, rf_predictions)
+print(ttt_cm)
+```
+
+
+# 초모수와 예측모형 성능 {#ttt-hyper-parameter}
+
+초모수와 예측모형 성능을 산출해보자. 가장 먼저 random forest 예측모형의 의사결정나무 숫자를 10 부터 100까지 변화시켜서 10개 모형을 만들고 각각의 성능변화를 살펴본다.
+
+```{python ttt-hyper-parameter}
+test_scores, train_scores = [], []
+
+for i in range(10, 100, 10):
+    rf_model = RandomForestClassifier(n_estimators = i, random_state=777)
+    rf_model.fit(X_train, y_train)
+
+    train_preds = rf_model.predict(X_train)
+    test_preds  = rf_model.predict(X_test)
+
+    train_scores.append(round(accuracy_score(y_train, train_preds), 1))
+    test_scores.append(round(accuracy_score(y_test, test_preds), 1))
+
+ttt_rf_df = pd.DataFrame({'train': train_scores,
+                          'test': test_scores})
+
+ttt_rf_df
+```
+
+
+# 예측모형 초모수 임의추출 {#ttt-hyper-parameter-random}
+
+예측모형 초모수를 임의추출하여 적합시키는 예측모형을 구축해본다.
+
+```{python ttt-hyper-parameter-random}
+import random 
+
+# 의사결정나무 갯수
+n_trees = list(range(10, 100, 10))
+
+# 의사결정나무 깊이
+max_depth = [4, 8, 12, 16]
+
+# 노드당 관측점 갯수
+min_obs_split = [3, 5, 7, 9]
+
+# 최대 feature
+max_features = [3, 5, 7, 9]
+
+rf_model = rfr = RandomForestClassifier(n_estimators=random.choice(n_trees),
+                                       max_depth=random.choice(max_depth),
+                                       min_samples_split=random.choice(min_obs_split),
+                                       max_features=random.choice(max_features))
+
+rf_model.fit(X_train, y_train)
+
+train_preds = rf_model.predict(X_train)
+test_preds  = rf_model.predict(X_test)
+
+test_scores.append(round(accuracy_score(y_test, test_preds), 1))
+
+print(' 훈련 정확도: {0:.2}'.format(round(accuracy_score(y_train, train_preds), 1)), "\n",
+      '시험 정확도: {0:.2}'.format(round(accuracy_score(y_test,  test_preds), 1)), )
+```
+
+
+# 랜덤 검색(Random Search) {#ttt-hyper-parameter-random-search}
+
+`RandomizedSearchCV()` 메쏘드를 사용해서 격자탐색보다 효율적으로 최적 모수를 탐색해보자.
+
+
+```{python ttt-hyper-parameter-random-search}
+from sklearn.model_selection import RandomizedSearchCV
+
+param_list = {"n_estimators": list(range(10, 100, 10)),
+              "max_depth": [4, 8, 12, 16],
+              "max_features": [3, 5, 7, 9],
+              "min_samples_split": [3, 5, 7, 9]}
+
+rf_model = RandomForestClassifier(random_state = 777)
+
+rf_random_search = RandomizedSearchCV(
+        estimator=rf_model,
+        param_distributions = param_list,
+        n_iter = 10,
+        cv = 5,
+        scoring = make_scorer(accuracy_score))
+
+rf_random_search.fit(X_train, y_train)
+
+## 선택된 초모수
+rf_random_search.best_params_
+
+## 훈련/시험 성능
+train_preds = rf_random_search.predict(X_train)
+test_preds  = rf_random_search.predict(X_test)
+
+test_scores.append(round(accuracy_score(y_test, test_preds), 1))
+
+print(' 훈련 정확도: {0:.2}'.format(round(accuracy_score(y_train, train_preds), 1)), "\n",
+      '시험 정확도: {0:.2}'.format(round(accuracy_score(y_test,  test_preds), 1)), )
+```
+
+
