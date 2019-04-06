@@ -1,0 +1,188 @@
+---
+layout: page
+title: "데이터 과학 -- 모형"
+subtitle: "파이썬 예측모형 - 생애주기(lifecycle)"
+author:
+    name: xwMOOC
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+library(reticulate)
+use_condaenv("anaconda3")
+# reticulate::repl_python()
+```
+
+
+# 예측모형 시운전 {#ansur-dry-run}
+
+[미군 신체측정 데이터셋(Anthropometric Survey of US Army Personnel, ANSUR 2)](http://www.openlab.psu.edu/ansur2/)은 2012년 내부에 공개되었고 2017년에 대중에 공개되었다. 
+총 6,000명 군인(남자 4,082, 여자 1,986)에 대한 측정정보를 담고 있다. 실제 데이터를 받아보면 6,068명 행으로 되어있고, 108 칼럼으로 구성되어 있다. 이를 간단한 전처리 작업을 거쳐서 예측모형 데이터셋(basetable)을 구성한다.
+
+데이터에 대한 확인이 되었으면 다음으로 모형을 정의한다. 즉, 남성과 여성이 Label 이 되고, 남성과 여성을 신체특성 변수 feature로 예측하는 모형이다.
+
+$$\text{남자 혹은 여자} = f(x_1 , x_2 , \cdots, x_n) + \epsilon$$
+
+이를 쭉 붙여서 시운전(Dry-Run)하여 예측모형의 틀을 잡아본다.
+
+```{python ansur-python}
+# 예측모형 관련 모듈 불러오기
+import pandas as pd # 데이터셋
+from sklearn.preprocessing import LabelEncoder # Feature 공학
+from sklearn.model_selection import train_test_split # 훈련/시험 데이터셋 분할
+from sklearn.feature_selection import SelectKBest, f_classif # 변수선택
+from sklearn.ensemble import RandomForestClassifier # 예측모형
+from sklearn.metrics import accuracy_score # 성능측정
+from sklearn.model_selection import GridSearchCV # 초모수 탐색
+from sklearn.pipeline import Pipeline # 파이프라인
+from sklearn.metrics import f1_score, make_scorer # 평가지표
+from sklearn.metrics import confusion_matrix # 비용 오차행렬
+
+# 원본 데이터 가져오기
+ansur_pd = pd.read_csv("data/soldier_df.csv")
+
+# Feature 모형
+category_columns = ["Gender", "Component", "Branch", "DODRace", "WritingPreference"]
+
+for column in category_columns:
+    le = LabelEncoder()
+    ansur_pd[column] = le.fit_transform(ansur_pd[column])
+
+# 예측변수와 Label 구분, 훈련/시험 데이터 분할
+features, labels = ansur_pd.drop('Gender', 1), ansur_pd['Gender']
+
+X_train, X_test, y_train, y_test = train_test_split(
+  features, labels, test_size = 0.3, random_state=7)
+
+# 성능비교를 위한 딕셔너리
+accuracies = {}
+
+# Random Forest ------------------------------
+rf_model = RandomForestClassifier(random_state = 77).fit(
+  X_train, y_train)
+
+rf_predictions = rf_model.predict(X_test)
+accuracies['rf'] = accuracy_score(y_test, rf_predictions)
+
+accuracies
+```
+
+# 예측모형 파이프라인 {#ansur-pipeline}
+
+## 파이프라인 시운전 {#ansur-pipeline-dryrun}
+
+앞서 feature 공학은 완료된 것으로 가정하고 변수선택과 예측모형의 초모수를 선정하는 과정을 파이프라인으로 자동화시킨다.
+
+```{python ansur-pipeline}
+# 파이프라인 구축
+ansur_pipe = Pipeline([ 
+            ### feature 표준화 등 전처리 단계
+            ('feature_selection', SelectKBest(f_classif)),
+            ('rf', RandomForestClassifier(random_state=2))])
+
+# 초모수 격자 구축
+ansur_params = { 'feature_selection__k' : [10,20],
+           'rf__n_estimators'     : [20, 50, 100],
+           'rf__max_features'     : ['auto', 'sqrt'],
+           'rf__max_depth'        : list(range(2, 10, 2))}
+
+# 격자 탐색 초기화 - 정확도
+grid_pipeline = GridSearchCV(ansur_pipe, param_grid = ansur_params)
+
+# 최적모수(정확도) ...
+print(grid_pipeline.fit(X_train, y_train).best_params_)
+```
+
+## 정확도 외 다른 평가지표 {#ansur-pipeline-metrics}
+
+`accuracy`로 대표되는 정확도 지표 외에도 다른 예측모형 측정지표도 중요하다.
+F1점수나 ROC 곡선의 AUC값도 초모수 선정지표로 사용할 수 있다.
+
+```{python ansur-pipeline-metric}
+# 평가점수 측도 메트릭 변경
+f1_scorer = make_scorer(f1_score)
+
+# 격자 탐색 초기화 - F1 점수
+grid_f1_pipeline = GridSearchCV(ansur_pipe, param_grid=ansur_params, scoring=f1_scorer)
+
+# 최적모수(F1점수) ...
+print("F1 점수: ", grid_f1_pipeline.fit(X_train, y_train).best_params_)
+print("정확도: ", grid_pipeline.fit(X_train, y_train).best_params_)
+```
+
+
+## 오분류 비용반영 {#ansur-pipeline-cost}
+
+기계학습 알고리즘의 평가지표보다 실제 비즈니스에서 사용되는 
+오분류 비용을 반영하여 예측모형을 적합시키고 최적 초모수를 추출해낸다.
+
+```{python ansur-pipeline-metric-cost}
+def ansur_metric(y_test, y_est, cost_fp = 10.0, cost_fn = 1.0):
+    tn, fp, fn, tp = confusion_matrix(y_test, y_est).ravel()
+    return cost_fp * fp + cost_fn * fn
+
+# 평가점수 측도 메트릭 변경
+cost_scorer = make_scorer(ansur_metric)
+
+# 격자 탐색 초기화 - 오분류 비용 반영
+grid_cost_pipeline = GridSearchCV(ansur_pipe, param_grid = ansur_params, scoring = cost_scorer)
+
+# 최적모수(F1점수) ...
+print("정확도: ", grid_pipeline.fit(X_train, y_train).best_params_)
+print("F1 점수: ", grid_f1_pipeline.fit(X_train, y_train).best_params_)
+print("비용 점수: ", grid_cost_pipeline.fit(X_train, y_train).best_params_)
+```
+
+
+# 예측모형 배포 {#ansur-pipeline-deployment}
+
+최적 예측모형이 구축되었다면 다음 단계로 배포를 해야한다. 이때 `pickle`를 사용한다. 이유는 `pickle` 모듈을 이용하면 원하는 데이터, 즉 개발한 예측모형 자료형의 변경없이 파일로 저장하여 그대로 로드하여 재활용할 수 있기 때문이다. `import pickle` 명령어를 사용해서 예측모혀 배포를 시작해 보자.
+
+`ansur_deploy_model` 예측모형을 `data/ansur_rf_model.pkl` 파일명으로 저장시킨다.
+
+```{python ansur-deployment}
+import pickle
+
+ansur_deploy_model = grid_cost_pipeline.fit(X_train, y_train)
+
+with open('data/ansur_rf_model.pkl', 'wb') as file:
+    pickle.dump(ansur_deploy_model, file=file)
+    
+```
+
+`pickle` 모듈을 사용해서 `data/ansur_rf_model.pkl` 이름으로 예측모형 객체를 `ansur_deploy_model`을 메모리에서 끌어내려 하드디스크에 저장시킨다.
+
+이를 다음 명령어로 확인할 수 있다.
+
+```{r show-pickle-object}
+dir("data/", pattern="*.pkl")
+```
+
+
+## 예측모형 사용 {#ansur-pipeline-deployment-use}
+
+다음 단계로 예측모형을 다시 `pickle`을 활용하여 그대로 가져온다.
+그다음 파이썬 예측 환경에서 `.predict()` 메쏘드를 통해서 예측한다.
+
+```{python ansur-deployment-use}
+with open('data/ansur_rf_model.pkl', 'rb') as file:
+    ansur_rf_deploy = pickle.load(file)
+
+# 시험데이터를 통해 예측
+ansur_rf_preds = ansur_rf_deploy.predict(X_test)
+
+print(ansur_rf_preds[:5])
+```
