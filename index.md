@@ -79,19 +79,19 @@ title: 데이터 과학 -- 모형
     - [기계학습 모형 배포](model-deploy.html)
 - **[클라우드 컴퓨팅 환경](model-cloud-infra.html)**
     - [예측모형 AWS EC2](model-aws-ec2.html) 
-- **R + 파이썬**
-    - [파이썬 + R - 포도주 품질](model-python-wine.html) 
-    - [파이썬 + R - 고객이탈 (xgBoost)](model-python-churn.html) 
-- **네트워크, 텍스트, 이미지, 시계열**
-    - [캐글 - 전자상거래 옷 리뷰](model-kaggle-text.html) 
-    - [예측모형 - 네트워크](model-network.html) 
 - **사기 탐지(Fraud Detection)**
     - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
     - [어노말리(Anomaly) 탐지](model-anomaly.html) 
 - **파이썬 실무 예측모형**
+    - [파이썬 + R - 포도주 품질](model-python-wine.html) 
+    - [파이썬 + R - 고객이탈 (xgBoost)](model-python-churn.html) 
     - [파이썬 예측모형 - 시운전(Dry-Run)](model-python-predictive-model.html)
     - [파이썬 예측모형 - 생애주기(lifecycle)](model-python-predictive-model-lifecycle.html)
     - [파이썬 예측모형 - 교차검증(cross-validation)](model-python-cross-validation.html)
+- **데이터 융합(Data Fusion) - 네트워크, 텍스트, 이미지, 시계열**
+    - [캐글 - 전자상거래 옷 리뷰](model-kaggle-text.html) 
+    - [예측모형 - 네트워크](model-network.html) 
+    - [예측모형 - `tsne`](model-tsne.html)
 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
