@@ -1,7 +1,7 @@
 ---
 layout: page
 title: "데이터 과학 -- 모형"
-subtitle: "예측모형 - `tsne`"
+subtitle: "예측모형 - 데이터 융합(`tsne`)"
 author:
     name: xwMOOC
 date: "`r Sys.Date()`"
@@ -26,6 +26,228 @@ use_condaenv("anaconda3")
 # reticulate::repl_python()
 ```
 
-# 예측모형 `tsne` {#predictive-model-tsne}
+# 차원축소 `tsne` 준비 {#predictive-model-tsne}
 
+차원축소로 기존 주성분분석(PCA)을 많이 사용했으나, 최근에는  T-Distributed Stochastic Neighbor Embedding(`tsne`)을 딥러닝의 부흥과 더불어 많이 회자되고 있다.
+
+## ANSUR II 데이터셋 {#predictive-model-tsne-dataset}
+
+
+[미군 신체측정 데이터셋(Anthropometric Survey of US Army Personnel, ANSUR 2)](http://www.openlab.psu.edu/ansur2/)은 2012년 내부에 공개되었고 2017년에 대중에 공개되었다. 
+총 6,000명 군인(남자 4,082, 여자 1,986)에 대한 측정정보를 담고 있다. 실제 데이터를 받아보면 6,068명 행으로 되어있고, 108 칼럼으로 구성되어 있다. R에서 불필요하다고 판단되는 변수를 일부 제고하고 남은 99개 변수를 대상으로 예측모형 구축작업을 수행해 나간다.
+
+```{r tsne-ansur-dataset}
+library(tidyverse)
+
+ansur_dat <- read_csv("data/soldier_df.csv")
+
+ansur_df <- ansur_dat %>% 
+  mutate(Gender = as.factor(Gender),
+         WritingPreference = as.factor(WritingPreference)) %>% 
+  select(-Component, -Branch, -DODRace) %>% 
+  select(Gender, everything()) %>% 
+  sample_frac(0.1)
+
+ansur_df %>% 
+  sample_n(100) %>% 
+  DT::datatable()
+```
+
+
+## 모형정의 {#ansur-pm}
+
+데이터에 대한 확인이 되었으면 다음으로 모형을 정의한다. 즉, 남성과 여성이 Label 이 되고, 남성과 여성을 신체특성 변수 feature로 예측하는 모형이다.
+
+$$\text{남자 혹은 여자} = f(x_1 , x_2 , \cdots, x_n) + \epsilon$$
+
+
+# 차원축소 `tsne` EDA {#predictive-model-tsne-eda}
+
+앞서 신체측정 데이터셋을 바탕을 남자와 여자로 분류하는 예측모형을 제작할 준비가 되었는데 변수가 너무 많다 보니 이를 `tsne`를 사용해서 차원축소작업을 수행한다.
+[Rtsne](https://cran.r-project.org/web/packages/Rtsne/index.html)는  Barnes-Hut 의 t-SNE C/C++ 구현을 R로 가져온 팩키지로 [bhtsne](https://github.com/lvdmaaten/bhtsne/)에서 원코드를 확인할 수 있다.
+tsne 알고리즘을 적용하여 차원축소를 할 때 PCA를 통상 먼저 수행한다.
+
+## 차원축소 `tsne` 시운전 {#predictive-model-tsne-eda-dry-run}
+
+`Rtsne()` 함수로 뽑아낸 차원을 2차원 공간에 시각화한다.
+
+```{r tsne-ansur-run}
+library(Rtsne)
+
+ansur_tsne <- Rtsne(ansur_df[,-1], PCA = TRUE, check_duplicates = FALSE, dims = 2, max_iter = 500)
+
+ansur_tsne_df <- data.frame(tsne_x = ansur_tsne$Y[, 1], 
+                            tsne_y = ansur_tsne$Y[, 2], 
+                            gender = ansur_df$Gender)
+
+ansur_tsne_df %>% 
+  ggplot(aes(x = tsne_x, y = tsne_y, color = gender)) + 
+  	geom_text(aes(label = gender)) +
+    labs(x="차원 1", y="차원 2", title="ANSUR II 데이터셋 남녀 구분 - tsne") +
+  	theme(legend.position = "none")
+```
+
+`tsne`는 원본 데이터가 갖는 차원과 축소된 차원사이의 거리(K-L Divergence)를 최소화하는 것을 목표로 하고 있다. `itercosts` 값의 변화를 통해 간접적으로 차원축소의 품질을 확인할 수 있다.
+`which.min()` 함수를 사용해서 반복횟수를 찾아낸다.
+
+``` {r tsne-ansur-kl-check}
+ansur_tsne_cost_df <- tibble(
+  iter = 1:length(ansur_tsne$itercosts),
+  cost = ansur_tsne$itercosts)
+
+ansur_tsne_cost_df %>% 
+  ggplot(aes(x=iter, y=cost)) +
+    geom_point() +
+    geom_line()
+
+which.min(ansur_tsne_cost_df$cost)
+```
+
+## 차원축소 `tsne` 초모수 {#predictive-model-tsne-hyper-parameter}
+
+차원축소 `tsne`의 대표적인 초모수(hypter-paramter)는 `maxiter`, `perplexity`를 들 수 있다.
+특히, `perplexity`는 전역(global)과 지역(local)을 조절하는 중요한 초모수다. 
+최적 `perplexity`를 찾기 위해 격자탐색 기법을 통원하여 앞서 차원축소한 것의 품질을 더 높일 수 있도록 한다. 5 -- 50 사이 10개를 뽑아 이를 격자탐색하여 가장 적합한 `perplexity` 값을 찾아낸다.
+
+최적 `perplexity`값을 시각화하면 `perplexity` 값이 낮아질수록 적합 품질은 초기에 높아지나 특정 횟수를 넘어서게 되면 큰 차이는 없는 것으로 파악된다.
+
+```{r tsne-ansur-hyper-paramter}
+# perplexity 값
+perplexity_vec <- vector(mode="numeric", length = 10)
+perplexity_vec <- seq(5, 50, length.out = 10)
+
+# perplexity별 itercosts 값
+cost_list <- vector(mode="list", length = 10)
+
+# perplexity별 반복횟수
+iter_vec <- vector(mode="integer", length = 10)
+
+for(i in seq_along(perplexity_vec)) {
+  cat("작업중: ", i, "\n")
+  tsne_tmp <- Rtsne(ansur_df[,-1], perplexity = perplexity_vec[i], max_iter = 500)
+  iter_vec[i] <- which.min(tsne_tmp$itercosts)
+  cost_list[[i]] <- tsne_tmp$itercosts
+}
+
+tsne_perp_dat <- tibble(
+  perplexity = as.factor(perplexity_vec),
+  max_iter = iter_vec,
+  cost = cost_list)
+
+tsne_perp_dat %>% 
+  DT::datatable() %>% 
+  DT::formatRound("cost", digits=3)
+
+tsne_perp_df <- tsne_perp_dat %>%
+  select(-max_iter) %>% 
+  unnest(cost) %>% 
+  mutate(iter_seq = rep(1:length(tsne_perp_dat$cost[[1]]), 10))
+
+tsne_perp_df %>% 
+  ggplot(aes(x=iter_seq, y= cost, color = perplexity)) +
+    geom_point() + 
+    geom_line()
+```
+
+## 초모수 `perplexity` 시각화 {#predictive-model-tsne-hyper-parameter-viz}
+
+`perplexity`가 5, 50인 두가지 극단적인 상황을 높고 시각화를 한다.
+
+```{r tsne-perplexity-viz-comp}
+## perplexity 5 시각화 -----
+ansur_5_tsne <- Rtsne(ansur_df[,-1], PCA = TRUE, dims = 2, max_iter = 500, perplexity = 5)
+
+ansur_5_tsne_df <- data.frame(tsne_x = ansur_5_tsne$Y[, 1], 
+                            tsne_y = ansur_5_tsne$Y[, 2], 
+                            gender = ansur_df$Gender)
+
+ansur_5_g <- ansur_5_tsne_df %>% 
+  ggplot(aes(x = tsne_x, y = tsne_y, color = gender)) + 
+  	geom_text(aes(label = gender)) +
+    labs(x="차원 1", y="차원 2", title="ANSUR II 데이터셋 남녀 구분 - tsne",
+         subtitle = "Perpleixity 50") +
+  	theme(legend.position = "none")
+
+## perplexity 50 시각화 -----
+ansur_50_tsne <- Rtsne(ansur_df[,-1], PCA = TRUE, dims = 2, max_iter = 500, perplexity = 50)
+
+ansur_50_tsne_df <- data.frame(tsne_x = ansur_50_tsne$Y[, 1], 
+                            tsne_y = ansur_50_tsne$Y[, 2], 
+                            gender = ansur_df$Gender)
+
+ansur_50_g <- ansur_50_tsne_df %>% 
+  ggplot(aes(x = tsne_x, y = tsne_y, color = gender)) + 
+  	geom_text(aes(label = gender)) +
+    labs(x="차원 1", y="차원 2", title="ANSUR II 데이터셋 남녀 구분 - tsne",
+         subtitle = "Perpleixity 50") +
+  	theme(legend.position = "none")
+
+cowplot::plot_grid(ansur_5_g, ansur_50_g)
+```
+
+## 남녀 대표 `tsne` 중심점 {#predictive-model-tsne-center}
+
+`perplexity`와 `max_iter` 초모수값을 선정한 후에 최적 초모수에 근거한 `tsne` 알고리즘을 적합을 시도하고 이를 바탕으로 중심점을 뽑아낸다.
+
+```{r tsne-perplexity-viz-center}
+## perplexity 5 시각화 -----
+ansur_10_tsne <- Rtsne(ansur_df[,-1], PCA = TRUE, dims = 2, max_iter = 500, perplexity = 25)
+
+ansur_10_tsne_df <- data.frame(tsne_x = ansur_10_tsne$Y[, 1], 
+                               tsne_y = ansur_10_tsne$Y[, 2], 
+                               gender = ansur_df$Gender)
+
+ansur_center_tsne_df <- ansur_10_tsne_df %>% 
+  gather(dimension, value, -gender) %>% 
+  group_by(gender, dimension) %>% 
+  summarise(mean_center = mean(value)) %>% 
+  spread(dimension, mean_center)
+
+ansur_10_tsne_df %>% 
+  ggplot(aes(x = tsne_x, y = tsne_y, color = gender)) + 
+  	geom_text(aes(label = gender)) +
+    labs(x="차원 1", y="차원 2", title="ANSUR II 데이터셋 남녀 구분 - tsne",
+         subtitle = "Perpleixity 10") +
+  	theme(legend.position = "none") +
+    geom_point(data=ansur_center_tsne_df, aes(x=tsne_x, y=tsne_y, color=gender, size=3, shape=gender)) +
+    scale_color_manual(values=c('#999999','#E69F00'))
+```
+
+
+# `tsne` 예측모형 {#predictive-model-tsne-predictive-model}
+
+`tsne`로 차원축소한 변수를 넣어 예측모형을 구축한다. 먼저 `tsne`로 차원축소한 3개 차원을 `X` basetable로 정의한 `ranger` 팩키지 Random Forest 예측모형을 통해 예측한다.
+
+
+```{r tsne-perplexity-predictive-model}
+library(tidymodels)
+library(rsample)
+library(parsnip)
+
+# feature 공학
+ansur_X_tsne <- Rtsne(ansur_df[,-1], dims = 3, PCA = TRUE, max_iter = 500, perplexity = 30)
+
+ansur_X_tsne_df <- data.frame(tsne_x = ansur_X_tsne$Y[, 1], 
+                              tsne_y = ansur_X_tsne$Y[, 2], 
+                              tsne_z = ansur_X_tsne$Y[, 2], 
+                              gender = ansur_df$Gender)
+
+
+# 데이터 분할: 훈련/시험
+tsne_split <- initial_split(ansur_X_tsne_df, props = 7/10)
+
+tsne_train <- training(tsne_split)
+tsne_test  <- testing(tsne_split)
+
+# 예측모형 적합
+tsne_rf <- rand_forest(trees = 1000, mode = "classification") %>%
+  set_engine("ranger", seed = 63233) %>% 
+  fit(gender ~ ., data = tsne_train)
+
+# 예측모형 성능평가
+tsne_rf_prob  <- predict(tsne_rf, tsne_test, type="prob")
+tsne_rf_class <- ifelse(tsne_rf_prob[,2] > .68, "Male", "Female") %>% as.factor
+
+caret::confusionMatrix(tsne_rf_class, tsne_test$gender)
+```
 

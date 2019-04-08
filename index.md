@@ -91,7 +91,7 @@ title: 데이터 과학 -- 모형
 - **데이터 결합(Data Fusion) - 네트워크, 텍스트, 이미지, 시계열**
     - [캐글 - 전자상거래 옷 리뷰](model-kaggle-text.html) 
     - [예측모형 - 네트워크](model-network.html) 
-    - [예측모형 - `tsne`](model-tsne.html)
+    - [예측모형 - 데이터 융합(`tsne`)](model-tsne.html)
 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
