@@ -1,0 +1,163 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "피처 공학 - 변수선택 자동화"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+```{r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(tidyverse)
+```
+
+
+# Feature 선택 자동화 [^feature-automation] {#feature-selection-automation}
+
+[^feature-automation]: [Shirin's playgRound, (15 January 2017), "Feature Selection in Machine Learning (Breast Cancer Datasets)"](https://shiring.github.io/machine_learning/2017/01/15/rfe_ga_post)
+
+변수선택 자동화를 위해서 "재귀 변수 제거법 (Recursive Feature Elimination)", "보루타 알고리즘 (Boruta Algorithm)"을 살펴본다.
+
+## 데이터셋 - 미군 신체측정 {#feature-selection-dataset}
+
+[미군 신체측정 데이터셋(Anthropometric Survey of US Army Personnel, ANSUR 2)](http://www.openlab.psu.edu/ansur2/)은 2012년 내부에 공개되었고 2017년에 대중에 공개되었다. 
+총 6,000명 군인(남자 4,082, 여자 1,986)에 대한 측정정보를 담고 있다.
+
+```{r ansur-dataset, eval=FALSE}
+library(tidyverse)
+male_dat <- read_csv("http://tools.openlab.psu.edu/publicData/ANSUR_II_MALE_Public.csv")
+female_dat <- read_csv("http://tools.openlab.psu.edu/publicData/ANSUR_II_FEMALE_Public.csv")
+
+soldier_dat <- bind_rows(male_dat, female_dat)
+
+soldier_dat %>% write_rds("data/soldier_dat.rds")
+```
+
+다운로드 받은 남녀 데이터를 결합하여 남자군인, 여자군인을 분류하는데 사용되는 `X` 설계행렬을 추출한다.
+
+```{r ansur-dataset-filter}
+soldier_dat <- read_rds("data/soldier_dat.rds") %>% 
+  sample_frac(0.1)
+
+X_df <- soldier_dat %>% 
+  select(-c("subjectid","SubjectId", "Gender", "Date", "Installation",  "Component", "Branch", "PrimaryMOS", "SubjectsBirthLocation",  "SubjectNumericRace", "Ethnicity", "DODRace", "Heightin", "Weightlbs")) %>% 
+  mutate(WritingPreference = as.factor(WritingPreference))
+
+y_df <- soldier_dat %>% 
+  select(gender = Gender) %>% 
+  mutate(gender = factor(gender, levels = c("Female", "Male")))
+
+Xy_df <- bind_cols(y_df, X_df)
+```
+
+# 변수 선택 - 보루타 알고리즘 [^datacamp-boruta] [^python-boruta]  {#feature-selection}
+
+[^datacamp-boruta]: [Manish Pathak (March 7th, 2018), "Feature Selection in R with the Boruta R Package"](https://www.datacamp.com/community/tutorials/feature-selection-R-boruta)
+
+[^python-boruta]: [MKJJO (January 4, 2019), "보루타 알고리즘을 통한 변수선택"](https://mkjjo.github.io/python/2019/01/04/boruta.html)
+
+보루타 알고리즘을 통해 변수를 선택할 수 있다. 변수선택에는 크게 다음과 같은 세가지 방식이 존재한다.
+
+- 필터 방법(Filter Method): 데이터 전처리 단계에서 상관계수, 카이제곱 검정, 분산분석, 피셔 점수 등을 사용해서 전처리 단계에서 기계학습 알고리즘과 무관하게 추출해낸다.
+- 랩퍼 방법(Wrapper Method): 변수의 일부를 예측모형에 적합시켜 변수를 선택하는 방법으로 전진 선택(forward seleciton), 후진 선택(backward selection) 등을 들 수 있다.
+- 내재 방법(Embedded Method): 라쏘 회귀(LASSO regression)와 같이 자체 변수 선택 방법을 내재하고 있는 알고리즘을 통해 변수를 선택한다.
+
+보루타 알고리즘은 Random Forest에 기반한 변수 선택방법으로 Z값을 활용한다는 점이 다른 기존 변수방법과 비교하여 차이가 난다.
+
+속도를 위해서 전체 변수를 모두 사용하는 대신에 앞에서부터 30개만 뽑아 보루타 변수선택 모형을 생성시킨다.
+
+```{r boruta-feature}
+library(Boruta)
+
+Xy_boruta <- Boruta(gender ~ ., data = Xy_df[, 1:31], doTrace = 2, maxRuns = 500)
+
+print(Xy_boruta)
+plot(Xy_boruta, las = 2, cex.axis = 0.7)
+
+attStats(Xy_boruta) %>% 
+  rownames_to_column(var="variable") %>% 
+  arrange(desc(medianImp)) %>% 
+  DT::datatable()
+```
+
+
+# 변수 선택 - 재귀 변수 제거법 [^ml-rfe] {#feature-selection-rfe}
+
+[^ml-rfe]: [Kyriakos Chatzidimitriou (23 November, 2017), "Recursive Feature Elimination"](http://ml-tutorials.kyrcha.info/rfe.html)
+
+재귀 변수 제거법 (Recursive Feature Elimination)을 사용해서 변수를 선택해보자.
+`caret` 팩키지 `rfeControl()` 함수를 사용해서 예측모형 최적 변수를 선택해보자.
+
+Random Forest를 사용한 성능과 함께 선택된 변수는 `rfe_res$optVariables`에 저장되어 있다.
+
+```{r caret-fe-rfe}
+library(caret)
+library(randomForest)
+
+rfe_control <- rfeControl(functions = rfFuncs, method="cv", number=10)
+
+rfe_res <- rfe(x = Xy_df[, -1], y = Xy_df$gender, sizes = 2^(2:4), rfeControl = rfe_control)
+
+print(rfe_res)
+
+plot(rfe_res, type = c("g", "o"))
+
+rfe_res$optVariables
+```
+
+# 변수 선택 적용 예측모형 {#feature-selection-rfe-pm}
+
+전체 변수를 예측모형에 사용하는 대신 **재귀 변수 제거법**(Recursive Feature Elimination)을 사용해서 훨씬 속도가 빠르게 예측모형을 구축해낸다.
+
+```{r ansur-ml-rfe-caret-pm}
+library(tidymodels)
+library(rsample)
+library(parsnip)
+
+Xy_rfe_df <- Xy_df %>% 
+  select(c("gender", rfe_res$optVariables))
+
+# 데이터 분할: 훈련/시험
+basetable_split <- initial_split(Xy_rfe_df, props = 7/10)
+
+train_dat <- training(basetable_split)
+test_dat  <- testing(basetable_split)
+
+# 예측모형 적합
+rfe_rf <- rand_forest(trees = 1000, mode = "classification") %>%
+  set_engine("ranger", seed = 63233) %>% 
+  fit(gender ~ ., data = train_dat)
+
+# 예측모형 성능평가
+rfe_rf_prob  <- predict(rfe_rf, test_dat, type="prob")
+rfe_rf_class <- ifelse(rfe_rf_prob[,2] > .68, "Male", "Female") %>% as.factor()
+
+caret::confusionMatrix(rfe_rf_class, test_dat$gender)
+```
+
+# 실전 변수 선택 적용 예측모형 {#feature-selection-rfe-pm-in-practice}
+
+Random Forest 예측모형만 사용해서 변수를 선택하지 말고 다양한 알고리즘을 사용해서 모든 알고리즘이 선택한 변수만을 대상으로 예측모형을 구축해 보자.
+
+```{r ansur-ml-rfe-caret-pm-in-practice, eval = FALSE}
+## Random Forest
+rfe_rf_control <- rfeControl(functions = rfFuncs, method="cv", number=10)
+rfe_rf_res <- rfe(x = Xy_df[, -1], y = Xy_df$gender, sizes = 2^(2:4), rfeControl = rfe_rf_control)
+
+## SVM
+rfe_svm_control <- rfeControl(functions = svmFuncs, method="cv", number=10)
+rfe_svm_res <- rfe(x = Xy_df[, -1], y = Xy_df$gender, sizes = 2^(2:4), rfeControl = rfe_svm_control)
+```

@@ -42,6 +42,7 @@ title: 데이터 과학 -- 모형
     - [피처 공학(Feature Engineering)](model-feature-engineering.html)
     - [피처 공학 기법 - 직사각형 데이터프레임](model-feature-engineering-tech.html)
     - [피처 공학 - 선택 혹은 추출](model-feature-engineering-selection.html)
+    - [피처 공학 - 변수선택 자동화](model-feature-engineering-automation.html)
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형](tidyverse-model.html)**
