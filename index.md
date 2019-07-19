@@ -78,6 +78,7 @@ title: 데이터 과학 -- 모형
     - [`dplyr` + $H_2 O$ AutoML](model-dplyr-h2o-automl.html)
     - [기계학습 모형개발 30분 - `recipe` + $H_2 O$ AutoML](model-recipe-h2o-automl.html)
     - [기계학습 모형 배포](model-deploy.html)
+    - [**앙상블(ensemble) 모형**](model-ensemble.html)
 - **[클라우드 컴퓨팅 환경](model-cloud-infra.html)**
     - [예측모형 AWS EC2](model-aws-ec2.html) 
 - **사기 탐지(Fraud Detection)**
