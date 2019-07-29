@@ -1,0 +1,59 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "데이터베이스 - `dplyr`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+```{r, include=FALSE}
+source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = TRUE, fig.align = 'center')
+
+library(tidyverse)
+```
+
+
+# 데이터 {#dataset}
+
+```{r dataset-datascience}
+library(tidyverse)
+library(lubridate)
+library(download)
+
+
+year_start <- 2018
+year_last <- year(Sys.time())
+for (i in year_start:year_last){
+  for (m in 1:4){
+    url1 <- paste0("http://www.nber.org/fda/faers/",i,"/demo",i,"q",m,".csv.zip")
+        download.file(url1, dest=paste0("data/", "demo", i, "q", m, ".csv.zip")) # Demography
+        unzip(paste0("data/demo", i, "q", m, ".csv.zip"), exdir="data/")
+    url2<-paste0("http://www.nber.org/fda/faers/",i,"/drug",i,"q",m,".csv.zip")
+        download.file(url2, dest=paste0("data/", "drug", i, "q", m, ".csv.zip")) # Drug
+        unzip(paste0("data/drug", i, "q", m, ".csv.zip"), exdir="data/")
+    url3<-paste0("http://www.nber.org/fda/faers/",i,"/reac",i,"q",m,".csv.zip")
+        download.file(url3, dest=paste0("data/", "reac", i, "q", m, ".csv.zip")) # Reaction
+        unzip(paste0("data/reac", i, "q", m, ".csv.zip"), exdir="data/")
+    url4<-paste0("http://www.nber.org/fda/faers/",i,"/outc",i,"q",m,".csv.zip")
+        download.file(url4, dest=paste0("data/", "outc", i, "q", m, ".csv.zip")) # Outcome
+        unzip(paste0("data/outc", i, "q", m, ".csv.zip"), exdir="data/")
+    url5<-paste0("http://www.nber.org/fda/faers/",i,"/indi",i,"q",m,".csv.zip")
+        download.file(url5, dest=paste0("data/", "indi", i, "q", m, ".csv.zip")) # Indication for use
+        unzip(paste0("data/indi", i, "q", m, ".csv.zip"), exdir="data/")
+  }
+}
+
+```
+
