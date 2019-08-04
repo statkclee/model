@@ -1,7 +1,7 @@
 ---
 layout: page
 title: xwMOOC 모형
-subtitle: tidyverse 모형
+subtitle: "`tidymodels` - tidyverse 모형"
 output:
   html_document: 
     toc: yes
@@ -10,6 +10,8 @@ output:
     code_folding: show
     number_section: true
     self_contained: true
+editor_options: 
+  chunk_output_type: console
 ---
  
 ``` {r, include=FALSE}
@@ -93,18 +95,153 @@ API를 작성할 때 사람이 사용하기 쉽게 설계한다.
 - 명시적이고 긴 명칭을 변수명, 함수명, 객체명에 사용하고, 짧은 명칭은 가장 중요한 이름으로 활용한다. 
 - RStudio 소스 편집기의 자동완성기능을 사용하는 경우 접두어가 접미어보다 중요하고, stringr,  xml2, rvest 팩키지를 살펴보면 접두어에 일관된 명칭을 부여한 장점을 알수 있다.
 
+<img src="fig/tidymodels-tidyverse.png" alt="tidyverse 모형" width="100%" />
 
-# `tidyverse` 모형 {#tidyverse-modeling}
+# `tidyverse` 모형 - `tidymodels` {#tidyverse-modeling}
 
-기존 10여년에 걸쳐 `catet` 팩키지가 담당했던 기능을 `tidyverse` 방식에 맞게 모형화도 깔끔(?)해지고 있다.
-이를 위해서, 각각 기능별로 하나만 정말 잘 하는 팩키지들이 속속 출시되고 있다.
+기존 10여년에 걸쳐 `catet` 팩키지가 담당했던 기능을 `tidyverse` 방식에 맞게 모형화도 깔끔(?)해지고 있다. 이를 위해서, 각각 기능별로 하나만 정말 잘 하는 팩키지들이 속속 출시되고 있다.
+현재시점 기준 "2019-08-04" 몇몇 블로그를 통해서 개발되고 있는 최신 기능이 일부 소개되고 있다. [^blog-edgar] [^blog-datistics]
 
-- [`recipe`](https://github.com/tidymodels/recipes)(feature engineering): 모형 설계행렬 데이터를 생성하고 전처리하는 기능.
-    - [`embed`](https://topepo.github.io/embed/): 범주형 변수를 숫자 칼럼 예측변수로 담아내는 기능.
-- [`rsample`](https://github.com/tidymodels/rsample): 모형개발을 위한 표본추출 기능
-- [`parsip`](https://topepo.github.io/parsnip/): 모형공식(formula) 표준화
-- [`yardstick`](https://github.com/tidymodels/yardstick): 깔끔한 데이터(tidy data) 원칙에 따라 모형성능 추정.
-- [`tidyposterior`](https://tidymodels.github.io/tidyposterior/): 사후(post hoc) 모형 분석
+기계학습을 통한 일관된 인터페이스에 대한 요구는 파이썬 `scikit-learn`에 잘 나타나 있다. 어떻게 보면 R에서 파이썬 `scikit-learn`을 보면서 이에 대한 영감을 받아 시작되었는지도 모르겠다.
+
+[^blog-edgar]: [Edgar Ruiz (2019-06-19), "A Gentle Introduction to tidymodels", R Views](https://rviews.rstudio.com/2019/06/19/a-gentle-intro-to-tidymodels/)
+
+[^blog-datistics]: [datistics (December 29, 2018 ), "Tidymodels"](https://www.datisticsblog.com/2018/12/tidymodels/)
+
+`tidymodels`은 통계검정과 모형 크게 두가지로 나눌 수 있는데 여기서는 우선 모형에 관련된 사항에 집중하기로 한다. 모형이 `tidyverse` 체계를 구성하는 핵심 사항임에도 불구하고 `dplyr`, `ggplot`과 비교하여 체계적으로 정리된 것이 없어 과거 `caret`이 했던 기능을 `tidymodels`를 통해 하나씩 채워나가고 있다. `tidymodels`를 구성하는 핵심 팩키지는 `rsample`, `recipes`, `parnip`, `yardstick`을 들 수 있다.
+
 - [`tidymodels`](https://github.com/tidymodels/tidymodels)
+    - 전처리와 피처 공학(Feature Engineering)
+        - [`recipe`](https://github.com/tidymodels/recipes)(feature engineering): 모형 설계행렬 데이터를 생성하고 전처리하는 기능.
+            - [`embed`](https://github.com/tidymodels/embed): 범주형 예측변수를 숫자 칼럼 예측변수로 담아내는 기능.
+        - [`rsample`](https://github.com/tidymodels/rsample): 모형개발을 위한 표본추출 기능
+    - 모형(Model)    
+        - [`parsip`](https://topepo.github.io/parsnip/): 모형공식(formula) 표준화
+    - 성능평가(Evaluation)    
+        - [`yardstick`](https://github.com/tidymodels/yardstick): 깔끔한 데이터(tidy data) 원칙에 따라 모형성능 추정.
+    - 기타
+        - `tidytext`
+        - `broom`
+        - `tidypredict`
+- 통계 검정(Statistical Testing)        
+    - [`tidyposterior`](https://tidymodels.github.io/tidyposterior/): 사후(post hoc) 모형 분석
 
-<img src="fig/tidyverse-modeling-framework.png" alt="tidyverse 모형" width="100%" />
+# `iris` 사례 {#iris-helloword}
+
+## `tidymodels` 도구 {#iris-tidymodels}
+
+`tidymodels` 팩키지에 `tidyverse` 체계에서 예측모형을 구현하는 다양한 팩키지가 일괄적으로 포함되어 있다.
+
+```{r iris-case-study-library}
+library(tidymodels)
+```
+
+## 전처리와 피쳐 공학 {#iris-tidymodels-fe}
+
+기계학습 예측모형을 개발할 때 훈련/시험 데이터로 쪼개고 피쳐 공학(Feature Engineering)을 통해 Basetable을 다양한 기계학습 알고리즘에 적합시키도록 사전 정지작업을 수행한다.
+
+가장 먼저 `initial_split()` 함수로 훈련/시험 데이터를 7:3 비율로 쪼갠다.
+
+```{r iris-case-study}
+iris_split <- initial_split(iris, prop = 0.7)
+iris_split
+
+iris_split %>%
+  training() %>%
+  glimpse()
+```
+
+다음으로 `recipes` 팩키지를 사용해서 피쳐 공학 기법을 적용하여 다양한 기계학습 알고리즘을 적용시키도록 준비시킨다. `ggplot` 사용법에 익숙하신 분은 `recipes` 팩키지의 다양한 함수 사용법을 어려움 없이 사용할 수 있을 것이다.
+
+`recipe()` 함수에 모형 공식을 작성하고, `step_*` 함수에 다양한 피처 공학 기법을 적용시키고 최종 실행은 `prep()` 명령어로 실행시킨다.
+
+```{r iris-recipes-training-show}
+iris_recipe <- training(iris_split) %>%
+  recipe(Species ~.) %>%
+  step_corr(all_predictors()) %>%
+  step_center(all_predictors(), -all_outcomes()) %>%
+  step_scale(all_predictors(), -all_outcomes()) %>%
+  prep()
+
+iris_recipe
+```
+
+`iris_recipe` 요리법을 그대로 시험 데이터에 적용시켜 나중에 예측모형 성능평가에 사용한다. 
+이때 사용되는 동사가 `bake()`다. 
+
+```{r iris-recipes-testing}
+iris_testing <- iris_recipe %>%
+  bake(testing(iris_split)) 
+
+glimpse(iris_testing)
+```
+
+
+시험 데이터에 대한 전처리 및 피처 공학 적용이 완료되었다면, 다음 단계로 훈련 데이터에도 동일한 작업을 수행하는데 `juice()` 동사를 사용해서 해당 작업을 수행시키는데 이때 사용되는 요리법도 `iris_recipe`가 된다. 
+
+```{r iris-recipes-training}
+iris_training <- juice(iris_recipe)
+```
+
+
+## 모형적합 {#fit-model}
+
+Random Forest 모형의 경우 `ranger`, `randomForest` 팩키지가 사실의 표준으로 학계와 산업계를 대표하고 있는데 인터페이스가 서로 달라 동일한 알고리즘임에도 불구하고 구문을 별도 작성해야 하는 어려움이 있는데 `parsnip`이 이를 표준화했다.
+`rand_forest()`으로 모형을 정의하고 `set_engine()`에 팩키지명을 지정하고 나서 `fit()` 함수로 적합시키면 예측모형 객체를 얻을 수 있다.
+
+```{r iris-fit}
+iris_ranger <- rand_forest(trees = 100, mode = "classification") %>%
+  set_engine("ranger") %>%  # `ranger` 팩키지
+  # set_engine("randomForest") %>% # `randomForest` 팩키지
+  fit(Species ~ ., data = iris_training)
+```
+
+## 모형 성능 {#fit-model-performance}
+
+`yardstic` 팩키지 `metrics()` 함수를 사용해서 예측모형의 성능을 파악할 수 있다.
+
+```{r iris-fit-performance}
+iris_ranger %>%
+  predict(iris_testing) %>%
+  bind_cols(iris_testing) %>%
+  metrics(truth = Species, estimate = .pred_class)
+```
+
+`iris` 데이터는 3가지 품종을 꽃에 대한 4가지 측정정보를 바탕으로 예측하는 것이라 보통 정확도만을 따지지만, `tidyverse`의 `dplyr`, `broom`을 사용한 경험이 있다면 각 범주별로 ROC, AUC를 계산하는 것도 수월하게 진행할 수 있다.
+
+```{r iris-per-class}
+iris_probs <- iris_ranger %>%
+  predict(iris_testing, type = "prob") %>%
+  bind_cols(iris_testing)
+
+glimpse(iris_probs)
+```
+
+`gain_curve()`, `roc_curve()` 함수를 사용해서 이득(Gain), ROC 곡선도 코드 한줄로 작성이 가능하다.
+
+```{r parsnip-performance-ggplot}
+iris_probs%>%
+  # gain_curve(Species, .pred_setosa:.pred_virginica) %>%
+  roc_curve(Species, .pred_setosa:.pred_virginica) %>%
+  autoplot()
+```
+
+마지막으로 예측모형 성능평가만을 위해서 추출한 성능평가지표(metrics)만 추출하여 데이터프레임으로 제작하여 성능지표에 대한 마무리를 한다.
+
+```{r metric-concluded}
+predict(iris_ranger, iris_testing, type = "prob") %>%
+  bind_cols(predict(iris_ranger, iris_testing)) %>%
+  bind_cols(select(iris_testing, Species)) %>%
+  metrics(Species, .pred_setosa:.pred_virginica, estimate = .pred_class)
+```
+
+## 예측 {#fit-model-predict}
+
+`predict()` 함수를 사용하게 되면 예측모형에 대한 예측값을 생성시킬 수 있는데 `broom` 팩키지와 마찬가지로 사용해서 `bind_cols()` 함수를 사용하게 되면 데이터프레임으로 후속 작업이 가능한 형태로 구현이 가능하다.
+
+```{r iris-fit-predict}
+predict(iris_ranger, iris_testing, type = "prob") %>%
+  bind_cols(predict(iris_ranger, iris_testing)) %>%
+  bind_cols(select(iris_testing, Species))
+```
+
