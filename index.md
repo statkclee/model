@@ -45,7 +45,7 @@ title: 데이터 과학 -- 모형
     - [피처 공학 - 변수선택 자동화](model-feature-engineering-automation.html)
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
-- **[`tidyverse` 모형](tidyverse-model.html)**
+- **[`tidyverse` 모형 - `tidymodels`](tidyverse-model.html)**
     - [예측모형 파이프 - R 모형설계행렬(Recipe)](ml-r-design-matrix.html) 
     - [서포트 벡터 머신(SVM)](model_svm.html)
     - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)
