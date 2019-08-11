@@ -55,7 +55,7 @@ title: 데이터 과학 -- 모형
     - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
     - [틱택토(Tic-Tac-Toe) - `parsnip`](model-tictactoe-parsnip.html) 
     - **데이터베이스와 깔끔한 모형**
-        - [데이터베이스 - `dplyr`](model-database-dplyr.html)
+        - [데이터베이스 - `dplyr`](model-database-dplyr.html)     
 - **[GDPR - 모형 설명](model-explain.html)**
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
         - [연속형 변수 - 회귀모형](model-gdpr-regression.html)
@@ -88,7 +88,8 @@ title: 데이터 과학 -- 모형
     - [어노말리(Anomaly) 탐지](model-anomaly.html) 
 - **파이썬 실무 예측모형**
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
-    - [파이썬 + R - 고객이탈 (xgBoost)](model-python-churn.html) 
+    - [파이썬 고객이탈 - `xgBoost`](model-python-churn.html) 
+        - [R 고객이탈 - `xgBoost`](model-r-churn.html)
     - [파이썬 예측모형 - 시운전(Dry-Run)](model-python-predictive-model.html)
     - [파이썬 예측모형 - 생애주기(lifecycle)](model-python-predictive-model-lifecycle.html)
     - [파이썬 예측모형 - 교차검증(cross-validation)](model-python-cross-validation.html)
