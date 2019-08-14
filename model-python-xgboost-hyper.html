@@ -13138,7 +13138,8 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="XGBoost-&#50696;&#52769;&#47784;&#54805;-&#51088;&#46041;&#54868;"><code>XGBoost</code> &#50696;&#52769;&#47784;&#54805; &#51088;&#46041;&#54868;<a class="anchor-link" href="#XGBoost-&#50696;&#52769;&#47784;&#54805;-&#51088;&#46041;&#54868;">&#182;</a></h1><p><code>XGBoost</code> 예측모형은 뛰어난 성능으로 이미 캐글 등 대다수 경진대회를 휩쓴 검증된 알고리즘이다. 그렇다고 모든 예측문제에 기계학습 알고리즘으로 선택을 할 수는 없다. 우선, 뛰어난 성능을 가진 XGBoost 알고리즘의 마지막까지 높일 수 있는 초모수(Hyper Paramter) 튜닝에 대해서 살펴보자.</p>
+<h1 id="XGBoost-&#50696;&#52769;&#47784;&#54805;-&#51088;&#46041;&#54868;"><code>XGBoost</code> &#50696;&#52769;&#47784;&#54805; &#51088;&#46041;&#54868;<a class="anchor-link" href="#XGBoost-&#50696;&#52769;&#47784;&#54805;-&#51088;&#46041;&#54868;">&#182;</a></h1><p><code>XGBoost</code> 예측모형은 뛰어난 성능으로 이미 캐글 등 대다수 경진대회를 휩쓴 검증된 알고리즘이다. 그렇다고 모든 예측문제에 기계학습 알고리즘으로 선택을 할 수는 없다. 우선, 뛰어난 성능을 가진 XGBoost 알고리즘의 마지막까지 높일 수 있는 초모수(Hyper Paramter) 튜닝에 대해서 살펴보자.
+<a href="https://homes.cs.washington.edu/~tqchen/pdf/BoostedTree.pdf">Tianqi Chen (Oct. 22 2014), "Introduction to Boosted Trees", Washington University</a></p>
 <p><img src="fig/xgboost-python.png" alt="XGBoost" width="77%" /></p>
 <h2 id="&#52488;&#47784;&#49688;(Hypter-parameter)-&#53916;&#45789;">&#52488;&#47784;&#49688;(Hypter parameter) &#53916;&#45789;<a class="anchor-link" href="#&#52488;&#47784;&#49688;(Hypter-parameter)-&#53916;&#45789;">&#182;</a></h2><p>XGBoost와 관련된 Hypter Parameter는 다음 세가지 범주로 나뉜다.  XGBoost가 의사결정나무에 기반하기 때문에 관련된 모수와 기계학습과 관련이 있기 때문에 이와 연관된 다수 초모수가 포함된다.</p>
 <ul>
@@ -13190,7 +13191,7 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="XGBoost-&#52488;&#47784;&#49688;-&#54869;&#51064;">XGBoost &#52488;&#47784;&#49688; &#54869;&#51064;<a class="anchor-link" href="#XGBoost-&#52488;&#47784;&#49688;-&#54869;&#51064;">&#182;</a></h1><p>XGBoost 초모수(Hyper Parameter)는 XGBoost 객체를 하나 생성한 후에 <code>print()</code> 함수로 확인이 가능하다. 그렇다고 모든 Hyper parameter가 중요한 것은 아니다.</p>
+<h1 id="XGBoost-&#52488;&#47784;&#49688;">XGBoost &#52488;&#47784;&#49688;<a class="anchor-link" href="#XGBoost-&#52488;&#47784;&#49688;">&#182;</a></h1><p>XGBoost 초모수(Hyper Parameter)는 XGBoost 객체를 하나 생성한 후에 <code>print()</code> 함수로 확인이 가능하다. 그렇다고 모든 Hyper parameter가 중요한 것은 아니다.</p>
 
 </div>
 </div>
@@ -13417,6 +13418,2966 @@ weighted avg       0.93      0.92      0.92      4500
   </tbody>
 </table>
 </div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#44368;&#52264;&#44160;&#51613;(CV,-Cross-Validation)">&#44368;&#52264;&#44160;&#51613;(CV, Cross-Validation)<a class="anchor-link" href="#&#44368;&#52264;&#44160;&#51613;(CV,-Cross-Validation)">&#182;</a></h2><p>강건한 예측모형 구축을 위해서 훈련데이터를 교차검증(Cross-Validation)을 통해서 과적합을 방지시킬 수 있는 모형을 구축할 수 있다. 즉 훈련데이터를 3조각, 5조각 혹은 10조각을 내서 1조각을 제외한 나머지 조각을 훈련에 사용하고 모형성능을 1조각으로 평가시켜 가장 강건한 모형을 예측모형으로 선정한다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hr_dmatrix</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">DMatrix</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">hr_df</span><span class="p">[</span><span class="n">colnames</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">hr_df</span><span class="p">[[</span><span class="s1">&#39;left&#39;</span><span class="p">]])</span>
+
+<span class="n">cv_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span><span class="s2">&quot;binary:logistic&quot;</span><span class="p">,</span> 
+             <span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> 
+             <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span><span class="mi">5</span><span class="p">}</span>
+
+<span class="n">hr_cv</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">cv</span><span class="p">(</span><span class="n">dtrain</span><span class="o">=</span><span class="n">hr_dmatrix</span><span class="p">,</span> 
+               <span class="n">params</span><span class="o">=</span><span class="n">cv_params</span><span class="p">,</span> 
+               <span class="n">nfold</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> 
+               <span class="n">num_boost_round</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> 
+               <span class="n">metrics</span><span class="o">=</span><span class="s2">&quot;auc&quot;</span><span class="p">,</span> 
+               <span class="n">as_pandas</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">hr_cv</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>train-auc-mean</th>
+      <th>train-auc-std</th>
+      <th>test-auc-mean</th>
+      <th>test-auc-std</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.976151</td>
+      <td>0.000584</td>
+      <td>0.974546</td>
+      <td>0.004580</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.980073</td>
+      <td>0.001645</td>
+      <td>0.977836</td>
+      <td>0.003115</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.982462</td>
+      <td>0.000626</td>
+      <td>0.980670</td>
+      <td>0.002991</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.982992</td>
+      <td>0.000624</td>
+      <td>0.981325</td>
+      <td>0.002830</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.984424</td>
+      <td>0.001160</td>
+      <td>0.982618</td>
+      <td>0.002191</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.985397</td>
+      <td>0.000821</td>
+      <td>0.983066</td>
+      <td>0.002788</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>0.986158</td>
+      <td>0.000351</td>
+      <td>0.984041</td>
+      <td>0.002888</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>0.987001</td>
+      <td>0.000325</td>
+      <td>0.984812</td>
+      <td>0.002570</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>0.987493</td>
+      <td>0.000397</td>
+      <td>0.985092</td>
+      <td>0.002536</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>0.987849</td>
+      <td>0.000569</td>
+      <td>0.985406</td>
+      <td>0.002380</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#49884;&#44033;&#54868;">&#49884;&#44033;&#54868;<a class="anchor-link" href="#&#49884;&#44033;&#54868;">&#182;</a></h2><p>XGBoost 모형을 시각화함으로써 개발한 예측모형의 성능에 대해 더 깊은 이해를 가질 수 있다. <code>xgb.plot_importance()</code> 메쏘드에 XGBoost 모형객체를 넣어 변수중요도를 파악할 수 있다. 특히 의사결정나무 시각화를 위해서 <code>graphviz</code> 라이브러리 설치가 필요한데... 경로명 설정문제도 함께 해결하는 방식으로 아래와 같이 <code>pip install</code>, <code>conda install</code> 명령어를 연이어 실행시킨다.</p>
+<ul>
+<li><code>pip install graphviz</code></li>
+<li><code>conda install graphviz</code></li>
+</ul>
+<p>참고자료: <a href="https://frhyme.github.io/python-lib/graphviz_reinstall/">frhyme.code, "graphviz 다시 설치하기"</a></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">xgb</span><span class="o">.</span><span class="n">plot_importance</span><span class="p">(</span><span class="n">xgb_model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[5]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;matplotlib.axes._subplots.AxesSubplot at 0x1a1e051690&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">xgb</span><span class="o">.</span><span class="n">plot_tree</span><span class="p">(</span><span class="n">xgb_model</span><span class="p">,</span> <span class="n">num_trees</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[6]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;matplotlib.axes._subplots.AxesSubplot at 0x1a1e2035d0&gt;</pre>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">xgb</span><span class="o">.</span><span class="n">to_graphviz</span><span class="p">(</span><span class="n">xgb_model</span><span class="p">,</span> <span class="n">num_trees</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_svg output_subarea output_execute_result">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: %3 Pages: 1 -->
+<svg width="5566pt" height="914pt"
+ viewBox="0.00 0.00 5565.74 914.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 910)">
+<title>%3</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-910 5561.7353,-910 5561.7353,4 -4,4"/>
+<!-- 0 -->
+<g id="node1" class="node">
+<title>0</title>
+<ellipse fill="none" stroke="#000000" cx="1732.5928" cy="-888" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="1732.5928" y="-884.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.465000004</text>
+</g>
+<!-- 1 -->
+<g id="node2" class="node">
+<title>1</title>
+<ellipse fill="none" stroke="#000000" cx="1405.5928" cy="-801" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="1405.5928" y="-797.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;3</text>
+</g>
+<!-- 0&#45;&gt;1 -->
+<g id="edge1" class="edge">
+<title>0&#45;&gt;1</title>
+<path fill="none" stroke="#0000ff" d="M1672.616,-872.0429C1614.1397,-856.4849 1525.6506,-832.942 1466.7683,-817.276"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1467.4216,-813.8282 1456.8579,-814.6393 1465.6218,-820.5928 1467.4216,-813.8282"/>
+<text text-anchor="middle" x="1624.5928" y="-840.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 2 -->
+<g id="node3" class="node">
+<title>2</title>
+<ellipse fill="none" stroke="#000000" cx="2084.5928" cy="-801" rx="100.1823" ry="18"/>
+<text text-anchor="middle" x="2084.5928" y="-797.3" font-family="Times,serif" font-size="14.00" fill="#000000">time_spend_company&lt;5</text>
+</g>
+<!-- 0&#45;&gt;2 -->
+<g id="edge2" class="edge">
+<title>0&#45;&gt;2</title>
+<path fill="none" stroke="#ff0000" d="M1795.9299,-872.3457C1857.8378,-857.0446 1951.8293,-833.8137 2015.6044,-818.0511"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2016.7029,-821.385 2025.571,-815.5878 2015.0233,-814.5895 2016.7029,-821.385"/>
+<text text-anchor="middle" x="1938.0928" y="-840.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 3 -->
+<g id="node4" class="node">
+<title>3</title>
+<ellipse fill="none" stroke="#000000" cx="976.5928" cy="-714" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="976.5928" y="-710.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.574999988</text>
+</g>
+<!-- 1&#45;&gt;3 -->
+<g id="edge3" class="edge">
+<title>1&#45;&gt;3</title>
+<path fill="none" stroke="#0000ff" d="M1346.8417,-789.0854C1271.9775,-773.9032 1142.1955,-747.5838 1057.8763,-730.4841"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1058.3218,-727.0032 1047.8256,-728.4458 1056.9304,-733.8636 1058.3218,-727.0032"/>
+<text text-anchor="middle" x="1252.5928" y="-753.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 4 -->
+<g id="node5" class="node">
+<title>4</title>
+<ellipse fill="none" stroke="#000000" cx="1405.5928" cy="-714" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="1405.5928" y="-710.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.114999995</text>
+</g>
+<!-- 1&#45;&gt;4 -->
+<g id="edge4" class="edge">
+<title>1&#45;&gt;4</title>
+<path fill="none" stroke="#ff0000" d="M1405.5928,-782.9735C1405.5928,-771.1918 1405.5928,-755.5607 1405.5928,-742.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1409.0929,-742.0033 1405.5928,-732.0034 1402.0929,-742.0034 1409.0929,-742.0033"/>
+<text text-anchor="middle" x="1413.0928" y="-753.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 5 -->
+<g id="node48" class="node">
+<title>5</title>
+<ellipse fill="none" stroke="#000000" cx="2084.5928" cy="-714" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="2084.5928" y="-710.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;291</text>
+</g>
+<!-- 2&#45;&gt;5 -->
+<g id="edge47" class="edge">
+<title>2&#45;&gt;5</title>
+<path fill="none" stroke="#0000ff" d="M2084.5928,-782.9735C2084.5928,-771.1918 2084.5928,-755.5607 2084.5928,-742.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2088.0929,-742.0033 2084.5928,-732.0034 2081.0929,-742.0034 2088.0929,-742.0033"/>
+<text text-anchor="middle" x="2119.5928" y="-753.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 6 -->
+<g id="node49" class="node">
+<title>6</title>
+<ellipse fill="none" stroke="#000000" cx="3383.5928" cy="-714" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="3383.5928" y="-710.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.814999998</text>
+</g>
+<!-- 2&#45;&gt;6 -->
+<g id="edge48" class="edge">
+<title>2&#45;&gt;6</title>
+<path fill="none" stroke="#ff0000" d="M2178.5363,-794.7082C2410.159,-779.1953 3008.3121,-739.1343 3264.3889,-721.9836"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3264.7237,-725.4691 3274.4674,-721.3086 3264.2559,-718.4848 3264.7237,-725.4691"/>
+<text text-anchor="middle" x="2820.0928" y="-753.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 7 -->
+<g id="node6" class="node">
+<title>7</title>
+<ellipse fill="none" stroke="#000000" cx="639.5928" cy="-627" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="639.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.444999993</text>
+</g>
+<!-- 3&#45;&gt;7 -->
+<g id="edge5" class="edge">
+<title>3&#45;&gt;7</title>
+<path fill="none" stroke="#0000ff" d="M916.344,-698.4461C858.4176,-683.4918 770.8917,-660.8961 709.8296,-645.1323"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="710.4447,-641.6764 699.8873,-642.5656 708.6949,-648.4542 710.4447,-641.6764"/>
+<text text-anchor="middle" x="863.5928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 8 -->
+<g id="node7" class="node">
+<title>8</title>
+<ellipse fill="none" stroke="#000000" cx="976.5928" cy="-627" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="976.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;278</text>
+</g>
+<!-- 3&#45;&gt;8 -->
+<g id="edge6" class="edge">
+<title>3&#45;&gt;8</title>
+<path fill="none" stroke="#ff0000" d="M976.5928,-695.9735C976.5928,-684.1918 976.5928,-668.5607 976.5928,-655.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="980.0929,-655.0033 976.5928,-645.0034 973.0929,-655.0034 980.0929,-655.0033"/>
+<text text-anchor="middle" x="984.0928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 9 -->
+<g id="node20" class="node">
+<title>9</title>
+<ellipse fill="none" stroke="#000000" cx="1339.5928" cy="-627" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="1339.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.156779587</text>
+</g>
+<!-- 4&#45;&gt;9 -->
+<g id="edge19" class="edge">
+<title>4&#45;&gt;9</title>
+<path fill="none" stroke="#0000ff" d="M1391.9176,-695.9735C1382.5372,-683.6085 1369.9404,-667.0036 1359.4571,-653.1847"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1362.0829,-650.8549 1353.2506,-645.0034 1356.506,-655.0857 1362.0829,-650.8549"/>
+<text text-anchor="middle" x="1411.5928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 10 -->
+<g id="node21" class="node">
+<title>10</title>
+<ellipse fill="none" stroke="#000000" cx="1512.5928" cy="-627" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="1512.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;7</text>
+</g>
+<!-- 4&#45;&gt;10 -->
+<g id="edge20" class="edge">
+<title>4&#45;&gt;10</title>
+<path fill="none" stroke="#ff0000" d="M1428.0727,-696.1147C1435.2821,-690.3524 1443.2893,-683.9249 1450.5928,-678 1461.3542,-669.2701 1473.1082,-659.6287 1483.4608,-651.1006"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1485.9294,-653.6014 1491.4171,-644.5385 1481.4755,-648.2012 1485.9294,-653.6014"/>
+<text text-anchor="middle" x="1476.0928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 15 -->
+<g id="node8" class="node">
+<title>15</title>
+<ellipse fill="none" stroke="#000000" cx="427.5928" cy="-540" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="427.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.140828729</text>
+</g>
+<!-- 7&#45;&gt;15 -->
+<g id="edge7" class="edge">
+<title>7&#45;&gt;15</title>
+<path fill="none" stroke="#0000ff" d="M598.2138,-610.019C563.1489,-595.6291 512.8278,-574.9785 475.919,-559.832"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="476.9462,-556.4703 466.3661,-555.9117 474.2886,-562.9462 476.9462,-556.4703"/>
+<text text-anchor="middle" x="581.5928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 16 -->
+<g id="node9" class="node">
+<title>16</title>
+<ellipse fill="none" stroke="#000000" cx="639.5928" cy="-540" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="639.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;164</text>
+</g>
+<!-- 7&#45;&gt;16 -->
+<g id="edge8" class="edge">
+<title>7&#45;&gt;16</title>
+<path fill="none" stroke="#ff0000" d="M639.5928,-608.9735C639.5928,-597.1918 639.5928,-581.5607 639.5928,-568.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="643.0929,-568.0033 639.5928,-558.0034 636.0929,-568.0034 643.0929,-568.0033"/>
+<text text-anchor="middle" x="647.0928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 17 -->
+<g id="node18" class="node">
+<title>17</title>
+<ellipse fill="none" stroke="#000000" cx="883.5928" cy="-540" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="883.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.140699729</text>
+</g>
+<!-- 8&#45;&gt;17 -->
+<g id="edge17" class="edge">
+<title>8&#45;&gt;17</title>
+<path fill="none" stroke="#0000ff" d="M957.3232,-608.9735C943.6407,-596.1738 925.1016,-578.8308 910.0368,-564.7379"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="912.2134,-561.9813 902.5196,-557.7057 907.4313,-567.0933 912.2134,-561.9813"/>
+<text text-anchor="middle" x="971.5928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 18 -->
+<g id="node19" class="node">
+<title>18</title>
+<ellipse fill="none" stroke="#000000" cx="1063.5928" cy="-540" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="1063.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0196444262</text>
+</g>
+<!-- 8&#45;&gt;18 -->
+<g id="edge18" class="edge">
+<title>8&#45;&gt;18</title>
+<path fill="none" stroke="#ff0000" d="M994.6193,-608.9735C1007.3016,-596.2912 1024.4442,-579.1486 1038.4663,-565.1265"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1041.2909,-567.2517 1045.8872,-557.7057 1036.3412,-562.3019 1041.2909,-567.2517"/>
+<text text-anchor="middle" x="1033.0928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 27 -->
+<g id="node10" class="node">
+<title>27</title>
+<ellipse fill="none" stroke="#000000" cx="306.5928" cy="-453" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="306.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;126</text>
+</g>
+<!-- 16&#45;&gt;27 -->
+<g id="edge9" class="edge">
+<title>16&#45;&gt;27</title>
+<path fill="none" stroke="#0000ff" d="M580.4428,-524.5464C522.9932,-509.537 435.8188,-486.7617 375.3182,-470.9553"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="376.0317,-467.5243 365.4717,-468.3828 374.2622,-474.2969 376.0317,-467.5243"/>
+<text text-anchor="middle" x="528.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 28 -->
+<g id="node11" class="node">
+<title>28</title>
+<ellipse fill="none" stroke="#000000" cx="639.5928" cy="-453" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="639.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.295000017</text>
+</g>
+<!-- 16&#45;&gt;28 -->
+<g id="edge10" class="edge">
+<title>16&#45;&gt;28</title>
+<path fill="none" stroke="#ff0000" d="M639.5928,-521.9735C639.5928,-510.1918 639.5928,-494.5607 639.5928,-481.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="643.0929,-481.0033 639.5928,-471.0034 636.0929,-481.0034 643.0929,-481.0033"/>
+<text text-anchor="middle" x="647.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 43 -->
+<g id="node12" class="node">
+<title>43</title>
+<ellipse fill="none" stroke="#000000" cx="80.5928" cy="-366" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="80.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.120573714</text>
+</g>
+<!-- 27&#45;&gt;43 -->
+<g id="edge11" class="edge">
+<title>27&#45;&gt;43</title>
+<path fill="none" stroke="#0000ff" d="M263.2852,-436.3285C225.395,-421.7424 170.3535,-400.5539 130.5986,-385.25"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="131.6847,-381.9178 121.0949,-381.5915 129.1699,-388.4505 131.6847,-381.9178"/>
+<text text-anchor="middle" x="242.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 44 -->
+<g id="node13" class="node">
+<title>44</title>
+<ellipse fill="none" stroke="#000000" cx="306.5928" cy="-366" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="306.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.340000004</text>
+</g>
+<!-- 27&#45;&gt;44 -->
+<g id="edge12" class="edge">
+<title>27&#45;&gt;44</title>
+<path fill="none" stroke="#ff0000" d="M306.5928,-434.9735C306.5928,-423.1918 306.5928,-407.5607 306.5928,-394.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="310.0929,-394.0033 306.5928,-384.0034 303.0929,-394.0034 310.0929,-394.0033"/>
+<text text-anchor="middle" x="314.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 45 -->
+<g id="node16" class="node">
+<title>45</title>
+<ellipse fill="none" stroke="#000000" cx="533.5928" cy="-366" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="533.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0449607037</text>
+</g>
+<!-- 28&#45;&gt;45 -->
+<g id="edge15" class="edge">
+<title>28&#45;&gt;45</title>
+<path fill="none" stroke="#0000ff" d="M617.8864,-435.1843C602.0625,-422.1968 580.4405,-404.4504 563.0572,-390.183"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="564.8584,-387.1334 554.9081,-383.4946 560.4174,-392.5443 564.8584,-387.1334"/>
+<text text-anchor="middle" x="628.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 46 -->
+<g id="node17" class="node">
+<title>46</title>
+<ellipse fill="none" stroke="#000000" cx="713.5928" cy="-366" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="713.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.126797736</text>
+</g>
+<!-- 28&#45;&gt;46 -->
+<g id="edge16" class="edge">
+<title>28&#45;&gt;46</title>
+<path fill="none" stroke="#ff0000" d="M654.9257,-434.9735C665.6131,-422.4087 680.0243,-405.4657 691.8889,-391.5168"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="694.7198,-393.5906 698.5328,-383.7057 689.3877,-389.0553 694.7198,-393.5906"/>
+<text text-anchor="middle" x="689.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 67 -->
+<g id="node14" class="node">
+<title>67</title>
+<ellipse fill="none" stroke="#000000" cx="216.5928" cy="-279" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="216.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0528328419</text>
+</g>
+<!-- 44&#45;&gt;67 -->
+<g id="edge13" class="edge">
+<title>44&#45;&gt;67</title>
+<path fill="none" stroke="#0000ff" d="M287.9448,-347.9735C274.7037,-335.1738 256.7626,-317.8308 242.1837,-303.7379"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="244.5316,-301.1395 234.9091,-296.7057 239.6664,-306.1724 244.5316,-301.1395"/>
+<text text-anchor="middle" x="302.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 68 -->
+<g id="node15" class="node">
+<title>68</title>
+<ellipse fill="none" stroke="#000000" cx="396.5928" cy="-279" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="396.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.155873537</text>
+</g>
+<!-- 44&#45;&gt;68 -->
+<g id="edge14" class="edge">
+<title>44&#45;&gt;68</title>
+<path fill="none" stroke="#ff0000" d="M325.2409,-347.9735C338.482,-335.1738 356.4231,-317.8308 371.002,-303.7379"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="373.5193,-306.1724 378.2766,-296.7057 368.6541,-301.1395 373.5193,-306.1724"/>
+<text text-anchor="middle" x="365.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 19 -->
+<g id="node22" class="node">
+<title>19</title>
+<ellipse fill="none" stroke="#000000" cx="1372.5928" cy="-540" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="1372.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;289</text>
+</g>
+<!-- 10&#45;&gt;19 -->
+<g id="edge21" class="edge">
+<title>10&#45;&gt;19</title>
+<path fill="none" stroke="#0000ff" d="M1485.2671,-610.019C1463.6755,-596.6013 1433.3243,-577.7403 1409.562,-562.9737"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1411.1504,-559.84 1400.8094,-557.5346 1407.4557,-565.7856 1411.1504,-559.84"/>
+<text text-anchor="middle" x="1486.5928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 20 -->
+<g id="node23" class="node">
+<title>20</title>
+<ellipse fill="none" stroke="#000000" cx="1576.5928" cy="-540" rx="72.5877" ry="18"/>
+<text text-anchor="middle" x="1576.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.12497177</text>
+</g>
+<!-- 10&#45;&gt;20 -->
+<g id="edge22" class="edge">
+<title>10&#45;&gt;20</title>
+<path fill="none" stroke="#ff0000" d="M1525.8537,-608.9735C1534.9498,-596.6085 1547.1649,-580.0036 1557.3305,-566.1847"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1560.2426,-568.1326 1563.349,-558.0034 1554.604,-563.9846 1560.2426,-568.1326"/>
+<text text-anchor="middle" x="1556.0928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 29 -->
+<g id="node24" class="node">
+<title>29</title>
+<ellipse fill="none" stroke="#000000" cx="1167.5928" cy="-453" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="1167.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.995000005</text>
+</g>
+<!-- 19&#45;&gt;29 -->
+<g id="edge23" class="edge">
+<title>19&#45;&gt;29</title>
+<path fill="none" stroke="#0000ff" d="M1332.5801,-523.019C1299.6693,-509.052 1252.8603,-489.1867 1217.5024,-474.1811"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1218.4271,-470.7715 1207.8544,-470.0866 1215.6924,-477.2152 1218.4271,-470.7715"/>
+<text text-anchor="middle" x="1317.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 30 -->
+<g id="node25" class="node">
+<title>30</title>
+<ellipse fill="none" stroke="#000000" cx="1381.5928" cy="-453" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="1381.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.114781462</text>
+</g>
+<!-- 19&#45;&gt;30 -->
+<g id="edge24" class="edge">
+<title>19&#45;&gt;30</title>
+<path fill="none" stroke="#ff0000" d="M1374.4577,-521.9735C1375.6765,-510.1918 1377.2935,-494.5607 1378.6799,-481.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1382.1828,-481.3105 1379.7304,-471.0034 1375.2199,-480.5901 1382.1828,-481.3105"/>
+<text text-anchor="middle" x="1386.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 47 -->
+<g id="node26" class="node">
+<title>47</title>
+<ellipse fill="none" stroke="#000000" cx="939.5928" cy="-366" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="939.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.305000007</text>
+</g>
+<!-- 29&#45;&gt;47 -->
+<g id="edge25" class="edge">
+<title>29&#45;&gt;47</title>
+<path fill="none" stroke="#0000ff" d="M1123.6322,-436.2255C1086.573,-422.0845 1033.3912,-401.7915 993.7179,-386.653"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="994.7873,-383.3149 984.1965,-383.0198 992.2917,-389.855 994.7873,-383.3149"/>
+<text text-anchor="middle" x="1102.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 48 -->
+<g id="node27" class="node">
+<title>48</title>
+<ellipse fill="none" stroke="#000000" cx="1212.5928" cy="-366" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="1212.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.194999993</text>
+</g>
+<!-- 29&#45;&gt;48 -->
+<g id="edge26" class="edge">
+<title>29&#45;&gt;48</title>
+<path fill="none" stroke="#ff0000" d="M1176.9169,-434.9735C1183.1919,-422.8418 1191.578,-406.6287 1198.6429,-392.9698"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1201.7952,-394.4935 1203.2808,-384.0034 1195.5777,-391.2776 1201.7952,-394.4935"/>
+<text text-anchor="middle" x="1201.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 69 -->
+<g id="node28" class="node">
+<title>69</title>
+<ellipse fill="none" stroke="#000000" cx="695.5928" cy="-279" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="695.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.145000011</text>
+</g>
+<!-- 47&#45;&gt;69 -->
+<g id="edge27" class="edge">
+<title>47&#45;&gt;69</title>
+<path fill="none" stroke="#0000ff" d="M892.5472,-349.2255C852.5912,-334.9789 795.1225,-314.488 752.5674,-299.3147"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="753.5044,-295.933 742.9097,-295.8712 751.1534,-302.5264 753.5044,-295.933"/>
+<text text-anchor="middle" x="867.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 70 -->
+<g id="node29" class="node">
+<title>70</title>
+<ellipse fill="none" stroke="#000000" cx="968.5928" cy="-279" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="968.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.335000008</text>
+</g>
+<!-- 47&#45;&gt;70 -->
+<g id="edge28" class="edge">
+<title>47&#45;&gt;70</title>
+<path fill="none" stroke="#ff0000" d="M945.6017,-347.9735C949.5678,-336.0751 954.8426,-320.2508 959.3393,-306.7606"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="962.7498,-307.597 962.5917,-297.0034 956.109,-305.3834 962.7498,-307.597"/>
+<text text-anchor="middle" x="964.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 71 -->
+<g id="node46" class="node">
+<title>71</title>
+<ellipse fill="none" stroke="#000000" cx="1201.5928" cy="-279" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="1201.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0449607037</text>
+</g>
+<!-- 48&#45;&gt;71 -->
+<g id="edge45" class="edge">
+<title>48&#45;&gt;71</title>
+<path fill="none" stroke="#0000ff" d="M1210.3136,-347.9735C1208.824,-336.1918 1206.8476,-320.5607 1205.1531,-307.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1208.596,-306.4853 1203.8691,-297.0034 1201.6512,-307.3634 1208.596,-306.4853"/>
+<text text-anchor="middle" x="1243.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 72 -->
+<g id="node47" class="node">
+<title>72</title>
+<ellipse fill="none" stroke="#000000" cx="1386.5928" cy="-279" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="1386.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0949949846</text>
+</g>
+<!-- 48&#45;&gt;72 -->
+<g id="edge46" class="edge">
+<title>48&#45;&gt;72</title>
+<path fill="none" stroke="#ff0000" d="M1247.3861,-348.6033C1275.2175,-334.6877 1314.3601,-315.1164 1344.0534,-300.2697"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1345.9567,-303.2313 1353.3357,-295.6286 1342.8262,-296.9703 1345.9567,-303.2313"/>
+<text text-anchor="middle" x="1318.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 87 -->
+<g id="node30" class="node">
+<title>87</title>
+<ellipse fill="none" stroke="#000000" cx="498.5928" cy="-192" rx="100.1823" ry="18"/>
+<text text-anchor="middle" x="498.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">time_spend_company&lt;3</text>
+</g>
+<!-- 69&#45;&gt;87 -->
+<g id="edge29" class="edge">
+<title>69&#45;&gt;87</title>
+<path fill="none" stroke="#0000ff" d="M656.672,-261.8116C624.7957,-247.7343 579.585,-227.7681 545.6735,-212.792"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="546.9905,-209.5475 536.4289,-208.7093 544.1626,-215.9509 546.9905,-209.5475"/>
+<text text-anchor="middle" x="644.5928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 88 -->
+<g id="node31" class="node">
+<title>88</title>
+<ellipse fill="none" stroke="#000000" cx="697.5928" cy="-192" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="697.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.150756001</text>
+</g>
+<!-- 69&#45;&gt;88 -->
+<g id="edge30" class="edge">
+<title>69&#45;&gt;88</title>
+<path fill="none" stroke="#ff0000" d="M696.0073,-260.9735C696.2781,-249.1918 696.6374,-233.5607 696.9455,-220.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="700.4481,-220.0812 697.179,-210.0034 693.45,-219.9202 700.4481,-220.0812"/>
+<text text-anchor="middle" x="705.0928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 89 -->
+<g id="node38" class="node">
+<title>89</title>
+<ellipse fill="none" stroke="#000000" cx="965.5928" cy="-192" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="965.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;5</text>
+</g>
+<!-- 70&#45;&gt;89 -->
+<g id="edge37" class="edge">
+<title>70&#45;&gt;89</title>
+<path fill="none" stroke="#0000ff" d="M967.9712,-260.9735C967.565,-249.1918 967.026,-233.5607 966.5638,-220.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="970.0563,-219.8768 966.2137,-210.0034 963.0605,-220.1181 970.0563,-219.8768"/>
+<text text-anchor="middle" x="1002.5928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 90 -->
+<g id="node39" class="node">
+<title>90</title>
+<ellipse fill="none" stroke="#000000" cx="1180.5928" cy="-192" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="1180.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.965000033</text>
+</g>
+<!-- 70&#45;&gt;90 -->
+<g id="edge38" class="edge">
+<title>70&#45;&gt;90</title>
+<path fill="none" stroke="#ff0000" d="M1010.2243,-261.9154C1044.5395,-247.8332 1093.3392,-227.8069 1129.922,-212.7942"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1131.4951,-215.9319 1139.4176,-208.8974 1128.8375,-209.456 1131.4951,-215.9319"/>
+<text text-anchor="middle" x="1095.0928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 99 -->
+<g id="node32" class="node">
+<title>99</title>
+<ellipse fill="none" stroke="#000000" cx="406.5928" cy="-105" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="406.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;5</text>
+</g>
+<!-- 87&#45;&gt;99 -->
+<g id="edge31" class="edge">
+<title>87&#45;&gt;99</title>
+<path fill="none" stroke="#0000ff" d="M479.5304,-173.9735C465.995,-161.1738 447.6553,-143.8308 432.7524,-129.7379"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="434.9867,-127.0336 425.3161,-122.7057 430.1771,-132.1196 434.9867,-127.0336"/>
+<text text-anchor="middle" x="493.5928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 100 -->
+<g id="node33" class="node">
+<title>100</title>
+<ellipse fill="none" stroke="#000000" cx="586.5928" cy="-105" rx="76.0865" ry="18"/>
+<text text-anchor="middle" x="586.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">Work_accident&lt;1</text>
+</g>
+<!-- 87&#45;&gt;100 -->
+<g id="edge32" class="edge">
+<title>87&#45;&gt;100</title>
+<path fill="none" stroke="#ff0000" d="M516.8265,-173.9735C529.7734,-161.1738 547.3157,-143.8308 561.5707,-129.7379"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="564.033,-132.2253 568.6836,-122.7057 559.1116,-127.2473 564.033,-132.2253"/>
+<text text-anchor="middle" x="556.0928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 109 -->
+<g id="node34" class="node">
+<title>109</title>
+<ellipse fill="none" stroke="#000000" cx="221.5928" cy="-18" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="221.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0411673337</text>
+</g>
+<!-- 99&#45;&gt;109 -->
+<g id="edge33" class="edge">
+<title>99&#45;&gt;109</title>
+<path fill="none" stroke="#0000ff" d="M372.2293,-88.8399C342.2712,-74.7514 298.631,-54.2287 266.025,-38.8951"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="267.2543,-35.6056 256.7155,-34.5171 264.2753,-41.9401 267.2543,-35.6056"/>
+<text text-anchor="middle" x="360.5928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 110 -->
+<g id="node35" class="node">
+<title>110</title>
+<ellipse fill="none" stroke="#000000" cx="406.5928" cy="-18" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="406.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0966307893</text>
+</g>
+<!-- 99&#45;&gt;110 -->
+<g id="edge34" class="edge">
+<title>99&#45;&gt;110</title>
+<path fill="none" stroke="#ff0000" d="M406.5928,-86.9735C406.5928,-75.1918 406.5928,-59.5607 406.5928,-46.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="410.0929,-46.0033 406.5928,-36.0034 403.0929,-46.0034 410.0929,-46.0033"/>
+<text text-anchor="middle" x="414.0928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 111 -->
+<g id="node36" class="node">
+<title>111</title>
+<ellipse fill="none" stroke="#000000" cx="586.5928" cy="-18" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="586.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.140711769</text>
+</g>
+<!-- 100&#45;&gt;111 -->
+<g id="edge35" class="edge">
+<title>100&#45;&gt;111</title>
+<path fill="none" stroke="#0000ff" d="M586.5928,-86.9735C586.5928,-75.1918 586.5928,-59.5607 586.5928,-46.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="590.0929,-46.0033 586.5928,-36.0034 583.0929,-46.0034 590.0929,-46.0033"/>
+<text text-anchor="middle" x="621.5928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 112 -->
+<g id="node37" class="node">
+<title>112</title>
+<ellipse fill="none" stroke="#000000" cx="770.5928" cy="-18" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="770.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0703829974</text>
+</g>
+<!-- 100&#45;&gt;112 -->
+<g id="edge36" class="edge">
+<title>100&#45;&gt;112</title>
+<path fill="none" stroke="#ff0000" d="M620.7706,-88.8399C650.5669,-74.7514 693.9712,-54.2287 726.4009,-38.8951"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="728.1158,-41.9559 735.6601,-34.5171 725.1236,-35.6276 728.1158,-41.9559"/>
+<text text-anchor="middle" x="698.0928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 101 -->
+<g id="node40" class="node">
+<title>101</title>
+<ellipse fill="none" stroke="#000000" cx="770.5928" cy="-105" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="770.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.119641535</text>
+</g>
+<!-- 89&#45;&gt;101 -->
+<g id="edge39" class="edge">
+<title>89&#45;&gt;101</title>
+<path fill="none" stroke="#0000ff" d="M929.3718,-175.8399C897.4574,-161.6011 850.8121,-140.7901 816.3308,-125.4062"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="817.5086,-122.0991 806.9502,-121.221 814.6565,-128.4918 817.5086,-122.0991"/>
+<text text-anchor="middle" x="915.5928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 102 -->
+<g id="node41" class="node">
+<title>102</title>
+<ellipse fill="none" stroke="#000000" cx="969.5928" cy="-105" rx="100.1823" ry="18"/>
+<text text-anchor="middle" x="969.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">time_spend_company&lt;5</text>
+</g>
+<!-- 89&#45;&gt;102 -->
+<g id="edge40" class="edge">
+<title>89&#45;&gt;102</title>
+<path fill="none" stroke="#ff0000" d="M966.4217,-173.9735C966.9633,-162.1918 967.682,-146.5607 968.2982,-133.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="971.802,-133.1536 968.7651,-123.0034 964.8094,-132.832 971.802,-133.1536"/>
+<text text-anchor="middle" x="976.0928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 103 -->
+<g id="node44" class="node">
+<title>103</title>
+<ellipse fill="none" stroke="#000000" cx="1172.5928" cy="-105" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="1172.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.140895814</text>
+</g>
+<!-- 90&#45;&gt;103 -->
+<g id="edge43" class="edge">
+<title>90&#45;&gt;103</title>
+<path fill="none" stroke="#0000ff" d="M1178.9352,-173.9735C1177.8519,-162.1918 1176.4145,-146.5607 1175.1821,-133.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1178.6494,-132.6408 1174.2483,-123.0034 1171.6788,-133.2819 1178.6494,-132.6408"/>
+<text text-anchor="middle" x="1212.5928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 104 -->
+<g id="node45" class="node">
+<title>104</title>
+<ellipse fill="none" stroke="#000000" cx="1360.5928" cy="-105" rx="89.8845" ry="18"/>
+<text text-anchor="middle" x="1360.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.00800376292</text>
+</g>
+<!-- 90&#45;&gt;104 -->
+<g id="edge44" class="edge">
+<title>90&#45;&gt;104</title>
+<path fill="none" stroke="#ff0000" d="M1216.1551,-174.8116C1245.0317,-160.8546 1285.8846,-141.109 1316.7782,-126.1771"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1318.5415,-129.2123 1326.0219,-121.7093 1315.4953,-122.9098 1318.5415,-129.2123"/>
+<text text-anchor="middle" x="1289.0928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 113 -->
+<g id="node42" class="node">
+<title>113</title>
+<ellipse fill="none" stroke="#000000" cx="964.5928" cy="-18" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="964.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0475379825</text>
+</g>
+<!-- 102&#45;&gt;113 -->
+<g id="edge41" class="edge">
+<title>102&#45;&gt;113</title>
+<path fill="none" stroke="#0000ff" d="M968.5568,-86.9735C967.8797,-75.1918 966.9814,-59.5607 966.2111,-46.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="969.6956,-45.786 965.6275,-36.0034 962.7071,-46.1877 969.6956,-45.786"/>
+<text text-anchor="middle" x="1002.5928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 114 -->
+<g id="node43" class="node">
+<title>114</title>
+<ellipse fill="none" stroke="#000000" cx="1144.5928" cy="-18" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="1144.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.116312467</text>
+</g>
+<!-- 102&#45;&gt;114 -->
+<g id="edge42" class="edge">
+<title>102&#45;&gt;114</title>
+<path fill="none" stroke="#ff0000" d="M1003.75,-88.019C1032.0552,-73.9473 1072.4032,-53.8885 1102.6642,-38.8445"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1104.3108,-41.9347 1111.7072,-34.3489 1101.1946,-35.6665 1104.3108,-41.9347"/>
+<text text-anchor="middle" x="1075.0928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 11 -->
+<g id="node50" class="node">
+<title>11</title>
+<ellipse fill="none" stroke="#000000" cx="1958.5928" cy="-627" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="1958.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;6</text>
+</g>
+<!-- 5&#45;&gt;11 -->
+<g id="edge49" class="edge">
+<title>5&#45;&gt;11</title>
+<path fill="none" stroke="#0000ff" d="M2058.3975,-696.3066C2049.8371,-690.4979 2040.295,-683.9948 2031.5928,-678 2018.4555,-668.9498 2004.0485,-658.9094 1991.5298,-650.1475"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1993.4018,-647.1855 1983.2036,-644.3137 1989.385,-652.9184 1993.4018,-647.1855"/>
+<text text-anchor="middle" x="2066.5928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 12 -->
+<g id="node51" class="node">
+<title>12</title>
+<ellipse fill="none" stroke="#000000" cx="2131.5928" cy="-627" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="2131.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.106788218</text>
+</g>
+<!-- 5&#45;&gt;12 -->
+<g id="edge50" class="edge">
+<title>5&#45;&gt;12</title>
+<path fill="none" stroke="#ff0000" d="M2094.3313,-695.9735C2100.8852,-683.8418 2109.644,-667.6287 2117.0229,-653.9698"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2120.1932,-655.4652 2121.8669,-645.0034 2114.0344,-652.138 2120.1932,-655.4652"/>
+<text text-anchor="middle" x="2119.0928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 13 -->
+<g id="node70" class="node">
+<title>13</title>
+<ellipse fill="none" stroke="#000000" cx="3383.5928" cy="-627" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="3383.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.805000007</text>
+</g>
+<!-- 6&#45;&gt;13 -->
+<g id="edge69" class="edge">
+<title>6&#45;&gt;13</title>
+<path fill="none" stroke="#0000ff" d="M3383.5928,-695.9735C3383.5928,-684.1918 3383.5928,-668.5607 3383.5928,-655.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="3387.0929,-655.0033 3383.5928,-645.0034 3380.0929,-655.0034 3387.0929,-655.0033"/>
+<text text-anchor="middle" x="3418.5928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 14 -->
+<g id="node71" class="node">
+<title>14</title>
+<ellipse fill="none" stroke="#000000" cx="4192.5928" cy="-627" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="4192.5928" y="-623.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;217</text>
+</g>
+<!-- 6&#45;&gt;14 -->
+<g id="edge70" class="edge">
+<title>6&#45;&gt;14</title>
+<path fill="none" stroke="#ff0000" d="M3480.775,-703.549C3634.1096,-687.0594 3930.8973,-655.1428 4088.4507,-638.1995"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4089.0557,-641.6547 4098.6241,-637.1054 4088.3072,-634.6948 4089.0557,-641.6547"/>
+<text text-anchor="middle" x="3844.0928" y="-666.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 21 -->
+<g id="node52" class="node">
+<title>21</title>
+<ellipse fill="none" stroke="#000000" cx="1810.5928" cy="-540" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="1810.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.474999994</text>
+</g>
+<!-- 11&#45;&gt;21 -->
+<g id="edge51" class="edge">
+<title>11&#45;&gt;21</title>
+<path fill="none" stroke="#0000ff" d="M1930.057,-610.2255C1907.0644,-596.7096 1874.5112,-577.5736 1849.1917,-562.6899"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1850.9597,-559.6693 1840.5651,-557.6188 1847.4123,-565.7038 1850.9597,-559.6693"/>
+<text text-anchor="middle" x="1928.5928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 22 -->
+<g id="node53" class="node">
+<title>22</title>
+<ellipse fill="none" stroke="#000000" cx="2074.5928" cy="-540" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="2074.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.965000033</text>
+</g>
+<!-- 11&#45;&gt;22 -->
+<g id="edge52" class="edge">
+<title>11&#45;&gt;22</title>
+<path fill="none" stroke="#ff0000" d="M1981.7884,-609.6033C1999.2969,-596.472 2023.5202,-578.3045 2042.8286,-563.8232"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2045.1399,-566.4648 2051.0399,-557.6647 2040.9399,-560.8647 2045.1399,-566.4648"/>
+<text text-anchor="middle" x="2031.0928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 31 -->
+<g id="node54" class="node">
+<title>31</title>
+<ellipse fill="none" stroke="#000000" cx="1614.5928" cy="-453" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="1614.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;209</text>
+</g>
+<!-- 21&#45;&gt;31 -->
+<g id="edge53" class="edge">
+<title>21&#45;&gt;31</title>
+<path fill="none" stroke="#0000ff" d="M1771.8696,-522.8116C1740.359,-508.8248 1695.7519,-489.0247 1662.0869,-474.0815"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1663.4618,-470.8626 1652.9017,-470.0045 1660.6218,-477.2606 1663.4618,-470.8626"/>
+<text text-anchor="middle" x="1759.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 32 -->
+<g id="node55" class="node">
+<title>32</title>
+<ellipse fill="none" stroke="#000000" cx="1826.5928" cy="-453" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="1826.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.153790861</text>
+</g>
+<!-- 21&#45;&gt;32 -->
+<g id="edge54" class="edge">
+<title>21&#45;&gt;32</title>
+<path fill="none" stroke="#ff0000" d="M1813.9081,-521.9735C1816.0748,-510.1918 1818.9495,-494.5607 1821.4144,-481.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1824.9153,-481.4715 1823.2819,-471.0034 1818.0308,-480.2053 1824.9153,-481.4715"/>
+<text text-anchor="middle" x="1827.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 33 -->
+<g id="node58" class="node">
+<title>33</title>
+<ellipse fill="none" stroke="#000000" cx="2070.5928" cy="-453" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="2070.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;163</text>
+</g>
+<!-- 22&#45;&gt;33 -->
+<g id="edge57" class="edge">
+<title>22&#45;&gt;33</title>
+<path fill="none" stroke="#0000ff" d="M2073.764,-521.9735C2073.2224,-510.1918 2072.5037,-494.5607 2071.8875,-481.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2075.3763,-480.832 2071.4206,-471.0034 2068.3837,-481.1536 2075.3763,-480.832"/>
+<text text-anchor="middle" x="2108.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 34 -->
+<g id="node59" class="node">
+<title>34</title>
+<ellipse fill="none" stroke="#000000" cx="2324.5928" cy="-453" rx="122.6784" ry="18"/>
+<text text-anchor="middle" x="2324.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.75999999</text>
+</g>
+<!-- 22&#45;&gt;34 -->
+<g id="edge58" class="edge">
+<title>22&#45;&gt;34</title>
+<path fill="none" stroke="#ff0000" d="M2122.2044,-523.4312C2163.4293,-509.0849 2223.1689,-488.2955 2267.0614,-473.0209"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2268.4393,-476.2474 2276.7335,-469.6551 2266.1386,-469.6362 2268.4393,-476.2474"/>
+<text text-anchor="middle" x="2222.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 49 -->
+<g id="node56" class="node">
+<title>49</title>
+<ellipse fill="none" stroke="#000000" cx="1438.5928" cy="-366" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="1438.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.128160313</text>
+</g>
+<!-- 31&#45;&gt;49 -->
+<g id="edge55" class="edge">
+<title>31&#45;&gt;49</title>
+<path fill="none" stroke="#0000ff" d="M1579.8209,-435.8116C1551.4044,-421.7648 1511.1267,-401.8548 1480.8523,-386.8896"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1482.3177,-383.7097 1471.8021,-382.4159 1479.2157,-389.9849 1482.3177,-383.7097"/>
+<text text-anchor="middle" x="1572.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 50 -->
+<g id="node57" class="node">
+<title>50</title>
+<ellipse fill="none" stroke="#000000" cx="1618.5928" cy="-366" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="1618.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0295562986</text>
+</g>
+<!-- 31&#45;&gt;50 -->
+<g id="edge56" class="edge">
+<title>31&#45;&gt;50</title>
+<path fill="none" stroke="#ff0000" d="M1615.4217,-434.9735C1615.9633,-423.1918 1616.682,-407.5607 1617.2982,-394.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1620.802,-394.1536 1617.7651,-384.0034 1613.8094,-393.832 1620.802,-394.1536"/>
+<text text-anchor="middle" x="1625.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 51 -->
+<g id="node60" class="node">
+<title>51</title>
+<ellipse fill="none" stroke="#000000" cx="1831.5928" cy="-366" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="1831.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;155</text>
+</g>
+<!-- 33&#45;&gt;51 -->
+<g id="edge59" class="edge">
+<title>33&#45;&gt;51</title>
+<path fill="none" stroke="#0000ff" d="M2025.0762,-436.4312C1985.6223,-422.0693 1928.4299,-401.2503 1886.4561,-385.9711"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1887.534,-382.6389 1876.94,-382.5071 1885.1396,-389.2167 1887.534,-382.6389"/>
+<text text-anchor="middle" x="2000.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 52 -->
+<g id="node61" class="node">
+<title>52</title>
+<ellipse fill="none" stroke="#000000" cx="2089.5928" cy="-366" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="2089.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.644999981</text>
+</g>
+<!-- 33&#45;&gt;52 -->
+<g id="edge60" class="edge">
+<title>33&#45;&gt;52</title>
+<path fill="none" stroke="#ff0000" d="M2074.5297,-434.9735C2077.1027,-423.1918 2080.5164,-407.5607 2083.4434,-394.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2086.9468,-394.5199 2085.6611,-384.0034 2080.108,-393.0263 2086.9468,-394.5199"/>
+<text text-anchor="middle" x="2089.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 53 -->
+<g id="node68" class="node">
+<title>53</title>
+<ellipse fill="none" stroke="#000000" cx="2316.5928" cy="-366" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="2316.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0217539892</text>
+</g>
+<!-- 34&#45;&gt;53 -->
+<g id="edge67" class="edge">
+<title>34&#45;&gt;53</title>
+<path fill="none" stroke="#0000ff" d="M2322.9352,-434.9735C2321.8519,-423.1918 2320.4145,-407.5607 2319.1821,-394.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2322.6494,-393.6408 2318.2483,-384.0034 2315.6788,-394.2819 2322.6494,-393.6408"/>
+<text text-anchor="middle" x="2356.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 54 -->
+<g id="node69" class="node">
+<title>54</title>
+<ellipse fill="none" stroke="#000000" cx="2501.5928" cy="-366" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="2501.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0588356145</text>
+</g>
+<!-- 34&#45;&gt;54 -->
+<g id="edge68" class="edge">
+<title>34&#45;&gt;54</title>
+<path fill="none" stroke="#ff0000" d="M2359.986,-435.6033C2388.4198,-421.6274 2428.4596,-401.9468 2458.7117,-387.0772"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2460.3317,-390.1809 2467.7623,-382.6286 2457.2439,-383.8987 2460.3317,-390.1809"/>
+<text text-anchor="middle" x="2432.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 73 -->
+<g id="node62" class="node">
+<title>73</title>
+<ellipse fill="none" stroke="#000000" cx="1661.5928" cy="-279" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="1661.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.127582461</text>
+</g>
+<!-- 51&#45;&gt;73 -->
+<g id="edge61" class="edge">
+<title>51&#45;&gt;73</title>
+<path fill="none" stroke="#0000ff" d="M1797.2629,-348.6492C1785.6144,-342.747 1772.5299,-336.1009 1760.5928,-330 1741.5343,-320.2594 1720.446,-309.4062 1702.6473,-300.2241"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="1704.1592,-297.0658 1693.6678,-295.5895 1700.9487,-303.2861 1704.1592,-297.0658"/>
+<text text-anchor="middle" x="1795.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 74 -->
+<g id="node63" class="node">
+<title>74</title>
+<ellipse fill="none" stroke="#000000" cx="1837.5928" cy="-279" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="1837.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.120179094</text>
+</g>
+<!-- 51&#45;&gt;74 -->
+<g id="edge62" class="edge">
+<title>51&#45;&gt;74</title>
+<path fill="none" stroke="#ff0000" d="M1832.8361,-347.9735C1833.6486,-336.1918 1834.7266,-320.5607 1835.6509,-307.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="1839.1548,-307.2205 1836.3512,-297.0034 1832.1714,-306.7388 1839.1548,-307.2205"/>
+<text text-anchor="middle" x="1843.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 75 -->
+<g id="node64" class="node">
+<title>75</title>
+<ellipse fill="none" stroke="#000000" cx="2070.5928" cy="-279" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="2070.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;249</text>
+</g>
+<!-- 52&#45;&gt;75 -->
+<g id="edge63" class="edge">
+<title>52&#45;&gt;75</title>
+<path fill="none" stroke="#0000ff" d="M2085.656,-347.9735C2083.083,-336.1918 2079.6693,-320.5607 2076.7423,-307.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2080.0777,-306.0263 2074.5246,-297.0034 2073.2389,-307.5199 2080.0777,-306.0263"/>
+<text text-anchor="middle" x="2116.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 76 -->
+<g id="node65" class="node">
+<title>76</title>
+<ellipse fill="none" stroke="#000000" cx="2277.5928" cy="-279" rx="76.0865" ry="18"/>
+<text text-anchor="middle" x="2277.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.15104875</text>
+</g>
+<!-- 52&#45;&gt;76 -->
+<g id="edge64" class="edge">
+<title>52&#45;&gt;76</title>
+<path fill="none" stroke="#ff0000" d="M2127.1856,-348.6033C2157.9068,-334.3866 2201.3836,-314.267 2233.698,-299.313"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2235.3128,-302.4224 2242.9182,-295.0462 2232.3729,-296.0697 2235.3128,-302.4224"/>
+<text text-anchor="middle" x="2203.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 91 -->
+<g id="node66" class="node">
+<title>91</title>
+<ellipse fill="none" stroke="#000000" cx="1975.5928" cy="-192" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="1975.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0897278935</text>
+</g>
+<!-- 75&#45;&gt;91 -->
+<g id="edge65" class="edge">
+<title>75&#45;&gt;91</title>
+<path fill="none" stroke="#0000ff" d="M2050.9088,-260.9735C2036.9321,-248.1738 2017.9943,-230.8308 2002.6054,-216.7379"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2004.6653,-213.8783 1994.9267,-209.7057 1999.9376,-219.0406 2004.6653,-213.8783"/>
+<text text-anchor="middle" x="2064.5928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 92 -->
+<g id="node67" class="node">
+<title>92</title>
+<ellipse fill="none" stroke="#000000" cx="2165.5928" cy="-192" rx="86.3847" ry="18"/>
+<text text-anchor="middle" x="2165.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.00394297903</text>
+</g>
+<!-- 75&#45;&gt;92 -->
+<g id="edge66" class="edge">
+<title>75&#45;&gt;92</title>
+<path fill="none" stroke="#ff0000" d="M2090.2769,-260.9735C2104.2536,-248.1738 2123.1914,-230.8308 2138.5803,-216.7379"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2141.2481,-219.0406 2146.259,-209.7057 2136.5204,-213.8783 2141.2481,-219.0406"/>
+<text text-anchor="middle" x="2132.0928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 23 -->
+<g id="node72" class="node">
+<title>23</title>
+<ellipse fill="none" stroke="#000000" cx="3228.5928" cy="-540" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="3228.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;273</text>
+</g>
+<!-- 13&#45;&gt;23 -->
+<g id="edge71" class="edge">
+<title>13&#45;&gt;23</title>
+<path fill="none" stroke="#0000ff" d="M3352.5988,-609.6033C3328.4163,-596.0299 3294.6473,-577.0757 3268.454,-562.3737"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="3269.9666,-559.2091 3259.5332,-557.3665 3266.5403,-565.3132 3269.9666,-559.2091"/>
+<text text-anchor="middle" x="3350.5928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 24 -->
+<g id="node73" class="node">
+<title>24</title>
+<ellipse fill="none" stroke="#000000" cx="3549.5928" cy="-540" rx="100.1823" ry="18"/>
+<text text-anchor="middle" x="3549.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">time_spend_company&lt;6</text>
+</g>
+<!-- 13&#45;&gt;24 -->
+<g id="edge72" class="edge">
+<title>13&#45;&gt;24</title>
+<path fill="none" stroke="#ff0000" d="M3416.7865,-609.6033C3442.9683,-595.8816 3479.6426,-576.6607 3507.8199,-561.8931"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3509.7899,-564.8122 3517.0225,-557.07 3506.5405,-558.6121 3509.7899,-564.8122"/>
+<text text-anchor="middle" x="3484.0928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 25 -->
+<g id="node92" class="node">
+<title>25</title>
+<ellipse fill="none" stroke="#000000" cx="4192.5928" cy="-540" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="4192.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.975000024</text>
+</g>
+<!-- 14&#45;&gt;25 -->
+<g id="edge91" class="edge">
+<title>14&#45;&gt;25</title>
+<path fill="none" stroke="#0000ff" d="M4192.5928,-608.9735C4192.5928,-597.1918 4192.5928,-581.5607 4192.5928,-568.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4196.0929,-568.0033 4192.5928,-558.0034 4189.0929,-568.0034 4196.0929,-568.0033"/>
+<text text-anchor="middle" x="4227.5928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 26 -->
+<g id="node93" class="node">
+<title>26</title>
+<ellipse fill="none" stroke="#000000" cx="4832.5928" cy="-540" rx="100.1823" ry="18"/>
+<text text-anchor="middle" x="4832.5928" y="-536.3" font-family="Times,serif" font-size="14.00" fill="#000000">time_spend_company&lt;7</text>
+</g>
+<!-- 14&#45;&gt;26 -->
+<g id="edge92" class="edge">
+<title>14&#45;&gt;26</title>
+<path fill="none" stroke="#ff0000" d="M4278.9061,-615.2668C4400.0375,-598.8005 4619.3971,-568.9813 4742.5226,-552.2439"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4743.2368,-555.6791 4752.6742,-550.8639 4742.2938,-548.7429 4743.2368,-555.6791"/>
+<text text-anchor="middle" x="4559.0928" y="-579.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 35 -->
+<g id="node74" class="node">
+<title>35</title>
+<ellipse fill="none" stroke="#000000" cx="2929.5928" cy="-453" rx="100.1823" ry="18"/>
+<text text-anchor="middle" x="2929.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">time_spend_company&lt;6</text>
+</g>
+<!-- 23&#45;&gt;35 -->
+<g id="edge73" class="edge">
+<title>23&#45;&gt;35</title>
+<path fill="none" stroke="#0000ff" d="M3174.0993,-524.144C3122.8014,-509.2179 3046.0216,-486.8773 2992.2233,-471.2236"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2993.0364,-467.8151 2982.4567,-468.3818 2991.0806,-474.5363 2993.0364,-467.8151"/>
+<text text-anchor="middle" x="3132.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 36 -->
+<g id="node75" class="node">
+<title>36</title>
+<ellipse fill="none" stroke="#000000" cx="3228.5928" cy="-453" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="3228.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.574999988</text>
+</g>
+<!-- 23&#45;&gt;36 -->
+<g id="edge74" class="edge">
+<title>23&#45;&gt;36</title>
+<path fill="none" stroke="#ff0000" d="M3228.5928,-521.9735C3228.5928,-510.1918 3228.5928,-494.5607 3228.5928,-481.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3232.0929,-481.0033 3228.5928,-471.0034 3225.0929,-481.0034 3232.0929,-481.0033"/>
+<text text-anchor="middle" x="3236.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 37 -->
+<g id="node88" class="node">
+<title>37</title>
+<ellipse fill="none" stroke="#000000" cx="3549.5928" cy="-453" rx="122.6784" ry="18"/>
+<text text-anchor="middle" x="3549.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.75999999</text>
+</g>
+<!-- 24&#45;&gt;37 -->
+<g id="edge87" class="edge">
+<title>24&#45;&gt;37</title>
+<path fill="none" stroke="#0000ff" d="M3549.5928,-521.9735C3549.5928,-510.1918 3549.5928,-494.5607 3549.5928,-481.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="3553.0929,-481.0033 3549.5928,-471.0034 3546.0929,-481.0034 3553.0929,-481.0033"/>
+<text text-anchor="middle" x="3584.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 38 -->
+<g id="node89" class="node">
+<title>38</title>
+<ellipse fill="none" stroke="#000000" cx="3770.5928" cy="-453" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="3770.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.106788218</text>
+</g>
+<!-- 24&#45;&gt;38 -->
+<g id="edge88" class="edge">
+<title>24&#45;&gt;38</title>
+<path fill="none" stroke="#ff0000" d="M3591.4211,-523.5337C3628.3365,-509.0014 3682.1931,-487.7999 3721.2138,-472.4388"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3722.7724,-475.5867 3730.7953,-468.6669 3720.2082,-469.0733 3722.7724,-475.5867"/>
+<text text-anchor="middle" x="3681.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 55 -->
+<g id="node76" class="node">
+<title>55</title>
+<ellipse fill="none" stroke="#000000" cx="2717.5928" cy="-366" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="2717.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;243</text>
+</g>
+<!-- 35&#45;&gt;55 -->
+<g id="edge75" class="edge">
+<title>35&#45;&gt;55</title>
+<path fill="none" stroke="#0000ff" d="M2889.2183,-436.4312C2854.8104,-422.311 2805.1932,-401.9492 2768.1491,-386.7472"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2769.1193,-383.3621 2758.5392,-382.8035 2766.4617,-389.838 2769.1193,-383.3621"/>
+<text text-anchor="middle" x="2871.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 56 -->
+<g id="node77" class="node">
+<title>56</title>
+<ellipse fill="none" stroke="#000000" cx="2929.5928" cy="-366" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="2929.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.155474588</text>
+</g>
+<!-- 35&#45;&gt;56 -->
+<g id="edge76" class="edge">
+<title>35&#45;&gt;56</title>
+<path fill="none" stroke="#ff0000" d="M2929.5928,-434.9735C2929.5928,-423.1918 2929.5928,-407.5607 2929.5928,-394.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2933.0929,-394.0033 2929.5928,-384.0034 2926.0929,-394.0034 2933.0929,-394.0033"/>
+<text text-anchor="middle" x="2937.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 57 -->
+<g id="node84" class="node">
+<title>57</title>
+<ellipse fill="none" stroke="#000000" cx="3147.5928" cy="-366" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="3147.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.659999967</text>
+</g>
+<!-- 36&#45;&gt;57 -->
+<g id="edge83" class="edge">
+<title>36&#45;&gt;57</title>
+<path fill="none" stroke="#0000ff" d="M3211.8096,-434.9735C3200.0801,-422.3752 3184.2528,-405.3755 3171.2463,-391.4055"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="3173.7305,-388.9374 3164.3546,-384.0034 3168.6072,-393.7073 3173.7305,-388.9374"/>
+<text text-anchor="middle" x="3228.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 58 -->
+<g id="node85" class="node">
+<title>58</title>
+<ellipse fill="none" stroke="#000000" cx="3365.5928" cy="-366" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="3365.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.126318797</text>
+</g>
+<!-- 36&#45;&gt;58 -->
+<g id="edge84" class="edge">
+<title>36&#45;&gt;58</title>
+<path fill="none" stroke="#ff0000" d="M3256.3168,-435.3943C3277.6705,-421.8339 3307.336,-402.9952 3330.3702,-388.3677"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3332.277,-391.3029 3338.8425,-382.9875 3328.5245,-385.3937 3332.277,-391.3029"/>
+<text text-anchor="middle" x="3313.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 77 -->
+<g id="node78" class="node">
+<title>77</title>
+<ellipse fill="none" stroke="#000000" cx="2628.5928" cy="-279" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="2628.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.134132728</text>
+</g>
+<!-- 55&#45;&gt;77 -->
+<g id="edge77" class="edge">
+<title>55&#45;&gt;77</title>
+<path fill="none" stroke="#0000ff" d="M2699.152,-347.9735C2686.058,-335.1738 2668.3163,-317.8308 2653.8994,-303.7379"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2656.3032,-301.1931 2646.7056,-296.7057 2651.41,-306.1988 2656.3032,-301.1931"/>
+<text text-anchor="middle" x="2713.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 78 -->
+<g id="node79" class="node">
+<title>78</title>
+<ellipse fill="none" stroke="#000000" cx="2854.5928" cy="-279" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="2854.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.774999976</text>
+</g>
+<!-- 55&#45;&gt;78 -->
+<g id="edge78" class="edge">
+<title>55&#45;&gt;78</title>
+<path fill="none" stroke="#ff0000" d="M2745.3168,-348.3943C2766.3003,-335.069 2795.31,-316.6468 2818.1664,-302.1321"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2820.3447,-304.895 2826.9101,-296.5796 2816.5921,-298.9858 2820.3447,-304.895"/>
+<text text-anchor="middle" x="2802.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 93 -->
+<g id="node80" class="node">
+<title>93</title>
+<ellipse fill="none" stroke="#000000" cx="2774.5928" cy="-192" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="2774.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.118065335</text>
+</g>
+<!-- 78&#45;&gt;93 -->
+<g id="edge79" class="edge">
+<title>78&#45;&gt;93</title>
+<path fill="none" stroke="#0000ff" d="M2838.0168,-260.9735C2826.3549,-248.2912 2810.5916,-231.1486 2797.6977,-217.1265"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2800.2191,-214.6976 2790.8739,-209.7057 2795.0664,-219.4358 2800.2191,-214.6976"/>
+<text text-anchor="middle" x="2854.5928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 94 -->
+<g id="node81" class="node">
+<title>94</title>
+<ellipse fill="none" stroke="#000000" cx="3000.5928" cy="-192" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="3000.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.805000007</text>
+</g>
+<!-- 78&#45;&gt;94 -->
+<g id="edge80" class="edge">
+<title>78&#45;&gt;94</title>
+<path fill="none" stroke="#ff0000" d="M2884.1381,-261.3943C2906.698,-247.9511 2937.9634,-229.3203 2962.4186,-214.7477"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="2964.2927,-217.7053 2971.0915,-209.5796 2960.7094,-211.6919 2964.2927,-217.7053"/>
+<text text-anchor="middle" x="2944.0928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 105 -->
+<g id="node82" class="node">
+<title>105</title>
+<ellipse fill="none" stroke="#000000" cx="2912.5928" cy="-105" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="2912.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.108343318</text>
+</g>
+<!-- 94&#45;&gt;105 -->
+<g id="edge81" class="edge">
+<title>94&#45;&gt;105</title>
+<path fill="none" stroke="#0000ff" d="M2982.3592,-173.9735C2969.4123,-161.1738 2951.87,-143.8308 2937.615,-129.7379"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="2940.0741,-127.2473 2930.5021,-122.7057 2935.1527,-132.2253 2940.0741,-127.2473"/>
+<text text-anchor="middle" x="2997.5928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 106 -->
+<g id="node83" class="node">
+<title>106</title>
+<ellipse fill="none" stroke="#000000" cx="3088.5928" cy="-105" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="3088.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.104150392</text>
+</g>
+<!-- 94&#45;&gt;106 -->
+<g id="edge82" class="edge">
+<title>94&#45;&gt;106</title>
+<path fill="none" stroke="#ff0000" d="M3018.8265,-173.9735C3031.7734,-161.1738 3049.3157,-143.8308 3063.5707,-129.7379"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3066.033,-132.2253 3070.6836,-122.7057 3061.1116,-127.2473 3066.033,-132.2253"/>
+<text text-anchor="middle" x="3058.0928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 79 -->
+<g id="node86" class="node">
+<title>79</title>
+<ellipse fill="none" stroke="#000000" cx="3112.5928" cy="-279" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="3112.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.019743178</text>
+</g>
+<!-- 57&#45;&gt;79 -->
+<g id="edge85" class="edge">
+<title>57&#45;&gt;79</title>
+<path fill="none" stroke="#0000ff" d="M3140.3408,-347.9735C3135.5072,-335.9585 3129.063,-319.9401 3123.6016,-306.3646"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="3126.815,-304.9744 3119.8356,-297.0034 3120.3208,-307.5871 3126.815,-304.9744"/>
+<text text-anchor="middle" x="3167.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 80 -->
+<g id="node87" class="node">
+<title>80</title>
+<ellipse fill="none" stroke="#000000" cx="3292.5928" cy="-279" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="3292.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0306103975</text>
+</g>
+<!-- 57&#45;&gt;80 -->
+<g id="edge86" class="edge">
+<title>57&#45;&gt;80</title>
+<path fill="none" stroke="#ff0000" d="M3176.9358,-348.3943C3199.6359,-334.7742 3231.211,-315.8291 3255.6352,-301.1746"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3257.5062,-304.1337 3264.2804,-295.9875 3253.9047,-298.1312 3257.5062,-304.1337"/>
+<text text-anchor="middle" x="3237.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 59 -->
+<g id="node90" class="node">
+<title>59</title>
+<ellipse fill="none" stroke="#000000" cx="3549.5928" cy="-366" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="3549.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0208277609</text>
+</g>
+<!-- 37&#45;&gt;59 -->
+<g id="edge89" class="edge">
+<title>37&#45;&gt;59</title>
+<path fill="none" stroke="#0000ff" d="M3549.5928,-434.9735C3549.5928,-423.1918 3549.5928,-407.5607 3549.5928,-394.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="3553.0929,-394.0033 3549.5928,-384.0034 3546.0929,-394.0034 3553.0929,-394.0033"/>
+<text text-anchor="middle" x="3584.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 60 -->
+<g id="node91" class="node">
+<title>60</title>
+<ellipse fill="none" stroke="#000000" cx="3734.5928" cy="-366" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="3734.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0471658967</text>
+</g>
+<!-- 37&#45;&gt;60 -->
+<g id="edge90" class="edge">
+<title>37&#45;&gt;60</title>
+<path fill="none" stroke="#ff0000" d="M3586.1429,-435.8116C3616.1412,-421.7043 3658.7151,-401.683 3690.5834,-386.6964"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="3692.1256,-389.8389 3699.6854,-382.4159 3689.1466,-383.5044 3692.1256,-389.8389"/>
+<text text-anchor="middle" x="3661.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 39 -->
+<g id="node94" class="node">
+<title>39</title>
+<ellipse fill="none" stroke="#000000" cx="4081.5928" cy="-453" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="4081.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;3</text>
+</g>
+<!-- 25&#45;&gt;39 -->
+<g id="edge93" class="edge">
+<title>25&#45;&gt;39</title>
+<path fill="none" stroke="#0000ff" d="M4169.8625,-522.1843C4153.1416,-509.0788 4130.2381,-491.1274 4111.9517,-476.7948"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4113.9432,-473.9087 4103.9135,-470.4946 4109.625,-479.4181 4113.9432,-473.9087"/>
+<text text-anchor="middle" x="4179.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 40 -->
+<g id="node95" class="node">
+<title>40</title>
+<ellipse fill="none" stroke="#000000" cx="4304.5928" cy="-453" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="4304.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.774999976</text>
+</g>
+<!-- 25&#45;&gt;40 -->
+<g id="edge94" class="edge">
+<title>25&#45;&gt;40</title>
+<path fill="none" stroke="#ff0000" d="M4215.528,-522.1843C4232.2885,-509.165 4255.2056,-491.3633 4273.5958,-477.0781"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4275.9381,-479.6905 4281.6884,-470.7919 4271.6439,-474.1624 4275.9381,-479.6905"/>
+<text text-anchor="middle" x="4263.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 41 -->
+<g id="node102" class="node">
+<title>41</title>
+<ellipse fill="none" stroke="#000000" cx="4832.5928" cy="-453" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="4832.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.704999983</text>
+</g>
+<!-- 26&#45;&gt;41 -->
+<g id="edge101" class="edge">
+<title>26&#45;&gt;41</title>
+<path fill="none" stroke="#0000ff" d="M4832.5928,-521.9735C4832.5928,-510.1918 4832.5928,-494.5607 4832.5928,-481.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4836.0929,-481.0033 4832.5928,-471.0034 4829.0929,-481.0034 4836.0929,-481.0033"/>
+<text text-anchor="middle" x="4867.5928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 42 -->
+<g id="node103" class="node">
+<title>42</title>
+<ellipse fill="none" stroke="#000000" cx="5058.5928" cy="-453" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="5058.5928" y="-449.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.147899449</text>
+</g>
+<!-- 26&#45;&gt;42 -->
+<g id="edge102" class="edge">
+<title>26&#45;&gt;42</title>
+<path fill="none" stroke="#ff0000" d="M4875.1017,-523.636C4912.9017,-509.0846 4968.2235,-487.7882 5008.2313,-472.387"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="5009.7219,-475.5636 5017.7968,-468.7047 5007.207,-469.0309 5009.7219,-475.5636"/>
+<text text-anchor="middle" x="4967.0928" y="-492.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 61 -->
+<g id="node96" class="node">
+<title>61</title>
+<ellipse fill="none" stroke="#000000" cx="3919.5928" cy="-366" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="3919.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0544177853</text>
+</g>
+<!-- 39&#45;&gt;61 -->
+<g id="edge95" class="edge">
+<title>39&#45;&gt;61</title>
+<path fill="none" stroke="#0000ff" d="M4050.7406,-436.4312C4025.0072,-422.6114 3988.1409,-402.8128 3960.0452,-387.7244"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="3961.348,-384.4513 3950.8821,-382.8035 3958.0361,-390.6183 3961.348,-384.4513"/>
+<text text-anchor="middle" x="4045.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 62 -->
+<g id="node97" class="node">
+<title>62</title>
+<ellipse fill="none" stroke="#000000" cx="4103.5928" cy="-366" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="4103.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.144523412</text>
+</g>
+<!-- 39&#45;&gt;62 -->
+<g id="edge96" class="edge">
+<title>39&#45;&gt;62</title>
+<path fill="none" stroke="#ff0000" d="M4086.1513,-434.9735C4089.1601,-423.0751 4093.1616,-407.2508 4096.5729,-393.7606"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4099.9818,-394.5563 4099.0403,-384.0034 4093.1954,-392.8401 4099.9818,-394.5563"/>
+<text text-anchor="middle" x="4102.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 63 -->
+<g id="node98" class="node">
+<title>63</title>
+<ellipse fill="none" stroke="#000000" cx="4283.5928" cy="-366" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="4283.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0170837063</text>
+</g>
+<!-- 40&#45;&gt;63 -->
+<g id="edge97" class="edge">
+<title>40&#45;&gt;63</title>
+<path fill="none" stroke="#0000ff" d="M4300.2416,-434.9735C4297.3696,-423.0751 4293.5499,-407.2508 4290.2937,-393.7606"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4293.6873,-392.9029 4287.9385,-384.0034 4286.8827,-394.5455 4293.6873,-392.9029"/>
+<text text-anchor="middle" x="4330.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 64 -->
+<g id="node99" class="node">
+<title>64</title>
+<ellipse fill="none" stroke="#000000" cx="4502.5928" cy="-366" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="4502.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.985000014</text>
+</g>
+<!-- 40&#45;&gt;64 -->
+<g id="edge98" class="edge">
+<title>40&#45;&gt;64</title>
+<path fill="none" stroke="#ff0000" d="M4343.7113,-435.8116C4375.4403,-421.8701 4420.3141,-402.1528 4454.2837,-387.2268"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4455.8085,-390.3798 4463.5557,-383.1527 4452.9925,-383.9712 4455.8085,-390.3798"/>
+<text text-anchor="middle" x="4423.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 81 -->
+<g id="node100" class="node">
+<title>81</title>
+<ellipse fill="none" stroke="#000000" cx="4314.5928" cy="-279" rx="89.8845" ry="18"/>
+<text text-anchor="middle" x="4314.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.00819887128</text>
+</g>
+<!-- 64&#45;&gt;81 -->
+<g id="edge99" class="edge">
+<title>64&#45;&gt;81</title>
+<path fill="none" stroke="#0000ff" d="M4465.4501,-348.8116C4435.0627,-334.7493 4391.9773,-314.8109 4359.6267,-299.8402"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4360.9282,-296.5858 4350.3829,-295.5624 4357.9883,-302.9386 4360.9282,-296.5858"/>
+<text text-anchor="middle" x="4455.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 82 -->
+<g id="node101" class="node">
+<title>82</title>
+<ellipse fill="none" stroke="#000000" cx="4502.5928" cy="-279" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="4502.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.096236594</text>
+</g>
+<!-- 64&#45;&gt;82 -->
+<g id="edge100" class="edge">
+<title>64&#45;&gt;82</title>
+<path fill="none" stroke="#ff0000" d="M4502.5928,-347.9735C4502.5928,-336.1918 4502.5928,-320.5607 4502.5928,-307.1581"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4506.0929,-307.0033 4502.5928,-297.0034 4499.0929,-307.0034 4506.0929,-307.0033"/>
+<text text-anchor="middle" x="4510.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 65 -->
+<g id="node104" class="node">
+<title>65</title>
+<ellipse fill="none" stroke="#000000" cx="4832.5928" cy="-366" rx="118.8789" ry="18"/>
+<text text-anchor="middle" x="4832.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">last_evaluation&lt;0.915000021</text>
+</g>
+<!-- 41&#45;&gt;65 -->
+<g id="edge103" class="edge">
+<title>41&#45;&gt;65</title>
+<path fill="none" stroke="#0000ff" d="M4832.5928,-434.9735C4832.5928,-423.1918 4832.5928,-407.5607 4832.5928,-394.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4836.0929,-394.0033 4832.5928,-384.0034 4829.0929,-394.0034 4836.0929,-394.0033"/>
+<text text-anchor="middle" x="4867.5928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 66 -->
+<g id="node105" class="node">
+<title>66</title>
+<ellipse fill="none" stroke="#000000" cx="5105.5928" cy="-366" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="5105.5928" y="-362.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;4</text>
+</g>
+<!-- 41&#45;&gt;66 -->
+<g id="edge104" class="edge">
+<title>41&#45;&gt;66</title>
+<path fill="none" stroke="#ff0000" d="M4884.263,-436.5337C4931.5531,-421.4632 5001.3489,-399.2206 5049.8725,-383.757"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="5051.1191,-387.0333 5059.5842,-380.6621 5048.9936,-380.3638 5051.1191,-387.0333"/>
+<text text-anchor="middle" x="4993.0928" y="-405.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 83 -->
+<g id="node106" class="node">
+<title>83</title>
+<ellipse fill="none" stroke="#000000" cx="4681.5928" cy="-279" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="4681.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.118996553</text>
+</g>
+<!-- 65&#45;&gt;83 -->
+<g id="edge105" class="edge">
+<title>65&#45;&gt;83</title>
+<path fill="none" stroke="#0000ff" d="M4802.0357,-348.3943C4778.2155,-334.67 4745.0112,-315.5391 4719.4976,-300.8392"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4721.2339,-297.8002 4710.8218,-295.8405 4717.7393,-303.8655 4721.2339,-297.8002"/>
+<text text-anchor="middle" x="4801.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 84 -->
+<g id="node107" class="node">
+<title>84</title>
+<ellipse fill="none" stroke="#000000" cx="4893.5928" cy="-279" rx="113.18" ry="18"/>
+<text text-anchor="middle" x="4893.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">average_montly_hours&lt;248</text>
+</g>
+<!-- 65&#45;&gt;84 -->
+<g id="edge106" class="edge">
+<title>65&#45;&gt;84</title>
+<path fill="none" stroke="#ff0000" d="M4845.2321,-347.9735C4853.82,-335.7252 4865.325,-319.3165 4874.9587,-305.5766"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4878.0946,-307.2006 4880.9698,-297.0034 4872.3631,-303.1819 4878.0946,-307.2006"/>
+<text text-anchor="middle" x="4875.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 85 -->
+<g id="node110" class="node">
+<title>85</title>
+<ellipse fill="none" stroke="#000000" cx="5105.5928" cy="-279" rx="80.6858" ry="18"/>
+<text text-anchor="middle" x="5105.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.109490655</text>
+</g>
+<!-- 66&#45;&gt;85 -->
+<g id="edge109" class="edge">
+<title>66&#45;&gt;85</title>
+<path fill="none" stroke="#0000ff" d="M5105.5928,-347.9735C5105.5928,-336.1918 5105.5928,-320.5607 5105.5928,-307.1581"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="5109.0929,-307.0033 5105.5928,-297.0034 5102.0929,-307.0034 5109.0929,-307.0033"/>
+<text text-anchor="middle" x="5140.5928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 86 -->
+<g id="node111" class="node">
+<title>86</title>
+<ellipse fill="none" stroke="#000000" cx="5282.5928" cy="-279" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="5282.5928" y="-275.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;6</text>
+</g>
+<!-- 66&#45;&gt;86 -->
+<g id="edge110" class="edge">
+<title>66&#45;&gt;86</title>
+<path fill="none" stroke="#ff0000" d="M5139.1392,-349.7413C5151.8235,-343.5777 5166.3828,-336.4836 5179.5928,-330 5199.667,-320.1474 5221.9041,-309.1477 5240.5635,-299.8932"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="5242.285,-302.9463 5249.687,-295.366 5239.1735,-296.6758 5242.285,-302.9463"/>
+<text text-anchor="middle" x="5216.0928" y="-318.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 95 -->
+<g id="node108" class="node">
+<title>95</title>
+<ellipse fill="none" stroke="#000000" cx="4748.5928" cy="-192" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="4748.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0493735485</text>
+</g>
+<!-- 84&#45;&gt;95 -->
+<g id="edge107" class="edge">
+<title>84&#45;&gt;95</title>
+<path fill="none" stroke="#0000ff" d="M4864.2499,-261.3943C4841.5498,-247.7742 4809.9747,-228.8291 4785.5505,-214.1746"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="4787.281,-211.1312 4776.9053,-208.9875 4783.6795,-217.1337 4787.281,-211.1312"/>
+<text text-anchor="middle" x="4865.5928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 96 -->
+<g id="node109" class="node">
+<title>96</title>
+<ellipse fill="none" stroke="#000000" cx="4933.5928" cy="-192" rx="81.7856" ry="18"/>
+<text text-anchor="middle" x="4933.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.0327930488</text>
+</g>
+<!-- 84&#45;&gt;96 -->
+<g id="edge108" class="edge">
+<title>84&#45;&gt;96</title>
+<path fill="none" stroke="#ff0000" d="M4901.8809,-260.9735C4907.405,-248.9585 4914.7698,-232.9401 4921.0114,-219.3646"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="4924.318,-220.5512 4925.3154,-210.0034 4917.9581,-217.627 4924.318,-220.5512"/>
+<text text-anchor="middle" x="4924.0928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 97 -->
+<g id="node112" class="node">
+<title>97</title>
+<ellipse fill="none" stroke="#000000" cx="5241.5928" cy="-192" rx="127.2775" ry="18"/>
+<text text-anchor="middle" x="5241.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">satisfaction_level&lt;0.915000021</text>
+</g>
+<!-- 86&#45;&gt;97 -->
+<g id="edge111" class="edge">
+<title>86&#45;&gt;97</title>
+<path fill="none" stroke="#0000ff" d="M5274.0976,-260.9735C5268.4353,-248.9585 5260.8865,-232.9401 5254.4888,-219.3646"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="5257.5063,-217.5571 5250.0772,-210.0034 5251.1742,-220.5413 5257.5063,-217.5571"/>
+<text text-anchor="middle" x="5298.5928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 98 -->
+<g id="node113" class="node">
+<title>98</title>
+<ellipse fill="none" stroke="#000000" cx="5472.5928" cy="-192" rx="85.2851" ry="18"/>
+<text text-anchor="middle" x="5472.5928" y="-188.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.0669936165</text>
+</g>
+<!-- 86&#45;&gt;98 -->
+<g id="edge112" class="edge">
+<title>86&#45;&gt;98</title>
+<path fill="none" stroke="#ff0000" d="M5317.8851,-262.8399C5348.8831,-248.646 5394.1439,-227.9213 5427.7094,-212.5519"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="5429.2098,-215.7144 5436.8448,-208.3688 5426.2955,-209.3499 5429.2098,-215.7144"/>
+<text text-anchor="middle" x="5396.0928" y="-231.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 107 -->
+<g id="node114" class="node">
+<title>107</title>
+<ellipse fill="none" stroke="#000000" cx="5174.5928" cy="-105" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="5174.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.151778981</text>
+</g>
+<!-- 97&#45;&gt;107 -->
+<g id="edge113" class="edge">
+<title>97&#45;&gt;107</title>
+<path fill="none" stroke="#0000ff" d="M5227.7104,-173.9735C5218.1879,-161.6085 5205.4002,-145.0036 5194.7581,-131.1847"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="5197.3321,-128.7907 5188.4575,-123.0034 5191.786,-133.0618 5197.3321,-128.7907"/>
+<text text-anchor="middle" x="5247.5928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 108 -->
+<g id="node115" class="node">
+<title>108</title>
+<ellipse fill="none" stroke="#000000" cx="5347.5928" cy="-105" rx="77.9862" ry="18"/>
+<text text-anchor="middle" x="5347.5928" y="-101.3" font-family="Times,serif" font-size="14.00" fill="#000000">number_project&lt;5</text>
+</g>
+<!-- 97&#45;&gt;108 -->
+<g id="edge114" class="edge">
+<title>97&#45;&gt;108</title>
+<path fill="none" stroke="#ff0000" d="M5263.5352,-174.0661C5270.5824,-168.3012 5278.42,-161.8844 5285.5928,-156 5296.3061,-147.2111 5308.0494,-137.5566 5318.4068,-129.0344"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="5320.8727,-131.5378 5326.3699,-122.4807 5316.4244,-126.1329 5320.8727,-131.5378"/>
+<text text-anchor="middle" x="5310.0928" y="-144.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+<!-- 115 -->
+<g id="node116" class="node">
+<title>115</title>
+<ellipse fill="none" stroke="#000000" cx="5254.5928" cy="-18" rx="89.8845" ry="18"/>
+<text text-anchor="middle" x="5254.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=&#45;0.00390869332</text>
+</g>
+<!-- 108&#45;&gt;115 -->
+<g id="edge115" class="edge">
+<title>108&#45;&gt;115</title>
+<path fill="none" stroke="#0000ff" d="M5328.7729,-87.3943C5315.1233,-74.6252 5296.4706,-57.1759 5281.2845,-42.9696"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="5283.3978,-40.1538 5273.704,-35.8782 5278.6157,-45.2657 5283.3978,-40.1538"/>
+<text text-anchor="middle" x="5341.5928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">yes, missing</text>
+</g>
+<!-- 116 -->
+<g id="node117" class="node">
+<title>116</title>
+<ellipse fill="none" stroke="#000000" cx="5439.5928" cy="-18" rx="77.1866" ry="18"/>
+<text text-anchor="middle" x="5439.5928" y="-14.3" font-family="Times,serif" font-size="14.00" fill="#000000">leaf=0.116105832</text>
+</g>
+<!-- 108&#45;&gt;116 -->
+<g id="edge116" class="edge">
+<title>108&#45;&gt;116</title>
+<path fill="none" stroke="#ff0000" d="M5366.2104,-87.3943C5379.8027,-74.5407 5398.41,-56.9446 5413.4862,-42.6878"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="5416.142,-44.9935 5421.003,-35.5796 5411.3324,-39.9074 5416.142,-44.9935"/>
+<text text-anchor="middle" x="5406.0928" y="-57.8" font-family="Times,serif" font-size="14.00" fill="#000000">no</text>
+</g>
+</g>
+</svg>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="3&#44032;&#51648;-&#52488;&#47784;&#49688;-&#53916;&#45789;">3&#44032;&#51648; &#52488;&#47784;&#49688; &#53916;&#45789;<a class="anchor-link" href="#3&#44032;&#51648;-&#52488;&#47784;&#49688;-&#53916;&#45789;">&#182;</a></h1><p>일반적으로 초모수(Hypter Parameter)를 튜닝하는 방식은 격자 탐색(Grid Search), 임의 탐색(Random Search), 베이즈 최적화(Bayesian Optimization) 방식이 많이 사용된다. 가장 기본적인 격자 탐색을 이해하고 이를 바탕으로 실무에서는 베이즈 최적화를 사용하도록 하자.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="for-&#47336;&#54532;&#47484;-&#49324;&#50857;&#54620;-&#53916;&#45789;"><code>for</code> &#47336;&#54532;&#47484; &#49324;&#50857;&#54620; &#53916;&#45789;<a class="anchor-link" href="#for-&#47336;&#54532;&#47484;-&#49324;&#50857;&#54620;-&#53916;&#45789;">&#182;</a></h2><p>모수가 하나 혹은 두개인 경우 <code>for</code> 루플 사용해서 최적 초모수를 결정할 수 있다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hr_accuracy_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">max_depth_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">hr_grid_search</span><span class="p">(</span><span class="n">max_depth</span><span class="p">):</span> 
+    <span class="n">xgb_model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">max_depth</span><span class="o">=</span><span class="n">max_depth</span><span class="p">)</span>
+    <span class="n">xgb_pred</span> <span class="o">=</span> <span class="n">xgb_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+    
+    <span class="k">return</span><span class="p">([</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">xgb_pred</span><span class="p">)])</span>
+      
+
+<span class="k">for</span> <span class="n">max_depth</span> <span class="ow">in</span> <span class="n">max_depth_list</span><span class="p">:</span>
+    <span class="n">hr_accuracy_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hr_grid_search</span><span class="p">(</span><span class="n">max_depth</span><span class="p">))</span>
+
+    
+<span class="n">hr_xgb_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">hr_accuracy_list</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;tree depth&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+<span class="n">hr_xgb_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>    
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>tree depth</th>
+      <th>accuracy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>0.910000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>0.974889</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>5</td>
+      <td>0.979333</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>7</td>
+      <td>0.982222</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>9</td>
+      <td>0.983556</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>탐색할 초모수 숫자가 늘어나게 되면 <code>for</code> 루프를 계속해서 중첩시켜야 한다. 이는 가독성도 떨어뜨리고 추후 유지보수에 상당한 문제를 야기시킨다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hr2_accuracy_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">max_depth_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span>
+<span class="n">subsample_list</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">hr2_grid_search</span><span class="p">(</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">subsample</span><span class="p">):</span> 
+    <span class="n">xgb_model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">max_depth</span><span class="o">=</span><span class="n">max_depth</span><span class="p">,</span>
+                              <span class="n">subsample</span><span class="o">=</span><span class="n">subsample</span><span class="p">)</span>
+    <span class="n">xgb_pred</span> <span class="o">=</span> <span class="n">xgb_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+    
+    <span class="k">return</span><span class="p">([</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">subsample</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">xgb_pred</span><span class="p">)])</span>
+      
+
+<span class="k">for</span> <span class="n">max_depth</span> <span class="ow">in</span> <span class="n">max_depth_list</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">subsample</span> <span class="ow">in</span> <span class="n">subsample_list</span><span class="p">:</span>
+        <span class="n">hr2_accuracy_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hr2_grid_search</span><span class="p">(</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">subsample</span><span class="p">))</span>
+    
+<span class="n">hr2_xgb_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">hr2_accuracy_list</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;tree depth&#39;</span><span class="p">,</span> <span class="s1">&#39;subsample rate&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+<span class="n">hr2_xgb_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>tree depth</th>
+      <th>subsample rate</th>
+      <th>accuracy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3</td>
+      <td>0.6</td>
+      <td>0.974667</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>0.8</td>
+      <td>0.975111</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3</td>
+      <td>1.0</td>
+      <td>0.974889</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>5</td>
+      <td>0.6</td>
+      <td>0.978667</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5</td>
+      <td>0.8</td>
+      <td>0.979333</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#44201;&#51088;-&#53456;&#49353;(Grid-Search)">&#44201;&#51088; &#53456;&#49353;(Grid Search)<a class="anchor-link" href="#&#44201;&#51088;-&#53456;&#49353;(Grid-Search)">&#182;</a></h2><p><code>for</code> 문을 대신하여 격자 탐색(Grid Search)를 사용해서 깔끔하게 코드를 정리해보자. 먼저 분류모형(estimator)를 <code>XGBoost</code>로 지정하고 <code>XGBoost</code> 모형의 초모수를 딕셔너리로 지정하여 초모수 격자를 생성시킨다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">GridSearchCV</span>
+
+<span class="c1"># XGBoost 분류기 생성</span>
+<span class="n">xgb_clf</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">()</span>
+
+<span class="c1"># 초모수 격자생성</span>
+<span class="n">xgb_param_grid</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">],</span> 
+              <span class="s1">&#39;subsample&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]}</span>
+
+<span class="c1"># Create a GridSearchCV object</span>
+<span class="n">hr_grid</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="n">xgb_clf</span><span class="p">,</span>
+                       <span class="n">param_grid</span><span class="o">=</span><span class="n">xgb_param_grid</span><span class="p">,</span>
+                       <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;roc_auc&#39;</span><span class="p">,</span>
+                       <span class="n">n_jobs</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                       <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                       <span class="n">refit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                       <span class="n">return_train_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">hr_grid</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>GridSearchCV(cv=5, error_score=&#39;raise-deprecating&#39;,
+             estimator=XGBClassifier(base_score=0.5, booster=&#39;gbtree&#39;,
+                                     colsample_bylevel=1, colsample_bynode=1,
+                                     colsample_bytree=1, gamma=0,
+                                     learning_rate=0.1, max_delta_step=0,
+                                     max_depth=3, min_child_weight=1,
+                                     missing=None, n_estimators=100, n_jobs=1,
+                                     nthread=None, objective=&#39;binary:logistic&#39;,
+                                     random_state=0, reg_alpha=0, reg_lambda=1,
+                                     scale_pos_weight=1, seed=None, silent=None,
+                                     subsample=1, verbosity=1),
+             iid=&#39;warn&#39;, n_jobs=8,
+             param_grid={&#39;max_depth&#39;: [3, 5, 7], &#39;subsample&#39;: [0.6, 0.8, 1.0]},
+             pre_dispatch=&#39;2*n_jobs&#39;, refit=True, return_train_score=True,
+             scoring=&#39;roc_auc&#39;, verbose=0)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>격자 탐색이 완료되면 이를 데이터프레임으로 바꾸어서 모수에 대한 사항을 살펴보고 최적 초모수를 감별한다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hr_grid_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">hr_grid</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">)</span>
+<span class="n">hr_grid_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="s1">&#39;mean_test_score&#39;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">]]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mean_test_score</th>
+      <th>params</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.987299</td>
+      <td>{'max_depth': 3, 'subsample': 0.6}</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.987182</td>
+      <td>{'max_depth': 3, 'subsample': 0.8}</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.987056</td>
+      <td>{'max_depth': 3, 'subsample': 1.0}</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.991230</td>
+      <td>{'max_depth': 5, 'subsample': 0.6}</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.991056</td>
+      <td>{'max_depth': 5, 'subsample': 0.8}</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.990975</td>
+      <td>{'max_depth': 5, 'subsample': 1.0}</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>0.991625</td>
+      <td>{'max_depth': 7, 'subsample': 0.6}</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>0.991856</td>
+      <td>{'max_depth': 7, 'subsample': 0.8}</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>0.992205</td>
+      <td>{'max_depth': 7, 'subsample': 1.0}</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hr_grid_df</span><span class="p">[</span><span class="n">hr_grid_df</span><span class="p">[</span><span class="s1">&#39;rank_test_score&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mean_fit_time</th>
+      <th>std_fit_time</th>
+      <th>mean_score_time</th>
+      <th>std_score_time</th>
+      <th>param_max_depth</th>
+      <th>param_subsample</th>
+      <th>params</th>
+      <th>split0_test_score</th>
+      <th>split1_test_score</th>
+      <th>split2_test_score</th>
+      <th>...</th>
+      <th>mean_test_score</th>
+      <th>std_test_score</th>
+      <th>rank_test_score</th>
+      <th>split0_train_score</th>
+      <th>split1_train_score</th>
+      <th>split2_train_score</th>
+      <th>split3_train_score</th>
+      <th>split4_train_score</th>
+      <th>mean_train_score</th>
+      <th>std_train_score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>8</th>
+      <td>1.209971</td>
+      <td>0.021592</td>
+      <td>0.016729</td>
+      <td>0.000867</td>
+      <td>7</td>
+      <td>1</td>
+      <td>{'max_depth': 7, 'subsample': 1.0}</td>
+      <td>0.993105</td>
+      <td>0.988505</td>
+      <td>0.991156</td>
+      <td>...</td>
+      <td>0.992205</td>
+      <td>0.003073</td>
+      <td>1</td>
+      <td>0.998429</td>
+      <td>0.99838</td>
+      <td>0.998318</td>
+      <td>0.998676</td>
+      <td>0.997867</td>
+      <td>0.998334</td>
+      <td>0.000263</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 22 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>격자탐색으로 나온 산출물을 정리해보자.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">## 최고성능</span>
+<span class="n">best_score</span> <span class="o">=</span> <span class="n">hr_grid</span><span class="o">.</span><span class="n">best_score_</span>
+<span class="c1"># 최고성능을 내는 행을 찾아냄</span>
+<span class="n">best_row</span> <span class="o">=</span> <span class="n">hr_grid</span><span class="o">.</span><span class="n">best_index_</span>
+
+<span class="c1"># 최적 초모수: max_depth, subsample</span>
+<span class="n">best_max_depth</span>     <span class="o">=</span> <span class="n">hr_grid</span><span class="o">.</span><span class="n">best_params_</span><span class="p">[</span><span class="s2">&quot;max_depth&quot;</span><span class="p">]</span>
+<span class="n">best_max_subsample</span> <span class="o">=</span> <span class="n">hr_grid</span><span class="o">.</span><span class="n">best_params_</span><span class="p">[</span><span class="s2">&quot;subsample&quot;</span><span class="p">]</span>
+
+<span class="n">nl</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;예측모형성능(AUC):  </span><span class="se">\t</span><span class="s1"> </span><span class="si">{best_score:.3f}{nl}</span><span class="se">\</span>
+<span class="s1">        인덱스:           </span><span class="se">\t</span><span class="s1"> </span><span class="si">{best_row}{nl}</span><span class="se">\</span>
+<span class="s1">        max_depth:      </span><span class="se">\t</span><span class="s1"> </span><span class="si">{max_depth}{nl}</span><span class="se">\</span>
+<span class="s1">        subsample:      </span><span class="se">\t</span><span class="s1"> </span><span class="si">{subsample}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>예측모형성능(AUC):  	 0.992
+        인덱스:           	 8
+        max_depth:      	 7
+        subsample:      	 1.0
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#51076;&#51032;-&#53456;&#49353;(Random-Search)">&#51076;&#51032; &#53456;&#49353;(Random Search)<a class="anchor-link" href="#&#51076;&#51032;-&#53456;&#49353;(Random-Search)">&#182;</a></h2><p>임의 탐색(Random Search)은 격자탐색과 여러가지로 유사성이 있으나 임의 추출하는 초모수 탐색횟수를 지정한다는 면에서 차이가 난다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">RandomizedSearchCV</span>
+
+<span class="c1"># XGBoost 분류기 생성</span>
+<span class="n">xgb_clf</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">()</span>
+
+<span class="c1"># 초모수 격자생성</span>
+<span class="n">xgb_param_grid</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">)),</span> 
+                  <span class="s1">&#39;subsample&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)}</span>
+
+<span class="c1"># Create a random search object</span>
+<span class="n">xgb_random</span> <span class="o">=</span> <span class="n">RandomizedSearchCV</span><span class="p">(</span><span class="n">estimator</span> <span class="o">=</span> <span class="n">xgb_clf</span><span class="p">,</span>
+                                <span class="n">param_distributions</span> <span class="o">=</span> <span class="n">xgb_param_grid</span><span class="p">,</span>
+                                <span class="n">n_iter</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                                <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;roc_auc&#39;</span><span class="p">,</span> 
+                                <span class="n">n_jobs</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> 
+                                <span class="n">cv</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> 
+                                <span class="n">refit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                                <span class="n">return_train_score</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Fit to the training data</span>
+<span class="n">xgb_random</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>RandomizedSearchCV(cv=3, error_score=&#39;raise-deprecating&#39;,
+                   estimator=XGBClassifier(base_score=0.5, booster=&#39;gbtree&#39;,
+                                           colsample_bylevel=1,
+                                           colsample_bynode=1,
+                                           colsample_bytree=1, gamma=0,
+                                           learning_rate=0.1, max_delta_step=0,
+                                           max_depth=3, min_child_weight=1,
+                                           missing=None, n_estimators=100,
+                                           n_jobs=1, nthread=None,
+                                           objective=&#39;binary:logistic&#39;,
+                                           random_state=0, reg_alpha=0,
+                                           reg_lambda=1, scale_pos_weight=1,
+                                           seed=None, silent=None, subsample=1,
+                                           verbosity=1),
+                   iid=&#39;warn&#39;, n_iter=10, n_jobs=8,
+                   param_distributions={&#39;max_depth&#39;: [2, 3, 4, 5, 6, 7, 8, 9],
+                                        &#39;subsample&#39;: array([0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])},
+                   pre_dispatch=&#39;2*n_jobs&#39;, random_state=None, refit=True,
+                   return_train_score=True, scoring=&#39;roc_auc&#39;, verbose=0)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hr_random_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">xgb_random</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">)</span>
+<span class="n">hr_random_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="s1">&#39;mean_test_score&#39;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">]]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mean_test_score</th>
+      <th>params</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.989352</td>
+      <td>{'subsample': 0.7, 'max_depth': 4}</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.988768</td>
+      <td>{'subsample': 0.5, 'max_depth': 4}</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.990513</td>
+      <td>{'subsample': 0.8, 'max_depth': 9}</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.989637</td>
+      <td>{'subsample': 0.8, 'max_depth': 4}</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.990581</td>
+      <td>{'subsample': 0.8, 'max_depth': 7}</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.991309</td>
+      <td>{'subsample': 0.8999999999999999, 'max_depth': 8}</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>0.989285</td>
+      <td>{'subsample': 0.4, 'max_depth': 6}</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>0.991109</td>
+      <td>{'subsample': 0.8999999999999999, 'max_depth': 7}</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>0.990271</td>
+      <td>{'subsample': 0.7, 'max_depth': 6}</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>0.986689</td>
+      <td>{'subsample': 0.7, 'max_depth': 3}</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#51076;&#51032;-&#53456;&#49353;-&#44592;&#48376;&#44592;(&#45216;&#53076;&#46377;)">&#51076;&#51032; &#53456;&#49353; &#44592;&#48376;&#44592;(&#45216;&#53076;&#46377;)<a class="anchor-link" href="#&#51076;&#51032;-&#53456;&#49353;-&#44592;&#48376;&#44592;(&#45216;&#53076;&#46377;)">&#182;</a></h2><p>임의 탐색(Random Search)를 <code>scikit-learn</code> 라이브러리를 사용해서 <code>RandomizedSearchCV</code> 클래스를 동원해서 구현했다. 하지만, 격자탐색 <code>for</code> 루프와 마찬가지로 소위 말해서 날코딩으로 구현하는 것도 가능하다.</p>
+<ol>
+<li>탐색하고자 하는 초모수 리스트를 정의한다: <code>max_depth</code>, <code>subsample</code></li>
+<li><code>product</code> 함수로 조합한 리스트를 list comprehension으로 구현한다: 이를 위해서 <code>itertools</code> 라이브러리 <code>product</code>를 사용한다.</li>
+<li><code>np.random.choice()</code> 함수로 초모수 조합에서 추출한다.</li>
+<li>이를 주어진 탐색횟수만큼 <code>for</code> 문을 돌려 예측모형 성능을 데이터화한다.</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
+
+<span class="c1"># 초모수 정의: max_depth, subsample</span>
+<span class="n">max_depth_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+<span class="n">subsample_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># 초모수 조합 리스트 생성</span>
+<span class="n">combi_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">max_depth_list</span><span class="p">,</span> <span class="n">subsample_list</span><span class="p">)]</span>
+
+<span class="c1"># 초모수 조합에서 난수 추출</span>
+<span class="n">random_combi_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">combi_list</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">combi_random_selected</span> <span class="o">=</span> <span class="p">[</span><span class="n">combi_list</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">random_combi_index</span><span class="p">]</span>
+
+<span class="c1"># 난수로 뽑은 조합 출력</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">combi_random_selected</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[[7, 0.8], [4, 0.4], [8, 0.4], [6, 0.6], [4, 0.9], [8, 0.1], [5, 1.0], [6, 0.4], [5, 0.7000000000000001], [4, 0.2]]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hr_random_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1"># 예측함수 XGBoost 정의</span>
+<span class="k">def</span> <span class="nf">hr_random_search</span><span class="p">(</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">subsample</span><span class="p">):</span> 
+    <span class="n">xgb_model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">max_depth</span><span class="o">=</span><span class="n">max_depth</span><span class="p">,</span>
+                              <span class="n">subsample</span><span class="o">=</span><span class="n">subsample</span><span class="p">)</span>
+    <span class="n">xgb_pred</span> <span class="o">=</span> <span class="n">xgb_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+    
+    <span class="k">return</span><span class="p">([</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">subsample</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">xgb_pred</span><span class="p">)])</span>
+      
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">combi_random_selected</span><span class="p">):</span>
+    <span class="n">hr_random_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hr_random_search</span><span class="p">(</span><span class="n">param</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    
+<span class="n">hr_xgb_random_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">hr_random_list</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;tree depth&#39;</span><span class="p">,</span> <span class="s1">&#39;subsample rate&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+<span class="n">hr_xgb_random_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>tree depth</th>
+      <th>subsample rate</th>
+      <th>accuracy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>7</td>
+      <td>0.8</td>
+      <td>0.982222</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>4</td>
+      <td>0.4</td>
+      <td>0.976667</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>8</td>
+      <td>0.4</td>
+      <td>0.981556</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>6</td>
+      <td>0.6</td>
+      <td>0.980889</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4</td>
+      <td>0.9</td>
+      <td>0.976889</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>8</td>
+      <td>0.1</td>
+      <td>0.973333</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>5</td>
+      <td>1.0</td>
+      <td>0.979333</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>6</td>
+      <td>0.4</td>
+      <td>0.978889</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>5</td>
+      <td>0.7</td>
+      <td>0.978667</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>4</td>
+      <td>0.2</td>
+      <td>0.974667</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#48288;&#51060;&#51592;-&#52572;&#51201;&#54868;">&#48288;&#51060;&#51592; &#52572;&#51201;&#54868;<a class="anchor-link" href="#&#48288;&#51060;&#51592;-&#52572;&#51201;&#54868;">&#182;</a></h2><p><a href="https://github.com/hyperopt/hyperopt">Hyperopt: Distributed Asynchronous Hyper-parameter Optimization</a> 웹사이트에서 개발버전을 다운로드 받는 것도 가능하고, <code>!pip install hyperopt</code> 명령어를 통해서 베이지안 최적화 라이브러리를 설치한다.</p>
+<p>참고: <a href="https://medium.com/district-data-labs/parameter-tuning-with-hyperopt-faa86acdfdce">District Data Labs (Dec 24, 2017), "Parameter Tuning with Hyperopt"</a></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">hyperopt</span> <span class="k">import</span> <span class="n">fmin</span><span class="p">,</span> <span class="n">tpe</span><span class="p">,</span> <span class="n">hp</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">cross_val_score</span>
+
+<span class="c1"># 초모수 탐색공간 정의</span>
+<span class="n">param_space</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">quniform</span><span class="p">(</span><span class="s1">&#39;max_depth&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+               <span class="s1">&#39;subsample&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;subsample&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">)}</span>
+
+<span class="c1"># 목적함수 정의</span>
+<span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;max_depth&#39;</span><span class="p">]),</span>
+              <span class="s1">&#39;subsample&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;subsample&#39;</span><span class="p">]}</span>
+    <span class="n">xgb_clf</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span> 
+    <span class="n">best_score</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="n">xgb_clf</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> 
+                                 <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> 
+                                 <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> 
+                                 <span class="n">n_jobs</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">best_score</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+<span class="c1"># 알고리즘 실행</span>
+<span class="n">best</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span> <span class="n">space</span><span class="o">=</span><span class="n">param_space</span><span class="p">,</span> 
+            <span class="n">max_evals</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> 
+            <span class="n">rstate</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">777</span><span class="p">),</span> 
+            <span class="n">algo</span><span class="o">=</span><span class="n">tpe</span><span class="o">.</span><span class="n">suggest</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">best</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>100%|██████████| 10/10 [00:09&lt;00:00,  1.04it/s, best loss: 0.01581120386605428]
+{&#39;max_depth&#39;: 9.0, &#39;subsample&#39;: 0.6383870484708831}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>상기 코드를 이해가 전에 먼저 간단한 예제를 통해서 베이즈 최적화기법에 대한 이해를 넓혀가자. $y=(x-1)^2$ 함수에 대한 최소값을 찾아내는 문제를 베이즈 최적화를 통해 살펴보자. 먼저 <code>fmin()</code> 함수에 <code>fn</code>에 $y=(x-1)^2$ 함수를 지정한다. 그리고 나서 검색공간에 <code>hp.uniform()</code>을 지정하면 베이즈 최적화를 통해 최소값을 찾아낼 수 있다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">best</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span>
+    <span class="n">fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">space</span><span class="o">=</span><span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+    <span class="n">algo</span><span class="o">=</span><span class="n">tpe</span><span class="o">.</span><span class="n">suggest</span><span class="p">,</span>
+    <span class="n">max_evals</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">best</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>100%|██████████| 100/100 [00:00&lt;00:00, 608.04it/s, best loss: 5.558957429663535e-06]
+{&#39;x&#39;: 1.0023577441399913}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>상기 내용을 <code>matplotlib</code>으로 시각화하면 다음과 같다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">100</span><span class="p">))</span>
+<span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ro&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#52488;&#47784;&#49688;-&#49884;&#44033;&#54868;">&#52488;&#47784;&#49688; &#49884;&#44033;&#54868;<a class="anchor-link" href="#&#52488;&#47784;&#49688;-&#49884;&#44033;&#54868;">&#182;</a></h2><p>초모수 값에 따라 예측모형의 성능변화를 시각화하는 것은 초모수 탐색공간을 줄일 수 있을 뿐만 아니라 최적 초모수 탐색에 큰 도움을 준다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline 
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;font&#39;</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s1">&#39;NanumGothicOTF&#39;</span><span class="p">)</span> <span class="c1"># 한글 폰트깨짐 해결(맥) 윈도우는 NanumGothic</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">hr_xgb_random_df</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">hr_xgb_random_df</span><span class="p">[</span><span class="s1">&#39;tree depth&#39;</span><span class="p">])</span>  
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;나무깊이&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;정확도&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;초모수 정확도 시각화&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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1JakERERtSVpREREbUkaERFRW5JGRETUlqQRERG1NfrAQklzgLOBncBq24srdQKuBI4HeoF1thdKmgp8tHKYE4Crbf+jpFcC7wa2Aj+wfXmT8UdExJ4aSxqSDgHOB2bbtqTrJN1hu+/dg6cB423PLdtfImm67XXlfn3H+SzwhTLJfKw83jZJV0g6zfatbf3OB+YDTJs2ramPFxExKjU5PXUScLttl9srgZmV+l7gMEljyoQwHphRPYCk3wS+bftJ4Ljy521l9Qrg1PZObV9ju2W7NXXq1KH9RBERo1yT01NTgM2V7c3AsX0btldLOgZYAowFNgAT247xLorpqP6Od+gQxxwREfvQ5EjjEfb8Up9Slu1ie6nt82yfAzwBPNBXJ+lYoNf2j+seLyIimtVk0lgDzCqnngDmAHd3aijpCIoF81sqxe8BPlHZ/j5wgqSDyu25wF1DGXBEROxbY9NTth+VtAy4UdJ24L7KIjiSxlJMTQFMAi6w3VvW/QIw1fa3KsfbIekK4AZJW4BNwB6L4BER0SztXqfuUofScuAs2zua7qvVarmnp6fpbiIiDiiS1tpudapr9D6NTmzP63afERExNHJHeERE1JakERERtSVpREREbUkaERFRW5JGRETUlqQRERG1JWlERERtSRoREVFbkkZERNSWpBEREbUlaURERG1JGhERUVuSRkRE1JakERERtSVpREREbUkaERFRW5JGRETUlqQRERG1Nfq6V0lzgLOBncBq24srdQKuBI4HeoF1theWdYcAHwSeCzwPuMr2/ZJuA75f6eJS2481+RkiImK3xpJG+cV/PjDbtiVdJ+kO2+vLJqcB423PLdtfImm67XXAIuDDth9uP67t8wfodz4wH2DatGlD+IkiIqLJ6amTgNttu9xeCcys1PcCh0kaU446xgMzJB0OGLhQ0lJJl1b2eVzSQkmfkXRup05tX2O7Zbs1derUof9UERGjWJPTU1OAzZXtzcCxfRu2V0s6BlgCjAU2ABOBFwMnArNsb5H0cUlvsb3M9pmwa2prsaQNtu9s8DNERERFkyONR4BDK9tTyrJdbC+1fZ7tc4AngAeAJ4Ev295SNrsZaLXtZ2AVML2h2CMiooMmk8YaYFY5KgCYA9zdqaGkIygWzG8BvgecKKkvtpOBdR12OwX4+pBGHBER+9TY9JTtRyUtA26UtB24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
+"
+>
 </div>
 
 </div>
