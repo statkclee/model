@@ -1,0 +1,159 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "`caret` &rarr; `parsnip`"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+```
+
+# 파이썬 scikit-learn [^parsnip-medium] {#tidymodels-caret}
+
+[^parsnip-medium]: [Diego Usai, "Modelling with Tidymodels and Parsnip - A Tidy Approach to a Classification Problem"](https://towardsdatascience.com/modelling-with-tidymodels-and-parsnip-bae2c01c131c)
+
+기계학습 모형 개발을 위해서 전용 라이브러리 [`scikit-learn`](https://scikit-learn.org/stable/)이 잘 준비되어 있다. 물론 R에서 기계학습을 위해서 [The caret Package](http://topepo.github.io/caret/index.html) 팩키지가 있지만 개발된지 거의 20년이 되어가고 현재와 같은 상황을 반영하여 설계된 것이 아니라 RStudio로 자리를 옮긴 후에 본격적인 재설계와 새로운 바탕에서 새로 개발되고 있고 그 결과물 중 하나가 [`parsnip`](https://github.com/tidymodels/parsnip)이다.
+
+# `tidymodels` &rarr; `parsnip` {#parsnip}
+
+## 데이터 {#parsnip-dataset}
+
+캐글 [hr-comma-sep, "HR Analytics for employee rentension"](https://www.kaggle.com/pankeshpatel/hrcommasep) 데이터셋을 가져와서 직원 이탈에 대한 예측모형을 개발한다.
+
+```{r parsnip-dataset}
+library(tidyverse)
+library(tidymodels)
+library(skimr)
+library(janitor)
+
+hr_dat <- read_csv("data/HR_comma_sep.csv") %>% 
+  clean_names()
+
+hr_dat %>% 
+  skim()
+```
+
+## 데이터 전처리 {#parsnip-dataset-preprocessing}
+
+범주형 변수를 명시적으로 정의한다. 대표적으로 `departments`, `left`, `work_accident`를 범주형 변수로 빼고 나머지는 숫자형이라 예측모형을 돌리기 위한 최소한의 기준을 만족시켰다.
+
+```{r parsnip-dataset-preprocessing}
+hr_df <- hr_dat %>% 
+  mutate(left = factor(left, levels=c(0,1), labels=c("stay", "left"))) %>%
+  mutate(departments = factor(departments),
+         work_accident = factor(work_accident))
+
+hr_df %>% 
+  skim()
+```
+
+# `tidymodels` 예측모형 {#parsnip-modeling}
+
+## 훈련/시험 데이터 구분 {#parsnip-modeling-split}
+
+가장 먼저 훈련/시험 데이터 구분한다. 이를 위해서 `rsample` 팩키지를 사용하고 `initial_split()` 함수를 사용해서 7:3으로 훈련/시험 데이터로 쪼갠다.
+
+```{r parsnip-modeling-split}
+train_test_split <- rsample::initial_split(
+  data = hr_df,     
+  prop = 0.70)
+
+train_test_split
+```
+
+훈련/시험 데이터프레임으로 `training()`, `testing()` 함수를 각각 사용해서 준비한다.
+
+```{r parsnip-modeling-split-train-test}
+train_df <- train_test_split %>% training() 
+test_df  <- train_test_split %>% testing()
+```
+
+## 피처 공학(Feature engineering) {#parsnip-modeling-preprocessing}
+
+예측모형을 개발할 때 피처 공학(Feature engineering)을 통해 예측모형 base table을 제작해야 한다. `tidymodels`에서는 이를 요리법(recipe)에 비유하여 요리 레시피를 준비해야 한다. 대표적인 요리법에는 결측값 제거, 이상점 처리, 다공선성을 갖는 변수 제거, 중심화와 척도 조정을 통한 정규화, 가변수 처리 등이 포함된다.
+
+범주형변수는 가변수화(`step_dummy()`)하고 연속형 변수는 정규화하는 요리법을 `hr_recipe`로 준비한다. 그리고 이를 `prep()`으로 준비하여 `bake()`해서 예측모형에 넣을 수 있도록 구워둔다.
+
+```{r parsnip-modeling-recipe}
+hr_recipe <- function(df) {
+  recipe(left ~ ., data = df) %>%
+    step_dummy(all_nominal(), -all_outcomes()) %>%
+    step_center(all_numeric()) %>%
+    step_scale(all_numeric()) %>%
+    prep(data = df)
+}
+
+recipe_prepped <- hr_recipe(df = train_df)
+
+train_baked <- bake(recipe_prepped, new_data = train_df)
+test_baked  <- bake(recipe_prepped, new_data = test_df)
+
+train_baked
+```
+
+## 모형 적합 {#parsnip-modeling-fit}
+
+드디어 `parsnip`의 가장 인기있는 부분을 살펴볼 수 있는데 앞서 준비한 `base table` 데이터프레임을 다음 3단계로 준비하여 훈련데이터를 예측모형에 적합시킨다.
+
+- 예측모형 유형: 로지스틱 회귀모형(`logistic_reg`), 모드(`classification`)
+- 엔진(`set_engine`): `glm`
+- 적합(`fit`): `fit`
+
+예를 들어, `logistic_reg`에 사용가능한 엔진은 `glm`, `glmnet`, `stan`, `spark`, `keras` 등이 있다.
+
+```{r parsnip-modeling-fit}
+hr_glm <-
+  logistic_reg(mode = "classification") %>%
+  set_engine("glm") %>%
+  fit(left ~ ., data = train_baked)
+```
+
+## 모형 성능평가 {#parsnip-modeling-performance}
+
+`yardstick` 팩키지를 사용하게 되면 예측모형의 성능을 수월히 평가할 수 있다.
+
+### 시험데이터 예측 {#parsnip-modeling-performance-predict}
+
+먼저 `predict()` 함수로 예측값을 뽑아내서 직원 잔존과 이탈여부를 데이터프레임으로 만들 수 있다.
+ 
+```{r parsnip-modeling-performance}
+hr_glm_pred_df <- hr_glm %>%
+  predict(new_data = test_baked) %>%
+  bind_cols(test_baked %>% select(left))
+
+hr_glm_pred_df
+```
+
+### 모형성능 {#parsnip-modeling-performance-metrics}
+
+```{r parsnip-modeling-metrics}
+hr_glm_pred_df %>%
+  conf_mat(left, .pred_class) %>%
+  pluck(1) %>%
+  as_tibble() %>%
+  spread(Truth, n)
+
+hr_glm_pred_df %>%
+  metrics(left, .pred_class) %>%
+  select(-.estimator) %>%
+  filter(.metric == "accuracy") 
+```
+

@@ -46,14 +46,15 @@ title: 데이터 과학 -- 모형
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형 - `tidymodels`](tidyverse-model.html)**
+    - [`caret` &rarr; `parsnip`](tidyverse-parsnip.html) 
     - [예측모형 파이프 - R 모형설계행렬(Recipe)](ml-r-design-matrix.html) 
-    - [서포트 벡터 머신(SVM)](model_svm.html)
-    - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)
     - [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
+    - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)
     - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
     - [틱택토(Tic-Tac-Toe) - `parsnip`](model-tictactoe-parsnip.html) 
+    - [서포트 벡터 머신(SVM)](model_svm.html)    
     - **데이터베이스와 깔끔한 모형**
         - [데이터베이스 - `dplyr`](model-database-dplyr.html)     
 - **[GDPR - 모형 설명](model-explain.html)**
