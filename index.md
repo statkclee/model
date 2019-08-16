@@ -90,6 +90,7 @@ title: 데이터 과학 -- 모형
 - **파이썬 실무 예측모형**
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
     - [파이썬 고객이탈 - `xgBoost`](model-python-churn.html) 
+        - [파이썬 고객이탈 - `XGBoost` 초모수 튜닝](model-python-xgboost-hyper.html)
         - [R 고객이탈 - `xgBoost`](model-r-churn.html)
     - [파이썬 예측모형 - 시운전(Dry-Run)](model-python-predictive-model.html)
     - [파이썬 예측모형 - 생애주기(lifecycle)](model-python-predictive-model-lifecycle.html)
