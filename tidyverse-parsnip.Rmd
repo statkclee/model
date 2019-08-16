@@ -32,6 +32,8 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 기계학습 모형 개발을 위해서 전용 라이브러리 [`scikit-learn`](https://scikit-learn.org/stable/)이 잘 준비되어 있다. 물론 R에서 기계학습을 위해서 [The caret Package](http://topepo.github.io/caret/index.html) 팩키지가 있지만 개발된지 거의 20년이 되어가고 현재와 같은 상황을 반영하여 설계된 것이 아니라 RStudio로 자리를 옮긴 후에 본격적인 재설계와 새로운 바탕에서 새로 개발되고 있고 그 결과물 중 하나가 [`parsnip`](https://github.com/tidymodels/parsnip)이다.
 
+<img src="fig/tidymodels-parsnip.png" alt="predictive models" width="100%">
+
 # `tidymodels` &rarr; `parsnip` {#parsnip}
 
 ## 데이터 {#parsnip-dataset}
@@ -144,16 +146,216 @@ hr_glm_pred_df
 
 ### 모형성능 {#parsnip-modeling-performance-metrics}
 
+`conf_mat()` 함수를 사용해서 이진 분류 성능예측모형을 확인할 수 있다.
+물론, `yardstick` 팩키지 `metrics()` 함수를 사용해도 된다.
+
 ```{r parsnip-modeling-metrics}
 hr_glm_pred_df %>%
-  conf_mat(left, .pred_class) %>%
+  conf_mat(left, .pred_class) %>% 
   pluck(1) %>%
   as_tibble() %>%
   spread(Truth, n)
 
 hr_glm_pred_df %>%
-  metrics(left, .pred_class) %>%
+  metrics(left, .pred_class)
+```
+
+실제 예측모형을 현업에 적용시킬 때,
+정확도(`accuracy`) 보다는 `precision`, `recall`, 혹은 `f1_score`가 더 적합한 측도가 될 수 있다.
+
+```{r parsnip-modeling-metrics-precision}
+clf_metric_df <- tibble(
+  "precision" = 
+     hr_glm_pred_df %>% precision(left, .pred_class) %>%
+     select(.estimate),
+  "recall" = 
+     hr_glm_pred_df %>% recall(left, .pred_class) %>%
+     select(.estimate),
+  "f1_score" = 
+     hr_glm_pred_df %>% f_meas(left, .pred_class) %>%
+     select(.estimate)
+) %>%
+  unnest()
+
+clf_metric_df
+```
+
+
+# `tidymodels` - `ranger` 예측모형 {#parsnip-modeling-ranger}
+
+GLM 계열 예측모형은 2015년 전까지 가장 검증된 예측모형으로 자리를 잡았으나 그 후 random forest, xgboost 계열 앙상블 모형으로 대체되고 있지만, 기준 성능을 나타내는 지표를 제공한다는 점에서 나름 굳건히 자리를 지켜나가고 있다. 
+
+random forest 예측모형을 C/C++로 성능을 대폭 향상시킨 `ranger` 팩키지를 많이 사용하는데 사용업은 크게 두가지를 추가로 설정해야 된다. 하나는 교차검증(CV, cross-validation), `set_engine`을 설정하는 부분이다.
+
+## 교차검증(CV)  {#parsnip-modeling-ranger-cv}
+
+`vfold_cv()` 함수를 사용해서 훈련데이터를 훈련/검증(train/validation) 데이터로 쪼갠다. CV를 10조각 내는 경우 훈련데이터를 9:1비율로 자동으로 쪼갠다.
+
+<div class = "row">
+  <div class = "col-md-6">
+**훈련/시험 데이터 쪼개기**
+
+```{r parsnip-ranger-full}
+train_test_split
+```
+
+  </div>
+  <div class = "col-md-6">
+**훈련/교차검증 데이터 쪼개기**
+
+```{r parsnip-ranger}
+cross_val_df <- vfold_cv(train_df, v = 10)
+cross_val_df
+
+cross_val_df$splits %>% 
+  pluck(7)
+```
+
+  </div>
+</div>
+
+## 피처 공학(feature engineering)  {#parsnip-modeling-ranger-cv-fe}
+
+교차검증으로 준비된 훈련/검증 데이터셋에 대하여 피처 공학을 적용시키는데, 특별히 더 추가하지 않고 앞서 준비한 `hr_recipe`를 재사용한다.
+
+```{r parsnip-ranger-fe}
+hr_recipe
+```
+
+## `ranger` 예측모형 적합  {#parsnip-modeling-ranger-fit}
+
+`fit_ranger()` 함수로 작성하고, 교차검정 데이터와 초모수 `mtry`와 `tree`를 넣어주는 함수를 작성시켜 적합시킨다.
+
+```{r parsnip-ranger-fit}
+fit_ranger <- function(split, id, mtry, tree) {
+   
+  analysis_set <- split %>% analysis()
+  analysis_prepped <- analysis_set %>% hr_recipe()
+  analysis_baked <- analysis_prepped %>% bake(new_data = analysis_set)
+  
+  model_rf <- rand_forest(
+      mode = "classification",
+      mtry = mtry,
+      trees = tree) %>%
+    set_engine("ranger",
+      importance = "impurity") %>%
+    fit(left ~ ., data = analysis_baked)
+  
+  assessment_set <- split %>% assessment()
+  assessment_prepped <- assessment_set %>% hr_recipe()
+  assessment_baked <- assessment_prepped %>% bake(new_data = assessment_set)
+  
+  tibble(
+    "id" = id,
+    "truth" = assessment_baked$left,
+    "prediction" = model_rf %>%
+      predict(new_data = assessment_baked) %>%
+      unlist()
+  )
+}
+
+pred_rf <- map2_df(
+  .x = cross_val_df$splits,
+  .y = cross_val_df$id,
+  ~ fit_ranger(split = .x, id = .y, mtry = 3, tree = 200)
+)
+
+pred_rf
+```
+
+## `ranger` 예측모형 성능  {#parsnip-modeling-ranger-fit-performance}
+
+`conf_mat()` 함수와 `summary()` 함수를 파이프로 연결시키면 예측모형 성능에 대한 모든 지표를 추출할 수 있다. 가장 많이 사용하는 "accuracy", "precision", "recall", "f_meas" 측도만 추출하여 향상된 성능을 파악한다.
+
+```{r parsnip-ranger-fit-performance}
+pred_rf %>%
+  conf_mat(truth, prediction) %>%
+  summary() %>%
   select(-.estimator) %>%
-  filter(.metric == "accuracy") 
+  filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) 
+```
+
+
+# `tidymodels` - `xgboost` 예측모형 {#parsnip-modeling-ranger}
+
+## `XGBoost` 모형적합 {#parsnip-modeling-xgboost}
+
+`fit_rf()` 함수에 `XGBoost` 팩키지 초모수 `learn_rate`, `tree_depth`, `sample_size`을 적용시키도록 예측모형을 `boost_tree`로 변경시키고, `set_engine`도 `xgboost`로 바꿔 훈련시킨다.
+
+```{r parsnip-xgboost-fit}
+fit_xgb <- function(split, id, learn_rate, tree_depth, sample_size) {
+   
+  analysis_set <- split %>% analysis()
+  analysis_prepped <- analysis_set %>% hr_recipe()
+  analysis_baked <- analysis_prepped %>% bake(new_data = analysis_set)
+  
+  model_xgb <- boost_tree(
+      mode = "classification",
+      learn_rate = learn_rate,
+      tree_depth = tree_depth,
+      sample_size = sample_size) %>%
+    set_engine("xgboost") %>%
+    fit(left ~ ., data = analysis_baked)
+  
+  assessment_set <- split %>% assessment()
+  assessment_prepped <- assessment_set %>% hr_recipe()
+  assessment_baked <- assessment_prepped %>% bake(new_data = assessment_set)
+  
+  tibble(
+    "id" = id,
+    "truth" = assessment_baked$left,
+    "prediction" = model_xgb %>%
+      predict(new_data = assessment_baked) %>%
+      unlist()
+  )
+}
+
+pred_xgb <- map2_df(
+  .x = cross_val_df$splits,
+  .y = cross_val_df$id,
+  ~ fit_xgb(split = .x, id = .y, learn_rate=0.3, tree_depth=5, sample_size=1)
+)
+
+pred_xgb
+```
+
+`XGBoost` 예측모형 성능을 동일한 방식으로 확인한다.
+
+```{r parsnip-xgboost-fit-performance}
+pred_xgb %>%
+  conf_mat(truth, prediction) %>%
+  summary() %>%
+  select(-.estimator) %>%
+  filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) 
+```
+
+## 격자 탐색(grid search) [^dials-grid] {#parsnip-grid-search}
+
+[^dials-grid]: [tidymodels, "Using Dials with Parsnip"](https://tidymodels.github.io/dials/articles/articles/Dials_and_Parsnip.html)
+
+`XGBoost` 초모수 튜닝을 위한 격자탐색에 대한 사항은 ...
+
+```{r parsnip-xgboost-grid}
+bst_grid <- grid_random(
+  learn_rate  %>% range_set(c(0.1,  0.01)), 
+  tree_depth  %>% range_set(c( 3,  10)), 
+  sample_size %>% range_set(c(20, 130)), 
+  size = 3)
+
+bst_grid
+
+model_xgb <- boost_tree(
+    mode = "classification",
+    learn_rate = 0.3,
+    tree_depth = 5,
+    sample_size = 1) 
+
+model_xgb_spec <- list()
+
+for(i in 1:nrow(bst_grid)) {
+  model_xgb_spec[i] <- merge(model_xgb, bst_grid[i, ])
+}
+
+model_xgb_spec
 ```
 
