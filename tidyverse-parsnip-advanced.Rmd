@@ -76,10 +76,91 @@ books %>%
   count(title)
 ```
 
-## 책 전처리 작업 {#tidytext-preprocessing}
+## 훈련/시험 데이터 쪼개기 {#tidytext-split}
+
+`rsample` 팩키지 `initial_split()` 함수로 훈련/시험 데이터를 7:3으로 쪼갠다.
 
 ```{r tidytext-preprocessing}
+books_split <- initial_split(books, 
+                             strata = "title", 
+                             p = 0.70)
+
+train_df <- training(books_split)
+test_df <- testing(books_split)
+```
+
+## 피처 공학(feature engineering) {#tidytext-feature-engineering}
+
+`textrecipes` 팩키지를 사용하여 텍스트에 대한 전처리 작업을 수행하여 피처 공학을 통해 `basetable`을 제작한다.
+[`textrecipes`](https://github.com/tidymodels/textrecipes)는 토큰화, 불용어 제거 등이 포함된다.
+
+```{r tidytext-fe}
+library(textrecipes)
+
+book_rec <- recipe(title ~ ., data = train_df) %>%
+  step_filter(text != "") %>%
+  step_tokenize(text) %>%
+  step_stopwords(text, keep = TRUE) %>%
+  step_untokenize(text) %>%
+  step_tokenize(text, token = "ngrams", options = list(n = 3, n_min = 1)) %>%
+  step_tokenfilter(text, min_times = 10) %>%
+  step_tf(text) %>%
+  prep(training = train_df)
+
+book_rec
+
+book_train_baked <- juice(book_rec)
+book_test_baked  <- bake(book_rec, test_df)
+```
 
 
+## 모형 적합 {#tidytext-fit}
+
+`XGBoost` 예측모형을 저작 분류문제를 해결하는데 사용한다.
+
+```{r tidytext-fit}
+title_xgb <- boost_tree(
+    mode = "classification",
+    learn_rate = 0.1,
+    tree_depth = 5,
+    sample_size = 1) %>%
+  set_engine("xgboost") %>%
+  fit(title ~ ., data = book_train_baked)
+```
+
+
+## 모형 평가 {#tidytext-evaluate}
+
+`XGBoost` 예측모형을 활용하여 시험 데이터에 대한 예측값과 확률을 계산한다.
+
+```{r tidytext-evaluate}
+book_pred_df <- book_test_baked %>%
+  select(title) %>%
+  bind_cols(
+    book_class = predict(title_xgb, new_data=book_test_baked),
+    book_prop  = predict(title_xgb, new_data=book_test_baked, type="prob")
+  )
+
+book_pred_df %>% 
+  sample_n(100) %>% 
+  DT::datatable()
+```
+
+예측모형 성능에 대한 주요 측도를 뽑아본다.
+
+```{r tidytext-performance-metrics}
+book_pred_df %>%
+  conf_mat(title, .pred_class ) %>%
+  summary() %>% 
+  select(-.estimator) %>%
+  filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) 
+```
+
+`roc_curve()`와 `autoplot()`을 쭉 연결시켜 시각화를 빠르게 수행한다.
+
+```{r tidytext-roc-curve}
+book_pred_df %>% 
+  roc_curve(title, `.pred_Pride and Prejudice`) %>%
+  autoplot()
 ```
 
