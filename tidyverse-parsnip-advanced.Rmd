@@ -1,0 +1,85 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "`parsnip` 정교함을 더하다"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+```
+
+# super learner [^tidymodels-super-learner] {#tidymodels-super-learner}
+
+[^tidymodels-super-learner]: [Alex Hayes(Apr 13, 2019), "IMPLEMENTING THE SUPER LEARNER WITH TIDYMODELS"](https://www.alexpghayes.com/blog/implementing-the-super-learner-with-tidymodels/)
+
+`tidymodels` 체계를 구성하는 `parsnip` 팩키지를 활용하여 앙상블 모형의 또 다른 형태인 `super learner`를 구현해 보자.
+
+# 텍스트 저자 분류 [^tidymodels-text-classification] [^text-tidymodels] {#tidymodels-text-classification}
+
+[^tidymodels-text-classification]: [EMIL HVITFELDT, "Authorship classification with tidymodels and textrecipes"](https://www.hvitfeldt.me/blog/authorship-classification-with-tidymodels-and-textrecipes/)
+
+[^text-tidymodels]: [EMIL HVITFELDT, "Text Classification with Tidymodels"](https://www.hvitfeldt.me/blog/text-classification-with-tidymodels/)
+
+고전작가 중 제인 오스틴 '오만과 편견'과 유사한 길이를 갖는 코난 도일의 '셜록 홈즈의 모험'을 구텐베르그 웹사이트에서 가져와서 작가를 판별하는 예측모형을 구축해본다.
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
+</style>
+<div class = "blue">
+
+**[한국인이 가장 사랑하는 세계적인 작가는? - 현존 작가 베르나르 베르베르, 고전작가 생텍쥐페리](http://www.econovill.com/news/articleView.html?idxno=219074)**
+
+'불멸의 고전 작가' 투표에서는 '어린 왕자'의 앙투안 드 생텍쥐페리가 5513표(7%)를 얻어 최고의 영예를 안았다. '셜록 홈즈' 시리즈의 아서 코난 도일은 4366표(5.6%)로 2위, '레 미제라블'의 빅토르 위고는 4266표(5.4%)로 3위를 차지했다. 이어 헤르만 헤세가 5.4%로 4위에 올랐고, 윌리엄 셰익스피어(5.3%), 어니스트 헤밍웨이(5.1%), 제인 오스틴(4.7%), 조지 오웰(3.9%) 등이 5~8위로 뒤를 이었다. 
+
+</div>
+
+## 데이터 가져오기 {#tidymodels-text-data}
+
+구텐베르그에 모든 고전 영문소설이 공개된 것은 아니다. 따라서 몇분정도 유명한 서양작가의 소설을 찾아 코난 도일과 제인 오스틴의 소설을 대표로 다운로드 받아 이를 분류하는 모형을 개발해 본다.
+
+```{r gutenberg-dataset}
+library(tidyverse)
+library(tidymodels)
+library(tidytext)
+
+## 텍스트 데이터
+library(gutenbergr)
+
+titles <- c(
+  "Pride and Prejudice",
+  "The Adventures of Sherlock Holmes")
+
+books <- gutenberg_works(title %in% titles) %>%
+  gutenberg_download(meta_fields = "title") %>%
+  mutate(title = as.factor(title)) %>%
+  select(-gutenberg_id)
+
+books %>% 
+  count(title)
+```
+
+## 책 전처리 작업 {#tidytext-preprocessing}
+
+```{r tidytext-preprocessing}
+
+
+```
+

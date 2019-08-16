@@ -47,6 +47,7 @@ title: 데이터 과학 -- 모형
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형 - `tidymodels`](tidyverse-model.html)**
     - [`caret` &rarr; `parsnip`](tidyverse-parsnip.html) 
+    - [`parsnip` 정교함을 더하다](tidyverse-parsnip-advanced.html) 
     - [예측모형 파이프 - R 모형설계행렬(Recipe)](ml-r-design-matrix.html) 
     - [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
