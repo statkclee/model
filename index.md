@@ -46,6 +46,7 @@ title: 데이터 과학 -- 모형
 - **탐색적 데이터분석(EDA)**
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
 - **[`tidyverse` 모형 - `tidymodels`](tidyverse-model.html)**
+    - [`purrr` - 많은 모형(many models)](tidyverse-purrr-many-models.html) 
     - [`caret` &rarr; `parsnip`](tidyverse-parsnip.html) 
     - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
     - [`parsnip` - 초모수(hyperparameter)](tidyverse-parsnip-advanced.html) 

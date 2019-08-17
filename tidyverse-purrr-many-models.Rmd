@@ -1,0 +1,64 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "`purrr` - 많은 모형(many models)"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+```
+
+# `gapminder` 회귀모형 [^many-models] {#purrr-many-models}
+
+[^many-models]: [DAN OVANDO(FEBRUARY 20, 2018), "DATA WRANGLING AND MODEL FITTING USING PURRR"](https://www.weirdfishes.blog/blog/practical-purrr/)
+
+```{r gapminder-reg}
+library(tidyverse)
+library(gapminder)
+
+gapminder <- gapminder %>%
+  set_names(colnames(.) %>% tolower())
+
+reg_models <- list(
+  simple = 'lifeexp ~ pop + gdppercap',
+  medium = 'lifeexp ~ pop + gdppercap + continent + year',
+  more   = 'lifeexp ~ pop + gdppercap + country + year',
+  woah   = 'lifeexp ~ pop + gdppercap + year*country')
+
+model_tbl <- data_frame(reg_formula = reg_models) %>%
+  mutate(model_name = names(reg_formula)) %>% 
+  select(model_name, reg_formula) %>% 
+  mutate(reg_formula = map(reg_formula, as.formula))
+
+model_tbl
+
+model_tbl <- model_tbl %>%
+  mutate(fit = map(reg_formula, ~lm(., data = gapminder), gapminder = gapminder)) %>% 
+  mutate(model_glance = map(fit, broom::glance),
+         rsquare      = map_dbl(model_glance, ~.$r.squared),
+         AIC          = map_dbl(model_glance, ~.$AIC)) %>% 
+  arrange(AIC)
+
+model_tbl
+```
+
+
+
