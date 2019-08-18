@@ -1,7 +1,7 @@
 ---
 layout: page
 title: "xwMOOC 모형 - `tidymodels`"
-subtitle: "`parsnip` 정교함을 더하다"
+subtitle: "`parsnip` - 초모수(hyperparameter)"
 author:
     name: xwMOOC
     url: https://www.facebook.com/groups/tidyverse/
@@ -32,135 +32,60 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 `tidymodels` 체계를 구성하는 `parsnip` 팩키지를 활용하여 앙상블 모형의 또 다른 형태인 `super learner`를 구현해 보자.
 
-# 텍스트 저자 분류 [^tidymodels-text-classification] [^text-tidymodels] {#tidymodels-text-classification}
+# 
 
-[^tidymodels-text-classification]: [EMIL HVITFELDT, "Authorship classification with tidymodels and textrecipes"](https://www.hvitfeldt.me/blog/authorship-classification-with-tidymodels-and-textrecipes/)
-
-[^text-tidymodels]: [EMIL HVITFELDT, "Text Classification with Tidymodels"](https://www.hvitfeldt.me/blog/text-classification-with-tidymodels/)
-
-고전작가 중 제인 오스틴 '오만과 편견'과 유사한 길이를 갖는 코난 도일의 '셜록 홈즈의 모험'을 구텐베르그 웹사이트에서 가져와서 작가를 판별하는 예측모형을 구축해본다.
-
-<style>
-div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
-</style>
-<div class = "blue">
-
-**[한국인이 가장 사랑하는 세계적인 작가는? - 현존 작가 베르나르 베르베르, 고전작가 생텍쥐페리](http://www.econovill.com/news/articleView.html?idxno=219074)**
-
-'불멸의 고전 작가' 투표에서는 '어린 왕자'의 앙투안 드 생텍쥐페리가 5513표(7%)를 얻어 최고의 영예를 안았다. '셜록 홈즈' 시리즈의 아서 코난 도일은 4366표(5.6%)로 2위, '레 미제라블'의 빅토르 위고는 4266표(5.4%)로 3위를 차지했다. 이어 헤르만 헤세가 5.4%로 4위에 올랐고, 윌리엄 셰익스피어(5.3%), 어니스트 헤밍웨이(5.1%), 제인 오스틴(4.7%), 조지 오웰(3.9%) 등이 5~8위로 뒤를 이었다. 
-
-</div>
-
-## 데이터 가져오기 {#tidymodels-text-data}
-
-구텐베르그에 모든 고전 영문소설이 공개된 것은 아니다. 따라서 몇분정도 유명한 서양작가의 소설을 찾아 코난 도일과 제인 오스틴의 소설을 대표로 다운로드 받아 이를 분류하는 모형을 개발해 본다.
-
-```{r gutenberg-dataset}
+```{r superlearner-setup}
 library(tidyverse)
 library(tidymodels)
-library(tidytext)
+library(furrr)
+library(tictoc)
 
-## 텍스트 데이터
-library(gutenbergr)
+hr_dat <- read_csv("data/HR_comma_sep.csv") %>% 
+  janitor::clean_names()
 
-titles <- c(
-  "Pride and Prejudice",
-  "The Adventures of Sherlock Holmes")
+hr_df <- hr_dat %>% 
+  mutate(left = factor(left, levels=c(0,1), labels=c("stay", "left"))) %>%
+  mutate(departments = factor(departments),
+         work_accident = factor(work_accident))
 
-books <- gutenberg_works(title %in% titles) %>%
-  gutenberg_download(meta_fields = "title") %>%
-  mutate(title = as.factor(title)) %>%
-  select(-gutenberg_id)
+model <-  boost_tree(mode = "classification") %>%
+    set_engine("xgboost")
 
-books %>% 
-  count(title)
-```
+model
 
-## 훈련/시험 데이터 쪼개기 {#tidytext-split}
+xgb_grid <- grid_random(
+  learn_rate  %>% range_set(c(0.1,  0.01)), 
+  tree_depth  %>% range_set(c( 3,  10)), 
+  sample_size %>% range_set(c(20, 130)), 
+  size = 3)
 
-`rsample` 팩키지 `initial_split()` 함수로 훈련/시험 데이터를 7:3으로 쪼갠다.
+xgb_grid
 
-```{r tidytext-preprocessing}
-books_split <- initial_split(books, 
-                             strata = "title", 
-                             p = 0.70)
+spec_df <- tibble(spec = merge(model, xgb_grid)) %>% 
+  mutate(model_id = row_number())
 
-train_df <- training(books_split)
-test_df <- testing(books_split)
-```
-
-## 피처 공학(feature engineering) {#tidytext-feature-engineering}
-
-`textrecipes` 팩키지를 사용하여 텍스트에 대한 전처리 작업을 수행하여 피처 공학을 통해 `basetable`을 제작한다.
-[`textrecipes`](https://github.com/tidymodels/textrecipes)는 토큰화, 불용어 제거 등이 포함된다.
-
-```{r tidytext-fe}
-library(textrecipes)
-
-book_rec <- recipe(title ~ ., data = train_df) %>%
-  step_filter(text != "") %>%
-  step_tokenize(text) %>%
-  step_stopwords(text, keep = TRUE) %>%
-  step_untokenize(text) %>%
-  step_tokenize(text, token = "ngrams", options = list(n = 3, n_min = 1)) %>%
-  step_tokenfilter(text, min_times = 10) %>%
-  step_tf(text) %>%
-  prep(training = train_df)
-
-book_rec
-
-book_train_baked <- juice(book_rec)
-book_test_baked  <- bake(book_rec, test_df)
+spec_df
 ```
 
 
-## 모형 적합 {#tidytext-fit}
+```{r}
+hr_recipe <- function(df) {
+  recipe(left ~ ., data = df) %>%
+    step_dummy(all_nominal(), -all_outcomes()) %>%
+    step_center(all_numeric()) %>%
+    step_scale(all_numeric()) %>%
+    prep(data = df)
+}
 
-`XGBoost` 예측모형을 저작 분류문제를 해결하는데 사용한다.
+prepped <- hr_recipe(hr_df)
 
-```{r tidytext-fit}
-title_xgb <- boost_tree(
-    mode = "classification",
-    learn_rate = 0.1,
-    tree_depth = 5,
-    sample_size = 1) %>%
-  set_engine("xgboost") %>%
-  fit(title ~ ., data = book_train_baked)
-```
+x <- juice(prepped, all_predictors())
+y <- juice(prepped, all_outcomes())
 
+full_fits <- spec_df %>% 
+  mutate(fit = future_map(spec, fit_xy, x, y))
 
-## 모형 평가 {#tidytext-evaluate}
+full_fits
 
-`XGBoost` 예측모형을 활용하여 시험 데이터에 대한 예측값과 확률을 계산한다.
-
-```{r tidytext-evaluate}
-book_pred_df <- book_test_baked %>%
-  select(title) %>%
-  bind_cols(
-    book_class = predict(title_xgb, new_data=book_test_baked),
-    book_prop  = predict(title_xgb, new_data=book_test_baked, type="prob")
-  )
-
-book_pred_df %>% 
-  sample_n(100) %>% 
-  DT::datatable()
-```
-
-예측모형 성능에 대한 주요 측도를 뽑아본다.
-
-```{r tidytext-performance-metrics}
-book_pred_df %>%
-  conf_mat(title, .pred_class ) %>%
-  summary() %>% 
-  select(-.estimator) %>%
-  filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) 
-```
-
-`roc_curve()`와 `autoplot()`을 쭉 연결시켜 시각화를 빠르게 수행한다.
-
-```{r tidytext-roc-curve}
-book_pred_df %>% 
-  roc_curve(title, `.pred_Pride and Prejudice`) %>%
-  autoplot()
 ```
 
