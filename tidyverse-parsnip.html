@@ -7,10 +7,11 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
-<meta name="date" content="2019-08-16" />
+<meta name="date" content="2019-08-18" />
 
 <title>xwMOOC 모형 - tidymodels</title>
 
@@ -68,8 +69,6 @@ overflow: auto;
 margin-left: 2%;
 position: fixed;
 border: 1px solid #ccc;
-webkit-border-radius: 6px;
-moz-border-radius: 6px;
 border-radius: 6px;
 }
 
@@ -97,9 +96,14 @@ font-size: 12px;
 .tocify-subheader .tocify-subheader {
 text-indent: 30px;
 }
-
 .tocify-subheader .tocify-subheader .tocify-subheader {
 text-indent: 40px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 50px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 60px;
 }
 
 .tocify .tocify-item > a, .tocify .nav-list .nav-header {
@@ -503,13 +507,13 @@ float: none;
 
           item.append($("<a/>", {
 
-            "text": self.text()
+            "html": self.html()
 
           }));
 
         } else {
 
-          item.text(self.text());
+          item.html(self.html());
 
         }
 
@@ -1408,7 +1412,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -1539,56 +1543,12 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 <style type="text/css">
 .code-folding-btn { margin-bottom: 4px; }
 </style>
-<script>
-$(document).ready(function () {
-  window.initializeCodeFolding("show" === "show");
-});
-</script>
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -1637,8 +1597,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -1686,7 +1644,7 @@ div.tocify {
 <h3 class="subtitle"><code>caret</code> → <code>parsnip</code></h3>
 <h4 class="author">xwMOOC</h4>
 <address class="author_afil">
-Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
+Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
 
 </div>
 
@@ -1715,12 +1673,12 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
  n obs: 14999 
  n variables: 10 
 
--- Variable type:character -----------------------------------------------------
+── Variable type:character ──────────────────────────────────────────────────────────────────────
     variable missing complete     n min max empty n_unique
  departments       0    14999 14999   2  11     0       10
       salary       0    14999 14999   3   6     0        3
 
--- Variable type:numeric -------------------------------------------------------
+── Variable type:numeric ────────────────────────────────────────────────────────────────────────
               variable missing complete     n    mean    sd    p0    p25
   average_montly_hours       0    14999 14999 201.05  49.94 96    156   
        last_evaluation       0    14999 14999   0.72   0.17  0.36   0.56
@@ -1731,14 +1689,14 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
     time_spend_company       0    14999 14999   3.5    1.46  2      3   
          work_accident       0    14999 14999   0.14   0.35  0      0   
     p50    p75 p100     hist
- 200    245     310 &lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2582&gt;
-   0.72   0.87    1 &lt;U+2582&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
-   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2582&gt;
-   4      5       7 &lt;U+2585&gt;&lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2585&gt;&lt;U+2581&gt;&lt;U+2582&gt;&lt;U+2581&gt;
-   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;
-   0.64   0.82    1 &lt;U+2585&gt;&lt;U+2582&gt;&lt;U+2585&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
-   3      4      10 &lt;U+2587&gt;&lt;U+2582&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;
-   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2582&gt;</code></pre>
+ 200    245     310 ▁▇▇▆▆▇▆▂
+   0.72   0.87    1 ▂▇▇▆▆▇▇▇
+   0      0       1 ▇▁▁▁▁▁▁▂
+   4      5       7 ▅▇▁▇▅▁▂▁
+   0      0       1 ▇▁▁▁▁▁▁▁
+   0.64   0.82    1 ▅▂▅▆▆▇▇▇
+   3      4      10 ▇▂▁▁▁▁▁▁
+   0      0       1 ▇▁▁▁▁▁▁▂</code></pre>
 </div>
 <div id="parsnip-dataset-preprocessing" class="section level2">
 <h2><span class="header-section-number">2.2</span> 데이터 전처리</h2>
@@ -1754,11 +1712,11 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
  n obs: 14999 
  n variables: 10 
 
--- Variable type:character -----------------------------------------------------
+── Variable type:character ──────────────────────────────────────────────────────────────────────
  variable missing complete     n min max empty n_unique
    salary       0    14999 14999   3   6     0        3
 
--- Variable type:factor --------------------------------------------------------
+── Variable type:factor ─────────────────────────────────────────────────────────────────────────
       variable missing complete     n n_unique
    departments       0    14999 14999       10
           left       0    14999 14999        2
@@ -1768,7 +1726,7 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
               sta: 11428, lef: 3571, NA: 0   FALSE
                   0: 12830, 1: 2169, NA: 0   FALSE
 
--- Variable type:numeric -------------------------------------------------------
+── Variable type:numeric ────────────────────────────────────────────────────────────────────────
               variable missing complete     n    mean    sd    p0    p25
   average_montly_hours       0    14999 14999 201.05  49.94 96    156   
        last_evaluation       0    14999 14999   0.72   0.17  0.36   0.56
@@ -1777,12 +1735,12 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
     satisfaction_level       0    14999 14999   0.61   0.25  0.09   0.44
     time_spend_company       0    14999 14999   3.5    1.46  2      3   
     p50    p75 p100     hist
- 200    245     310 &lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2582&gt;
-   0.72   0.87    1 &lt;U+2582&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
-   4      5       7 &lt;U+2585&gt;&lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2585&gt;&lt;U+2581&gt;&lt;U+2582&gt;&lt;U+2581&gt;
-   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;
-   0.64   0.82    1 &lt;U+2585&gt;&lt;U+2582&gt;&lt;U+2585&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
-   3      4      10 &lt;U+2587&gt;&lt;U+2582&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;</code></pre>
+ 200    245     310 ▁▇▇▆▆▇▆▂
+   0.72   0.87    1 ▂▇▇▆▆▇▇▇
+   4      5       7 ▅▇▁▇▅▁▂▁
+   0      0       1 ▇▁▁▁▁▁▁▁
+   0.64   0.82    1 ▅▂▅▆▆▇▇▇
+   3      4      10 ▇▂▁▁▁▁▁▁</code></pre>
 </div>
 </div>
 <div id="parsnip-modeling" class="section level1">
@@ -1819,19 +1777,19 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <a class="sourceLine" id="cb8-13" data-line-number="13"></a>
 <a class="sourceLine" id="cb8-14" data-line-number="14">train_baked</a></code></pre></div>
 <pre><code># A tibble: 10,500 x 19
-   satisfaction_le~ last_evaluation number_project average_montly_~
+   satisfaction_le… last_evaluation number_project average_montly_…
               &lt;dbl&gt;           &lt;dbl&gt;          &lt;dbl&gt;            &lt;dbl&gt;
- 1           -0.949          -1.09          -1.47            -0.872
- 2           -2.04            0.956          2.61             1.43 
- 3           -0.990          -1.15          -1.47            -0.832
- 4           -0.828          -1.26          -1.47            -0.952
- 5           -2.08            0.314          1.79             0.932
- 6            1.23            0.781          0.976            1.17 
- 7            1.11            1.66           0.976            0.471
- 8            0.908           1.19           0.160            0.672
- 9           -0.828          -0.971         -1.47            -1.05 
-10           -0.949          -1.03          -1.47            -1.15 
-# ... with 10,490 more rows, and 15 more variables:
+ 1            0.754           0.838          0.962            1.21 
+ 2           -2.01            0.956          2.58             1.41 
+ 3            0.434           0.897          0.962            0.437
+ 4           -0.969          -1.16          -1.47            -0.837
+ 5           -0.808          -1.27          -1.47            -0.956
+ 6           -2.05            0.311          1.77             0.915
+ 7            1.23            0.780          0.962            1.15 
+ 8            1.11            1.66           0.962            0.457
+ 9           -0.648          -1.04          -1.47            -1.31 
+10           -2.01            0.545          1.77             2.07 
+# … with 10,490 more rows, and 15 more variables:
 #   time_spend_company &lt;dbl&gt;, left &lt;fct&gt;, promotion_last_5years &lt;dbl&gt;,
 #   work_accident_X1 &lt;dbl&gt;, departments_hr &lt;dbl&gt;, departments_IT &lt;dbl&gt;,
 #   departments_management &lt;dbl&gt;, departments_marketing &lt;dbl&gt;,
@@ -1867,17 +1825,17 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <pre><code># A tibble: 4,499 x 2
    .pred_class left 
    &lt;fct&gt;       &lt;fct&gt;
- 1 stay        left 
+ 1 left        left 
  2 stay        left 
  3 stay        left 
- 4 stay        left 
- 5 left        left 
- 6 left        left 
- 7 stay        left 
- 8 left        left 
- 9 stay        left 
+ 4 left        left 
+ 5 stay        left 
+ 6 stay        left 
+ 7 left        left 
+ 8 stay        left 
+ 9 left        left 
 10 stay        left 
-# ... with 4,489 more rows</code></pre>
+# … with 4,489 more rows</code></pre>
 </div>
 <div id="parsnip-modeling-performance-metrics" class="section level3">
 <h3><span class="header-section-number">3.4.2</span> 모형성능</h3>
@@ -1890,15 +1848,15 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <pre><code># A tibble: 2 x 3
   Prediction  left  stay
   &lt;chr&gt;      &lt;int&gt; &lt;int&gt;
-1 left         416   241
-2 stay         715  3127</code></pre>
+1 left         360   256
+2 stay         699  3184</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">hr_glm_pred_df <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb15-2" data-line-number="2"><span class="st">  </span><span class="kw">metrics</span>(left, .pred_class)</a></code></pre></div>
 <pre><code># A tibble: 2 x 3
   .metric  .estimator .estimate
   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
 1 accuracy binary         0.788
-2 kap      binary         0.344</code></pre>
+2 kap      binary         0.310</code></pre>
 <p>실제 예측모형을 현업에 적용시킬 때, 정확도(<code>accuracy</code>) 보다는 <code>precision</code>, <code>recall</code>, 혹은 <code>f1_score</code>가 더 적합한 측도가 될 수 있다.</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1">clf_metric_df &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
 <a class="sourceLine" id="cb17-2" data-line-number="2">  <span class="st">&quot;precision&quot;</span> =<span class="st"> </span></a>
@@ -1917,7 +1875,7 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <pre><code># A tibble: 1 x 3
   precision recall f1_score
       &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;
-1     0.814  0.928    0.867</code></pre>
+1     0.820  0.926    0.870</code></pre>
 </div>
 </div>
 </div>
@@ -1941,7 +1899,7 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <pre><code>#  10-fold cross-validation 
 # A tibble: 10 x 2
    splits              id    
-   &lt;list&gt;              &lt;chr&gt; 
+   &lt;named list&gt;        &lt;chr&gt; 
  1 &lt;split [9.4K/1.1K]&gt; Fold01
  2 &lt;split [9.4K/1.1K]&gt; Fold02
  3 &lt;split [9.4K/1.1K]&gt; Fold03
@@ -2011,16 +1969,16 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
    id     truth prediction
    &lt;chr&gt;  &lt;fct&gt; &lt;fct&gt;     
  1 Fold01 left  left      
- 2 Fold01 left  left      
+ 2 Fold01 left  stay      
  3 Fold01 left  left      
  4 Fold01 left  left      
  5 Fold01 left  left      
  6 Fold01 left  left      
- 7 Fold01 left  stay      
- 8 Fold01 left  left      
- 9 Fold01 left  stay      
+ 7 Fold01 left  left      
+ 8 Fold01 left  stay      
+ 9 Fold01 left  left      
 10 Fold01 left  left      
-# ... with 10,490 more rows</code></pre>
+# … with 10,490 more rows</code></pre>
 </div>
 <div id="parsnip-modeling-ranger-fit-performance" class="section level2">
 <h2><span class="header-section-number">4.4</span> <code>ranger</code> 예측모형 성능</h2>
@@ -2033,10 +1991,10 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <pre><code># A tibble: 4 x 2
   .metric   .estimate
   &lt;chr&gt;         &lt;dbl&gt;
-1 accuracy      0.968
-2 precision     0.965
+1 accuracy      0.966
+2 precision     0.962
 3 recall        0.995
-4 f_meas        0.980</code></pre>
+4 f_meas        0.978</code></pre>
 </div>
 </div>
 <div id="parsnip-modeling-ranger" class="section level1">
@@ -2082,16 +2040,16 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
    id     truth prediction
    &lt;chr&gt;  &lt;fct&gt; &lt;fct&gt;     
  1 Fold01 left  left      
- 2 Fold01 left  left      
+ 2 Fold01 left  stay      
  3 Fold01 left  left      
  4 Fold01 left  left      
  5 Fold01 left  left      
  6 Fold01 left  left      
- 7 Fold01 left  stay      
- 8 Fold01 left  left      
- 9 Fold01 left  stay      
+ 7 Fold01 left  left      
+ 8 Fold01 left  stay      
+ 9 Fold01 left  left      
 10 Fold01 left  left      
-# ... with 10,490 more rows</code></pre>
+# … with 10,490 more rows</code></pre>
 <p><code>XGBoost</code> 예측모형 성능을 동일한 방식으로 확인한다.</p>
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" data-line-number="1">pred_xgb <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb33-2" data-line-number="2"><span class="st">  </span><span class="kw">conf_mat</span>(truth, prediction) <span class="op">%&gt;%</span></a>
@@ -2101,10 +2059,10 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <pre><code># A tibble: 4 x 2
   .metric   .estimate
   &lt;chr&gt;         &lt;dbl&gt;
-1 accuracy      0.965
-2 precision     0.965
-3 recall        0.990
-4 f_meas        0.977</code></pre>
+1 accuracy      0.957
+2 precision     0.954
+3 recall        0.991
+4 f_meas        0.972</code></pre>
 </div>
 <div id="parsnip-grid-search" class="section level2">
 <h2><span class="header-section-number">5.2</span> 격자 탐색(grid search) <a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></h2>
@@ -2119,9 +2077,9 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 <pre><code># A tibble: 3 x 3
   learn_rate tree_depth sample_size
        &lt;dbl&gt;      &lt;int&gt;       &lt;int&gt;
-1     0.0671          3          54
-2     0.0720          4          43
-3     0.0402          6         113</code></pre>
+1     0.0606          9         130
+2     0.0101          3         110
+3     0.0914          6          76</code></pre>
 <div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" data-line-number="1">model_xgb &lt;-<span class="st"> </span><span class="kw">boost_tree</span>(</a>
 <a class="sourceLine" id="cb37-2" data-line-number="2">    <span class="dt">mode =</span> <span class="st">&quot;classification&quot;</span>,</a>
 <a class="sourceLine" id="cb37-3" data-line-number="3">    <span class="dt">learn_rate =</span> <span class="fl">0.3</span>,</a>
@@ -2139,18 +2097,18 @@ Tidyverse Korea<br><h4 class="date">2019-08-16</h4>
 Boosted Tree Model Specification (classification)
 
 Main Arguments:
-  tree_depth = 3
-  learn_rate = 0.0670849166600965
-  sample_size = 54
+  tree_depth = 9
+  learn_rate = 0.0605576453101821
+  sample_size = 130
 
 
 [[2]]
 Boosted Tree Model Specification (classification)
 
 Main Arguments:
-  tree_depth = 4
-  learn_rate = 0.072038790518418
-  sample_size = 43
+  tree_depth = 3
+  learn_rate = 0.0100765079585835
+  sample_size = 110
 
 
 [[3]]
@@ -2158,8 +2116,8 @@ Boosted Tree Model Specification (classification)
 
 Main Arguments:
   tree_depth = 6
-  learn_rate = 0.0401709247892723
-  sample_size = 113</code></pre>
+  learn_rate = 0.0914361087372527
+  sample_size = 76</code></pre>
 </div>
 </div>
 <div class="footnotes">
@@ -2188,6 +2146,54 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
