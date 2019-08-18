@@ -30,18 +30,29 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 [^many-models]: [DAN OVANDO(FEBRUARY 20, 2018), "DATA WRANGLING AND MODEL FITTING USING PURRR"](https://www.weirdfishes.blog/blog/practical-purrr/)
 
+`purrr` 팩키지를 활용하여 원본 모형 데이터와 모형을 하나의 데이터프레임(`tibble`)에 담을 수가 있다.
+즉, 6가지 서로 다른 회귀모형을 일괄적으로 적합시키고 가장 AIC 값이 적은 회귀모형을 선택하는 코드를 다음과 같이 작성한다.
+
+1. `reg_models`: 다양한 회귀모형을 정의한다.
+1. `mutate(map())`: 정의한 회귀모형 각각을 적합시키고 모형성능 지표를 추출한다.
+1. AIC 기준으로 가장 낮은 모형을 선정한다.
+
 ```{r gapminder-reg}
 library(tidyverse)
 library(gapminder)
 
+## 데이터셋 준비 -----
 gapminder <- gapminder %>%
   set_names(colnames(.) %>% tolower())
 
+## 다양한 회귀모형 -----
 reg_models <- list(
-  simple = 'lifeexp ~ pop + gdppercap',
-  medium = 'lifeexp ~ pop + gdppercap + continent + year',
-  more   = 'lifeexp ~ pop + gdppercap + country + year',
-  woah   = 'lifeexp ~ pop + gdppercap + year*country')
+  `01_pop` = 'lifeexp ~ pop',
+  `02_gdppercap` = 'lifeexp ~ gdppercap',
+  `03_simple` = 'lifeexp ~ pop + gdppercap',
+  `04_medium` = 'lifeexp ~ pop + gdppercap + continent + year',
+  `05_more`   = 'lifeexp ~ pop + gdppercap + country + year',
+  `06_full`   = 'lifeexp ~ pop + gdppercap + year*country')
 
 model_tbl <- data_frame(reg_formula = reg_models) %>%
   mutate(model_name = names(reg_formula)) %>% 
@@ -50,6 +61,7 @@ model_tbl <- data_frame(reg_formula = reg_models) %>%
 
 model_tbl
 
+## 회귀모형 적합 및 모형 성능 지표 -----
 model_tbl <- model_tbl %>%
   mutate(fit = map(reg_formula, ~lm(., data = gapminder), gapminder = gapminder)) %>% 
   mutate(model_glance = map(fit, broom::glance),
@@ -60,5 +72,86 @@ model_tbl <- model_tbl %>%
 model_tbl
 ```
 
+# 교차검증 `CV` {#cv-reg-model}
 
+데이터를 10조각내서 교차검정을 통해 RMSE가 가장 작은 회귀모형이 어떤 것인지 살펴보자.
+`cross_df()` 함수로 교차검증 `splits` 데이터와 모형을 준비한다.
+다음으로 `analysis()` 함수로 교차검증 데이터에 대해서 회귀모형 각각을 적합시키고,
+`assessment()` 함수로 적합시킨 모형에 대해 모형성능을 살펴본다.
+마지막으로 RMSE 회귀모형 성능지표를 통해 모형선택을 한다.
+
+```{r gapminder-cv-reg}
+## 교차검정 -----
+valid_tbl <- gapminder %>%
+  rsample::vfold_cv(10)
+
+cv_tbl <- list(test_training = list(valid_tbl), 
+               model_name = model_tbl$model_name)  
+  
+cv_tbl <- cross_df(cv_tbl) %>%
+  unnest(.id = "model_number") %>% 
+  left_join(model_tbl %>% select(model_name, reg_formula), by = "model_name")
+
+cv_tbl
+
+## 교차검정 analysis, assessment -----
+cv_fit_tbl <- cv_tbl %>%
+  mutate(fit = map2(reg_formula, splits, ~lm(.x, data = rsample::analysis(.y)))) %>%
+  mutate(RMSE = map2_dbl(fit, splits, ~modelr::rmse(.x, rsample::assessment(.y))))
+
+cv_fit_tbl
+
+## 시각화 -----
+cv_fit_tbl %>%
+  ggplot(aes(RMSE, fill = model_name)) +
+  geom_density(alpha = 0.75) +
+  labs(x = "RMSE", title = "gapminder 회귀모형별 교차검정 분포")
+```
+
+
+# 병렬처리 - `furrr` {#cv-reg-model-furrr}
+
+`parallel::detectCores()`을 통해 전체 코어 숫자를 확인하고 이를 병렬처리를 통해 교차검증에 따른 시간을 대폭 절감시킨다. 이를 위해서 `future` 팩키지를 사용하고 절약되는 시간을 측정하기 위해서 `tictoc` 팩키지를 동원한다.
+
+
+
+```{r gapminder-cv-reg-furrr}
+library(furrr)
+library(tictoc)
+
+plan(multiprocess(workers = parallel::detectCores()-1))
+```
+
+
+<div class = "row">
+  <div class = "col-md-6">
+**`purrr` 순차처리**
+
+```{r gapminder-cv-reg-furrr-purrr}
+## purrr 순차처리 -----
+tic()
+
+cv_fit_tbl <- cv_tbl %>%
+  mutate(fit = map2(reg_formula, splits, ~lm(.x, data = rsample::analysis(.y))))
+
+toc()
+```
+
+  </div>
+  <div class = "col-md-6">
+**`furrr` 병렬처리**
+
+```{r gapminder-cv-reg-furrr-furrr}
+## furrr 병렬처리 ----
+tic()
+
+cv_fit_tbl <- cv_tbl %>%
+  mutate(fit = future_map2(reg_formula, splits, ~lm(.x, data = rsample::analysis(.y)), .progress=TRUE)) 
+
+toc()
+```
+  </div>
+</div>
+
+**`furrr` 병렬처리**
 
