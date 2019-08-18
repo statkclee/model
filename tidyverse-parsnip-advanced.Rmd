@@ -26,13 +26,15 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
                       comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
 ```
 
-# super learner [^tidymodels-super-learner] {#tidymodels-super-learner}
+# 임직원 이탈 예측 [^tidymodels-super-learner] {#tidymodels-super-learner}
 
 [^tidymodels-super-learner]: [Alex Hayes(Apr 13, 2019), "IMPLEMENTING THE SUPER LEARNER WITH TIDYMODELS"](https://www.alexpghayes.com/blog/implementing-the-super-learner-with-tidymodels/)
 
-`tidymodels` 체계를 구성하는 `parsnip` 팩키지를 활용하여 앙상블 모형의 또 다른 형태인 `super learner`를 구현해 보자.
+`tidymodels` 체계를 구성하는 `parsnip` 팩키지를 활용하여 앙상블 모형의 또 다른 형태인 `super learner`를 구현하는 것도 가능한데 차근차근 `purrr`, `furrr` 팩키지를 활용하여 체계적으로 접근해보자.
 
-# 
+# 예측모형과 초모수 준비 {#hyperparameter-setup}
+
+앞서 [xwMOOC 모형 - tidymodels: "caret &rarr; parsnip"](https://statkclee.github.io/model/tidyverse-parsnip.html)에서 사용한 임직원 이탈 데이터를 가지고 전처리 작업을 통해 `basetable`을 제작하고 `parsnip`을 통해 예측모형으로 `XGBoost`를 장착하고 초모수 임의 탐색(hyperparameter random search)를 위해 격자를 준비해서 탐색할 격자를 5개 준비한다. 그리고 나서 `merge()` 함수를 사용해서 예측모형(XGBoost)와 초모수 격자를 결합시켜 훈련시킬 모형 `spec_df` 데이터프레임을 준비한다.
 
 ```{r superlearner-setup}
 library(tidyverse)
@@ -40,6 +42,9 @@ library(tidymodels)
 library(furrr)
 library(tictoc)
 
+plan(multiprocess(workers = parallel::detectCores()))
+
+## HR 데이터 -----
 hr_dat <- read_csv("data/HR_comma_sep.csv") %>% 
   janitor::clean_names()
 
@@ -48,6 +53,7 @@ hr_df <- hr_dat %>%
   mutate(departments = factor(departments),
          work_accident = factor(work_accident))
 
+## XGBoost와 초모수 튜닝 -----
 model <-  boost_tree(mode = "classification") %>%
     set_engine("xgboost")
 
@@ -55,9 +61,9 @@ model
 
 xgb_grid <- grid_random(
   learn_rate  %>% range_set(c(0.1,  0.01)), 
-  tree_depth  %>% range_set(c( 3,  10)), 
-  sample_size %>% range_set(c(20, 130)), 
-  size = 3)
+  tree_depth  %>% range_set(c(3,  10)), 
+  sample_size %>% range_set(c(0, 1)), 
+  size = 10)
 
 xgb_grid
 
@@ -67,8 +73,12 @@ spec_df <- tibble(spec = merge(model, xgb_grid)) %>%
 spec_df
 ```
 
+# 예측모형과 초모수 준비 {#hyperparameter-setup-cv}
 
-```{r}
+준비한 데이터를 피처 공학(feature engineering)으로 요리법(recipe)을 준비하고 이를 준비시킨다. 
+다음으로 `map()` 함수를 사용해서 앞서 준비한 초모수를 담고 있는 XGBoost 모형 `spec`별로 적합시킨다.
+
+```{r hr-xgboost} 
 hr_recipe <- function(df) {
   recipe(left ~ ., data = df) %>%
     step_dummy(all_nominal(), -all_outcomes()) %>%
@@ -82,10 +92,81 @@ prepped <- hr_recipe(hr_df)
 x <- juice(prepped, all_predictors())
 y <- juice(prepped, all_outcomes())
 
-full_fits <- spec_df %>% 
-  mutate(fit = future_map(spec, fit_xy, x, y))
+tic()
 
-full_fits
+initial_fits <- spec_df %>% 
+  mutate(fit = map(spec, fit_xy, x, y))
+  # mutate(fit = future_map(spec, fit_xy, x, y))
 
+initial_fits
+
+toc()
+```
+
+# 교차검증 CV 적합 {#hyperparameter-cv-fit}
+
+앞서 훈련/시험 데이터로 분리시키지 않고 전체 데이터를 임의탐색 초모수 10개를 추출하여 이를 XGBoost 예측모형에 적합시켰다. 이번에는 교차검증(Cross-validation, cv)을 통해 훈련모형의 최적 성능을 판별해보자.
+
+`rsample` 팩키지 `vfold_cv()` 함수를 사용해서 교차검증 10개 split 데이터셋을 준비시키고, 적합시킬 임의탐색  초모수 XGBoost 모형 10개와 교차시켜 예측모형 데이터프레임을 준비시킨다.
+
+```{r hr-xgboost-cv}
+cv_folds <- rsample::vfold_cv(hr_df, v = 10)
+cv_folds
+
+cv_crossed_df <- crossing(cv_folds, spec_df)
+cv_crossed_df
+```
+
+`hr_recipe()`, `fit_on_fold()` 도움 함수(helper function)를 통해서 앞서 준비한 CV 데이터셋에 대해서 XGBoost 초모수가 반영된 `spec` 을 통해 예측모형을 적합시킨다.
+
+```{r hr-cv-fit}
+fit_on_fold <- function(spec, prepped) {
+  
+  x <- juice(prepped, all_predictors())
+  y <- juice(prepped, all_outcomes())
+  
+  fit_xy(spec, x, y)
+}
+
+tic()
+
+cv_fits <- cv_crossed_df %>%
+  mutate(
+    prepped = map(splits, hr_recipe),
+    fit = map2(spec, prepped, fit_on_fold)
+  )
+
+toc()
+
+cv_fits
+```
+
+# 교차검증 CV 예측 {#hyperparameter-cv-predict}
+
+`cv_fits` 데이터프레임에 대해서 요리법(`recipe`)을 반영하여 XGBoost 예측모형에 대한 예측값을 산출한다.
+
+```{r hr-cv-predict, eval=FALSE}
+predict_helper <- function(fit, new_data, recipe) {
+  
+  if (inherits(new_data, "rsplit")) {
+    obs <- as.integer(new_data, data = "assessment")
+    
+    new_data <- bake(recipe, assessment(new_data))
+  } else {
+    obs <- 1:nrow(new_data)
+    new_data <- bake(recipe, new_data)
+  }
+  
+  predict(fit, new_data, type = "prob") %>% 
+    mutate(obs = obs)
+}
+
+holdout_preds <- cv_fits %>% 
+  mutate(
+    preds = pmap(list(fit, splits, hr_recipe), predict_helper)
+  )
+
+holdout_preds %>% 
+  unnest(preds)
 ```
 
