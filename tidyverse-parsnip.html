@@ -7,7 +7,6 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
-<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
@@ -69,6 +68,8 @@ overflow: auto;
 margin-left: 2%;
 position: fixed;
 border: 1px solid #ccc;
+webkit-border-radius: 6px;
+moz-border-radius: 6px;
 border-radius: 6px;
 }
 
@@ -96,14 +97,9 @@ font-size: 12px;
 .tocify-subheader .tocify-subheader {
 text-indent: 30px;
 }
+
 .tocify-subheader .tocify-subheader .tocify-subheader {
 text-indent: 40px;
-}
-.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
-text-indent: 50px;
-}
-.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
-text-indent: 60px;
 }
 
 .tocify .tocify-item > a, .tocify .nav-list .nav-header {
@@ -507,13 +503,13 @@ float: none;
 
           item.append($("<a/>", {
 
-            "html": self.html()
+            "text": self.text()
 
           }));
 
         } else {
 
-          item.html(self.html());
+          item.text(self.text());
 
         }
 
@@ -1412,7 +1408,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -1543,12 +1539,56 @@ summary {
 }
 </style>
 
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
 <!-- code folding -->
 <style type="text/css">
 .code-folding-btn { margin-bottom: 4px; }
 </style>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
 
 
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
 
 <style type="text/css">
 
@@ -1597,6 +1637,8 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -1673,12 +1715,12 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
  n obs: 14999 
  n variables: 10 
 
-── Variable type:character ──────────────────────────────────────────────────────────────────────
+-- Variable type:character ------------------------------------------------------
     variable missing complete     n min max empty n_unique
  departments       0    14999 14999   2  11     0       10
       salary       0    14999 14999   3   6     0        3
 
-── Variable type:numeric ────────────────────────────────────────────────────────────────────────
+-- Variable type:numeric --------------------------------------------------------
               variable missing complete     n    mean    sd    p0    p25
   average_montly_hours       0    14999 14999 201.05  49.94 96    156   
        last_evaluation       0    14999 14999   0.72   0.17  0.36   0.56
@@ -1689,14 +1731,14 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
     time_spend_company       0    14999 14999   3.5    1.46  2      3   
          work_accident       0    14999 14999   0.14   0.35  0      0   
     p50    p75 p100     hist
- 200    245     310 ▁▇▇▆▆▇▆▂
-   0.72   0.87    1 ▂▇▇▆▆▇▇▇
-   0      0       1 ▇▁▁▁▁▁▁▂
-   4      5       7 ▅▇▁▇▅▁▂▁
-   0      0       1 ▇▁▁▁▁▁▁▁
-   0.64   0.82    1 ▅▂▅▆▆▇▇▇
-   3      4      10 ▇▂▁▁▁▁▁▁
-   0      0       1 ▇▁▁▁▁▁▁▂</code></pre>
+ 200    245     310 &lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2582&gt;
+   0.72   0.87    1 &lt;U+2582&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
+   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2582&gt;
+   4      5       7 &lt;U+2585&gt;&lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2585&gt;&lt;U+2581&gt;&lt;U+2582&gt;&lt;U+2581&gt;
+   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;
+   0.64   0.82    1 &lt;U+2585&gt;&lt;U+2582&gt;&lt;U+2585&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
+   3      4      10 &lt;U+2587&gt;&lt;U+2582&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;
+   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2582&gt;</code></pre>
 </div>
 <div id="parsnip-dataset-preprocessing" class="section level2">
 <h2><span class="header-section-number">2.2</span> 데이터 전처리</h2>
@@ -1712,11 +1754,11 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
  n obs: 14999 
  n variables: 10 
 
-── Variable type:character ──────────────────────────────────────────────────────────────────────
+-- Variable type:character ------------------------------------------------------
  variable missing complete     n min max empty n_unique
    salary       0    14999 14999   3   6     0        3
 
-── Variable type:factor ─────────────────────────────────────────────────────────────────────────
+-- Variable type:factor ---------------------------------------------------------
       variable missing complete     n n_unique
    departments       0    14999 14999       10
           left       0    14999 14999        2
@@ -1726,7 +1768,7 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
               sta: 11428, lef: 3571, NA: 0   FALSE
                   0: 12830, 1: 2169, NA: 0   FALSE
 
-── Variable type:numeric ────────────────────────────────────────────────────────────────────────
+-- Variable type:numeric --------------------------------------------------------
               variable missing complete     n    mean    sd    p0    p25
   average_montly_hours       0    14999 14999 201.05  49.94 96    156   
        last_evaluation       0    14999 14999   0.72   0.17  0.36   0.56
@@ -1735,12 +1777,12 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
     satisfaction_level       0    14999 14999   0.61   0.25  0.09   0.44
     time_spend_company       0    14999 14999   3.5    1.46  2      3   
     p50    p75 p100     hist
- 200    245     310 ▁▇▇▆▆▇▆▂
-   0.72   0.87    1 ▂▇▇▆▆▇▇▇
-   4      5       7 ▅▇▁▇▅▁▂▁
-   0      0       1 ▇▁▁▁▁▁▁▁
-   0.64   0.82    1 ▅▂▅▆▆▇▇▇
-   3      4      10 ▇▂▁▁▁▁▁▁</code></pre>
+ 200    245     310 &lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2582&gt;
+   0.72   0.87    1 &lt;U+2582&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
+   4      5       7 &lt;U+2585&gt;&lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2587&gt;&lt;U+2585&gt;&lt;U+2581&gt;&lt;U+2582&gt;&lt;U+2581&gt;
+   0      0       1 &lt;U+2587&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;
+   0.64   0.82    1 &lt;U+2585&gt;&lt;U+2582&gt;&lt;U+2585&gt;&lt;U+2586&gt;&lt;U+2586&gt;&lt;U+2587&gt;&lt;U+2587&gt;&lt;U+2587&gt;
+   3      4      10 &lt;U+2587&gt;&lt;U+2582&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;&lt;U+2581&gt;</code></pre>
 </div>
 </div>
 <div id="parsnip-modeling" class="section level1">
@@ -1777,19 +1819,19 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
 <a class="sourceLine" id="cb8-13" data-line-number="13"></a>
 <a class="sourceLine" id="cb8-14" data-line-number="14">train_baked</a></code></pre></div>
 <pre><code># A tibble: 10,500 x 19
-   satisfaction_le… last_evaluation number_project average_montly_…
+   satisfaction_le~ last_evaluation number_project average_montly_~
               &lt;dbl&gt;           &lt;dbl&gt;          &lt;dbl&gt;            &lt;dbl&gt;
- 1            0.754           0.838          0.962            1.21 
- 2           -2.01            0.956          2.58             1.41 
- 3            0.434           0.897          0.962            0.437
- 4           -0.969          -1.16          -1.47            -0.837
- 5           -0.808          -1.27          -1.47            -0.956
- 6           -2.05            0.311          1.77             0.915
- 7            1.23            0.780          0.962            1.15 
- 8            1.11            1.66           0.962            0.457
- 9           -0.648          -1.04          -1.47            -1.31 
-10           -2.01            0.545          1.77             2.07 
-# … with 10,490 more rows, and 15 more variables:
+ 1           -2.02            0.957          2.58             1.42 
+ 2           -0.976          -1.14          -1.47            -0.835
+ 3           -0.815          -1.26          -1.47            -0.955
+ 4           -2.06            0.315          1.77             0.922
+ 5            1.24            0.782          0.960            1.16 
+ 6            1.12            1.66           0.960            0.463
+ 7           -2.02            0.549          1.77             2.08 
+ 8           -0.815          -0.969         -1.47            -1.05 
+ 9           -0.935          -1.03          -1.47            -1.15 
+10           -0.653          -1.44          -1.47            -0.815
+# ... with 10,490 more rows, and 15 more variables:
 #   time_spend_company &lt;dbl&gt;, left &lt;fct&gt;, promotion_last_5years &lt;dbl&gt;,
 #   work_accident_X1 &lt;dbl&gt;, departments_hr &lt;dbl&gt;, departments_IT &lt;dbl&gt;,
 #   departments_management &lt;dbl&gt;, departments_marketing &lt;dbl&gt;,
@@ -1828,14 +1870,14 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
  1 left        left 
  2 stay        left 
  3 stay        left 
- 4 left        left 
+ 4 stay        left 
  5 stay        left 
  6 stay        left 
  7 left        left 
  8 stay        left 
- 9 left        left 
+ 9 stay        left 
 10 stay        left 
-# … with 4,489 more rows</code></pre>
+# ... with 4,489 more rows</code></pre>
 </div>
 <div id="parsnip-modeling-performance-metrics" class="section level3">
 <h3><span class="header-section-number">3.4.2</span> 모형성능</h3>
@@ -1848,15 +1890,15 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
 <pre><code># A tibble: 2 x 3
   Prediction  left  stay
   &lt;chr&gt;      &lt;int&gt; &lt;int&gt;
-1 left         360   256
-2 stay         699  3184</code></pre>
+1 left         379   277
+2 stay         681  3162</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">hr_glm_pred_df <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb15-2" data-line-number="2"><span class="st">  </span><span class="kw">metrics</span>(left, .pred_class)</a></code></pre></div>
 <pre><code># A tibble: 2 x 3
   .metric  .estimator .estimate
   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
-1 accuracy binary         0.788
-2 kap      binary         0.310</code></pre>
+1 accuracy binary         0.787
+2 kap      binary         0.319</code></pre>
 <p>실제 예측모형을 현업에 적용시킬 때, 정확도(<code>accuracy</code>) 보다는 <code>precision</code>, <code>recall</code>, 혹은 <code>f1_score</code>가 더 적합한 측도가 될 수 있다.</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1">clf_metric_df &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
 <a class="sourceLine" id="cb17-2" data-line-number="2">  <span class="st">&quot;precision&quot;</span> =<span class="st"> </span></a>
@@ -1875,7 +1917,7 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
 <pre><code># A tibble: 1 x 3
   precision recall f1_score
       &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;
-1     0.820  0.926    0.870</code></pre>
+1     0.823  0.919    0.868</code></pre>
 </div>
 </div>
 </div>
@@ -1969,16 +2011,16 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
    id     truth prediction
    &lt;chr&gt;  &lt;fct&gt; &lt;fct&gt;     
  1 Fold01 left  left      
- 2 Fold01 left  stay      
+ 2 Fold01 left  left      
  3 Fold01 left  left      
  4 Fold01 left  left      
  5 Fold01 left  left      
  6 Fold01 left  left      
  7 Fold01 left  left      
- 8 Fold01 left  stay      
+ 8 Fold01 left  left      
  9 Fold01 left  left      
 10 Fold01 left  left      
-# … with 10,490 more rows</code></pre>
+# ... with 10,490 more rows</code></pre>
 </div>
 <div id="parsnip-modeling-ranger-fit-performance" class="section level2">
 <h2><span class="header-section-number">4.4</span> <code>ranger</code> 예측모형 성능</h2>
@@ -1992,8 +2034,8 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
   .metric   .estimate
   &lt;chr&gt;         &lt;dbl&gt;
 1 accuracy      0.966
-2 precision     0.962
-3 recall        0.995
+2 precision     0.961
+3 recall        0.996
 4 f_meas        0.978</code></pre>
 </div>
 </div>
@@ -2040,16 +2082,16 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
    id     truth prediction
    &lt;chr&gt;  &lt;fct&gt; &lt;fct&gt;     
  1 Fold01 left  left      
- 2 Fold01 left  stay      
+ 2 Fold01 left  left      
  3 Fold01 left  left      
  4 Fold01 left  left      
  5 Fold01 left  left      
- 6 Fold01 left  left      
+ 6 Fold01 left  stay      
  7 Fold01 left  left      
- 8 Fold01 left  stay      
+ 8 Fold01 left  left      
  9 Fold01 left  left      
 10 Fold01 left  left      
-# … with 10,490 more rows</code></pre>
+# ... with 10,490 more rows</code></pre>
 <p><code>XGBoost</code> 예측모형 성능을 동일한 방식으로 확인한다.</p>
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" data-line-number="1">pred_xgb <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb33-2" data-line-number="2"><span class="st">  </span><span class="kw">conf_mat</span>(truth, prediction) <span class="op">%&gt;%</span></a>
@@ -2059,65 +2101,111 @@ Tidyverse Korea<br><h4 class="date">2019-08-18</h4>
 <pre><code># A tibble: 4 x 2
   .metric   .estimate
   &lt;chr&gt;         &lt;dbl&gt;
-1 accuracy      0.957
-2 precision     0.954
-3 recall        0.991
-4 f_meas        0.972</code></pre>
+1 accuracy      0.965
+2 precision     0.963
+3 recall        0.992
+4 f_meas        0.977</code></pre>
 </div>
 <div id="parsnip-grid-search" class="section level2">
 <h2><span class="header-section-number">5.2</span> 격자 탐색(grid search) <a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></h2>
-<p><code>XGBoost</code> 초모수 튜닝을 위한 격자탐색에 대한 사항은 …</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb35-1" data-line-number="1">bst_grid &lt;-<span class="st"> </span><span class="kw">grid_random</span>(</a>
-<a class="sourceLine" id="cb35-2" data-line-number="2">  learn_rate  <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">range_set</span>(<span class="kw">c</span>(<span class="fl">0.1</span>,  <span class="fl">0.01</span>)), </a>
-<a class="sourceLine" id="cb35-3" data-line-number="3">  tree_depth  <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">range_set</span>(<span class="kw">c</span>( <span class="dv">3</span>,  <span class="dv">10</span>)), </a>
-<a class="sourceLine" id="cb35-4" data-line-number="4">  sample_size <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">range_set</span>(<span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">130</span>)), </a>
-<a class="sourceLine" id="cb35-5" data-line-number="5">  <span class="dt">size =</span> <span class="dv">3</span>)</a>
-<a class="sourceLine" id="cb35-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb35-7" data-line-number="7">bst_grid</a></code></pre></div>
-<pre><code># A tibble: 3 x 3
+<p><code>XGBoost</code> 초모수 튜닝을 위한 격자탐색에 초모수 임의 탐색(random search)을 반영한 <code>model_xgb</code> XGBoost 모형과 <code>xgb_grid</code> 탐색 격자를 준비하여 이를 <code>merge</code> 시켜 <code>spec_df</code>를 준비시킨다.</p>
+<p>더불어 <code>vfold_cv()</code> 함수를 통해 교차검증 데이터셋도 함께 준비시킨다.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb35-1" data-line-number="1"><span class="co">## 초모수 -----</span></a>
+<a class="sourceLine" id="cb35-2" data-line-number="2">xgb_grid &lt;-<span class="st"> </span><span class="kw">grid_random</span>(</a>
+<a class="sourceLine" id="cb35-3" data-line-number="3">  learn_rate  <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">range_set</span>(<span class="kw">c</span>(<span class="fl">0.1</span>,  <span class="fl">0.01</span>)), </a>
+<a class="sourceLine" id="cb35-4" data-line-number="4">  tree_depth  <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">range_set</span>(<span class="kw">c</span>( <span class="dv">3</span>,  <span class="dv">10</span>)), </a>
+<a class="sourceLine" id="cb35-5" data-line-number="5">  sample_size <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">range_set</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>)), </a>
+<a class="sourceLine" id="cb35-6" data-line-number="6">  <span class="dt">size =</span> <span class="dv">5</span>)</a>
+<a class="sourceLine" id="cb35-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb35-8" data-line-number="8">xgb_grid</a></code></pre></div>
+<pre><code># A tibble: 5 x 3
   learn_rate tree_depth sample_size
-       &lt;dbl&gt;      &lt;int&gt;       &lt;int&gt;
-1     0.0606          9         130
-2     0.0101          3         110
-3     0.0914          6          76</code></pre>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" data-line-number="1">model_xgb &lt;-<span class="st"> </span><span class="kw">boost_tree</span>(</a>
-<a class="sourceLine" id="cb37-2" data-line-number="2">    <span class="dt">mode =</span> <span class="st">&quot;classification&quot;</span>,</a>
-<a class="sourceLine" id="cb37-3" data-line-number="3">    <span class="dt">learn_rate =</span> <span class="fl">0.3</span>,</a>
-<a class="sourceLine" id="cb37-4" data-line-number="4">    <span class="dt">tree_depth =</span> <span class="dv">5</span>,</a>
-<a class="sourceLine" id="cb37-5" data-line-number="5">    <span class="dt">sample_size =</span> <span class="dv">1</span>) </a>
-<a class="sourceLine" id="cb37-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb37-7" data-line-number="7">model_xgb_spec &lt;-<span class="st"> </span><span class="kw">list</span>()</a>
-<a class="sourceLine" id="cb37-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb37-9" data-line-number="9"><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(bst_grid)) {</a>
-<a class="sourceLine" id="cb37-10" data-line-number="10">  model_xgb_spec[i] &lt;-<span class="st"> </span><span class="kw">merge</span>(model_xgb, bst_grid[i, ])</a>
-<a class="sourceLine" id="cb37-11" data-line-number="11">}</a>
-<a class="sourceLine" id="cb37-12" data-line-number="12"></a>
-<a class="sourceLine" id="cb37-13" data-line-number="13">model_xgb_spec</a></code></pre></div>
-<pre><code>[[1]]
-Boosted Tree Model Specification (classification)
-
-Main Arguments:
-  tree_depth = 9
-  learn_rate = 0.0605576453101821
-  sample_size = 130
-
-
-[[2]]
-Boosted Tree Model Specification (classification)
-
-Main Arguments:
-  tree_depth = 3
-  learn_rate = 0.0100765079585835
-  sample_size = 110
-
-
-[[3]]
-Boosted Tree Model Specification (classification)
-
-Main Arguments:
-  tree_depth = 6
-  learn_rate = 0.0914361087372527
-  sample_size = 76</code></pre>
+       &lt;dbl&gt;      &lt;int&gt;       &lt;dbl&gt;
+1     0.0314          4         0.5
+2     0.0662          6         0.5
+3     0.0502          9         0.5
+4     0.0161          8         0.5
+5     0.0609          3         0.5</code></pre>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" data-line-number="1"><span class="co">## XGBoost 모형 -----</span></a>
+<a class="sourceLine" id="cb37-2" data-line-number="2">model_xgb &lt;-<span class="st"> </span><span class="kw">boost_tree</span>(</a>
+<a class="sourceLine" id="cb37-3" data-line-number="3">    <span class="dt">mode =</span> <span class="st">&quot;classification&quot;</span>,</a>
+<a class="sourceLine" id="cb37-4" data-line-number="4">    <span class="dt">learn_rate =</span> <span class="kw">varing</span>(),</a>
+<a class="sourceLine" id="cb37-5" data-line-number="5">    <span class="dt">tree_depth =</span> <span class="kw">varing</span>(),</a>
+<a class="sourceLine" id="cb37-6" data-line-number="6">    <span class="dt">sample_size =</span> <span class="kw">varing</span>()) </a>
+<a class="sourceLine" id="cb37-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb37-8" data-line-number="8">spec_df &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">spec =</span> <span class="kw">merge</span>(model_xgb, xgb_grid)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb37-9" data-line-number="9"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">model_id =</span> <span class="kw">row_number</span>())</a>
+<a class="sourceLine" id="cb37-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb37-11" data-line-number="11">spec_df</a></code></pre></div>
+<pre><code># A tibble: 5 x 2
+  spec      model_id
+  &lt;list&gt;       &lt;int&gt;
+1 &lt;spec[+]&gt;        1
+2 &lt;spec[+]&gt;        2
+3 &lt;spec[+]&gt;        3
+4 &lt;spec[+]&gt;        4
+5 &lt;spec[+]&gt;        5</code></pre>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1"><span class="co">## CV 데이터셋 -----</span></a>
+<a class="sourceLine" id="cb39-2" data-line-number="2">cross_val_df &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(train_df, <span class="dt">v =</span> <span class="dv">3</span>)</a>
+<a class="sourceLine" id="cb39-3" data-line-number="3">cross_val_df</a></code></pre></div>
+<pre><code>#  3-fold cross-validation 
+# A tibble: 3 x 2
+  splits            id   
+  &lt;named list&gt;      &lt;chr&gt;
+1 &lt;split [7K/3.5K]&gt; Fold1
+2 &lt;split [7K/3.5K]&gt; Fold2
+3 &lt;split [7K/3.5K]&gt; Fold3</code></pre>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb41-1" data-line-number="1">spec_cv_df &lt;-<span class="st"> </span><span class="kw">crossing</span>(spec_df, cross_val_df)</a>
+<a class="sourceLine" id="cb41-2" data-line-number="2">spec_cv_df</a></code></pre></div>
+<pre><code># A tibble: 15 x 4
+   spec      model_id splits            id   
+   &lt;list&gt;       &lt;int&gt; &lt;named list&gt;      &lt;chr&gt;
+ 1 &lt;spec[+]&gt;        1 &lt;split [7K/3.5K]&gt; Fold1
+ 2 &lt;spec[+]&gt;        1 &lt;split [7K/3.5K]&gt; Fold2
+ 3 &lt;spec[+]&gt;        1 &lt;split [7K/3.5K]&gt; Fold3
+ 4 &lt;spec[+]&gt;        2 &lt;split [7K/3.5K]&gt; Fold1
+ 5 &lt;spec[+]&gt;        2 &lt;split [7K/3.5K]&gt; Fold2
+ 6 &lt;spec[+]&gt;        2 &lt;split [7K/3.5K]&gt; Fold3
+ 7 &lt;spec[+]&gt;        3 &lt;split [7K/3.5K]&gt; Fold1
+ 8 &lt;spec[+]&gt;        3 &lt;split [7K/3.5K]&gt; Fold2
+ 9 &lt;spec[+]&gt;        3 &lt;split [7K/3.5K]&gt; Fold3
+10 &lt;spec[+]&gt;        4 &lt;split [7K/3.5K]&gt; Fold1
+11 &lt;spec[+]&gt;        4 &lt;split [7K/3.5K]&gt; Fold2
+12 &lt;spec[+]&gt;        4 &lt;split [7K/3.5K]&gt; Fold3
+13 &lt;spec[+]&gt;        5 &lt;split [7K/3.5K]&gt; Fold1
+14 &lt;spec[+]&gt;        5 &lt;split [7K/3.5K]&gt; Fold2
+15 &lt;spec[+]&gt;        5 &lt;split [7K/3.5K]&gt; Fold3</code></pre>
+</div>
+<div id="parsnip-grid-search-fit" class="section level2">
+<h2><span class="header-section-number">5.3</span> 격자 탐색(grid search) 적합</h2>
+<p>앞서 준비한 초모수 XGBoost 모형과 CV 교차검증 데이터셋에 대한 적합을 시도함.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb43-1" data-line-number="1">fit_on_fold &lt;-<span class="st"> </span><span class="cf">function</span>(df) {</a>
+<a class="sourceLine" id="cb43-2" data-line-number="2">  <span class="kw">fit</span>(left <span class="op">~</span><span class="st"> </span>., <span class="dt">data=</span>df)</a>
+<a class="sourceLine" id="cb43-3" data-line-number="3">}</a>
+<a class="sourceLine" id="cb43-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb43-5" data-line-number="5">spec_cv_fit &lt;-<span class="st"> </span>spec_cv_df <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb43-6" data-line-number="6"><span class="st">  </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb43-7" data-line-number="7">    <span class="dt">analysis_set =</span> <span class="kw">map</span>(splits, rsample<span class="op">::</span>analysis),</a>
+<a class="sourceLine" id="cb43-8" data-line-number="8">    <span class="dt">prepped =</span> <span class="kw">map</span>(splits, hr_recipe),</a>
+<a class="sourceLine" id="cb43-9" data-line-number="9">    <span class="dt">baked   =</span> <span class="kw">map2</span>(prepped, analysis_set, bake)</a>
+<a class="sourceLine" id="cb43-10" data-line-number="10">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb43-11" data-line-number="11"><span class="st">  </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb43-12" data-line-number="12">    <span class="dt">xgb_fit =</span> <span class="kw">map</span>(baked, <span class="op">~</span>fit_on_fold)</a>
+<a class="sourceLine" id="cb43-13" data-line-number="13">  )</a>
+<a class="sourceLine" id="cb43-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb43-15" data-line-number="15">xgb_predict &lt;-<span class="st"> </span><span class="cf">function</span>(model, newdata) {</a>
+<a class="sourceLine" id="cb43-16" data-line-number="16">  <span class="kw">predict</span>(model, newdata)</a>
+<a class="sourceLine" id="cb43-17" data-line-number="17">}</a>
+<a class="sourceLine" id="cb43-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb43-19" data-line-number="19">spec_cv_pred &lt;-<span class="st"> </span>spec_cv_fit <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb43-20" data-line-number="20"><span class="st">  </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb43-21" data-line-number="21">    <span class="dt">assess_set =</span> <span class="kw">map</span>(splits, rsample<span class="op">::</span>assessment),</a>
+<a class="sourceLine" id="cb43-22" data-line-number="22">    <span class="dt">assess_prepped =</span> <span class="kw">map</span>(splits, hr_recipe),</a>
+<a class="sourceLine" id="cb43-23" data-line-number="23">    <span class="dt">assess_baked   =</span> <span class="kw">map2</span>(prepped, assess_set, bake)</a>
+<a class="sourceLine" id="cb43-24" data-line-number="24">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb43-25" data-line-number="25"><span class="st">  </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb43-26" data-line-number="26">    <span class="dt">pred =</span> <span class="kw">map2</span>(xgb_fit, assess_baked, <span class="op">~</span>xgb_predict)</a>
+<a class="sourceLine" id="cb43-27" data-line-number="27">  )</a></code></pre></div>
 </div>
 </div>
 <div class="footnotes">
@@ -2146,54 +2234,6 @@ $(document).ready(function () {
 });
 
 
-</script>
-
-<!-- tabsets -->
-
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
-<!-- code folding -->
-<script>
-$(document).ready(function () {
-  window.initializeCodeFolding("show" === "show");
-});
-</script>
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

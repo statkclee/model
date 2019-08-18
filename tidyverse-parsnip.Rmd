@@ -333,29 +333,71 @@ pred_xgb %>%
 
 [^dials-grid]: [tidymodels, "Using Dials with Parsnip"](https://tidymodels.github.io/dials/articles/articles/Dials_and_Parsnip.html)
 
-`XGBoost` 초모수 튜닝을 위한 격자탐색에 대한 사항은 ...
+`XGBoost` 초모수 튜닝을 위한 격자탐색에 초모수 임의 탐색(random search)을 반영한 `model_xgb` XGBoost 모형과 `xgb_grid` 탐색 격자를 준비하여 이를 `merge` 시켜 `spec_df`를 준비시킨다.
+
+더불어 `vfold_cv()` 함수를 통해 교차검증 데이터셋도 함께 준비시킨다.
 
 ```{r parsnip-xgboost-grid}
-bst_grid <- grid_random(
+## 초모수 -----
+xgb_grid <- grid_random(
   learn_rate  %>% range_set(c(0.1,  0.01)), 
   tree_depth  %>% range_set(c( 3,  10)), 
-  sample_size %>% range_set(c(20, 130)), 
-  size = 3)
+  sample_size %>% range_set(c(0.5, 1)), 
+  size = 5)
 
-bst_grid
+xgb_grid
 
+## XGBoost 모형 -----
 model_xgb <- boost_tree(
     mode = "classification",
-    learn_rate = 0.3,
-    tree_depth = 5,
-    sample_size = 1) 
+    learn_rate = varing(),
+    tree_depth = varing(),
+    sample_size = varing()) 
 
-model_xgb_spec <- list()
+spec_df <- tibble(spec = merge(model_xgb, xgb_grid)) %>% 
+  mutate(model_id = row_number())
 
-for(i in 1:nrow(bst_grid)) {
-  model_xgb_spec[i] <- merge(model_xgb, bst_grid[i, ])
-}
+spec_df
 
-model_xgb_spec
+## CV 데이터셋 -----
+cross_val_df <- vfold_cv(train_df, v = 3)
+cross_val_df
+
+spec_cv_df <- crossing(spec_df, cross_val_df)
+spec_cv_df
 ```
 
+## 격자 탐색(grid search) 적합 {#parsnip-grid-search-fit}
+
+앞서 준비한 초모수 XGBoost 모형과 CV 교차검증 데이터셋에 대한 적합을 시도함.
+
+```{r parsnip-xgboost-grid-fit, eval=FALSE}
+fit_on_fold <- function(df) {
+  fit(left ~ ., data=df)
+}
+
+spec_cv_fit <- spec_cv_df %>%
+  mutate(
+    analysis_set = map(splits, rsample::analysis),
+    prepped = map(splits, hr_recipe),
+    baked   = map2(prepped, analysis_set, bake)
+  ) %>% 
+  mutate(
+    xgb_fit = map(baked, ~fit_on_fold)
+  )
+
+xgb_predict <- function(model, newdata) {
+  predict(model, newdata)
+}
+
+spec_cv_pred <- spec_cv_fit %>% 
+  mutate(
+    assess_set = map(splits, rsample::assessment),
+    assess_prepped = map(splits, hr_recipe),
+    assess_baked   = map2(prepped, assess_set, bake)
+  ) %>% 
+  mutate(
+    pred = map2(xgb_fit, assess_baked, ~xgb_predict)
+  )
+
+```
