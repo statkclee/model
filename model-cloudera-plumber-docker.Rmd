@@ -50,7 +50,8 @@ RUN apt-get -y --no-install-recommends install \
   libmariadbclient-dev \
   libpq-dev \
   libssh2-1-dev 
-  
+RUN apt-get install openssl  
+
 # copy model and scoring script
 RUN mkdir /data
 COPY deploy_glm.rds /data
