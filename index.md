@@ -87,9 +87,11 @@ title: 데이터 과학 -- 모형
     - [**앙상블(ensemble) 모형**](model-ensemble.html)
 - **[클라우드 컴퓨팅 환경](model-cloud-infra.html)**
     - [예측모형 AWS EC2](model-aws-ec2.html) 
-- **사기 탐지(Fraud Detection)**
-    - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
-    - [어노말리(Anomaly) 탐지](model-anomaly.html) 
+- **실무 모형**
+    - **사기 탐지(Fraud Detection)**
+        - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
+        - [어노말리(Anomaly) 탐지](model-anomaly.html) 
+    - **[신용평점모형 개발](credit-scoring-model.html)**    
 - **파이썬 실무 예측모형**
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
     - [파이썬 고객이탈 - `xgBoost`](model-python-churn.html) 
