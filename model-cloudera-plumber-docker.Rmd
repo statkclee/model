@@ -40,9 +40,17 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 FROM trestletech/plumber
 MAINTAINER Kwangchun Lee <kwangchun.lee.7@gmail.com>
 
-# install the randomForest package
-RUN R -e 'install.packages(c("tidyverse"))'
-
+# install tidyverse dependancy
+RUN apt-get update --allow-releaseinfo-change
+RUN apt-get -y --no-install-recommends install \
+  libxml2-dev \
+  libcairo2-dev \
+  libsqlite-dev \
+  libmariadbd-dev \
+  libmariadbclient-dev \
+  libpq-dev \
+  libssh2-1-dev 
+  
 # copy model and scoring script
 RUN mkdir /data
 COPY deploy_glm.rds /data

@@ -7,6 +7,7 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
@@ -68,8 +69,6 @@ overflow: auto;
 margin-left: 2%;
 position: fixed;
 border: 1px solid #ccc;
-webkit-border-radius: 6px;
-moz-border-radius: 6px;
 border-radius: 6px;
 }
 
@@ -97,9 +96,14 @@ font-size: 12px;
 .tocify-subheader .tocify-subheader {
 text-indent: 30px;
 }
-
 .tocify-subheader .tocify-subheader .tocify-subheader {
 text-indent: 40px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 50px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 60px;
 }
 
 .tocify .tocify-item > a, .tocify .nav-list .nav-header {
@@ -503,13 +507,13 @@ float: none;
 
           item.append($("<a/>", {
 
-            "text": self.text()
+            "html": self.html()
 
           }));
 
         } else {
 
-          item.text(self.text());
+          item.html(self.html());
 
         }
 
@@ -1408,7 +1412,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -1539,56 +1543,12 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 <style type="text/css">
 .code-folding-btn { margin-bottom: 4px; }
 </style>
-<script>
-$(document).ready(function () {
-  window.initializeCodeFolding("show" === "show");
-});
-</script>
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -1637,8 +1597,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -1700,19 +1658,27 @@ Tidyverse Korea<br><h4 class="date">2019-11-24</h4>
 <a class="sourceLine" id="cb1-3" data-line-number="3">FROM trestletech<span class="op">/</span>plumber</a>
 <a class="sourceLine" id="cb1-4" data-line-number="4">MAINTAINER Kwangchun Lee <span class="op">&lt;</span>kwangchun.lee<span class="fl">.7</span><span class="op">@</span>gmail.com<span class="op">&gt;</span></a>
 <a class="sourceLine" id="cb1-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="co"># install the randomForest package</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">RUN R <span class="op">-</span>e <span class="st">'install.packages(c(&quot;tidyverse&quot;))'</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="co"># copy model and scoring script</span></a>
-<a class="sourceLine" id="cb1-10" data-line-number="10">RUN mkdir <span class="op">/</span>data</a>
-<a class="sourceLine" id="cb1-11" data-line-number="11">COPY deploy_glm.rds <span class="op">/</span>data</a>
-<a class="sourceLine" id="cb1-12" data-line-number="12">COPY telco.R <span class="op">/</span>data</a>
-<a class="sourceLine" id="cb1-13" data-line-number="13">WORKDIR <span class="op">/</span>data</a>
-<a class="sourceLine" id="cb1-14" data-line-number="14"></a>
-<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="co"># plumb and run server</span></a>
-<a class="sourceLine" id="cb1-16" data-line-number="16">EXPOSE <span class="dv">8000</span></a>
-<a class="sourceLine" id="cb1-17" data-line-number="17">ENTRYPOINT [<span class="st">&quot;R&quot;</span>, <span class="st">&quot;-e&quot;</span>, \</a>
-<a class="sourceLine" id="cb1-18" data-line-number="18">    <span class="st">&quot;pr &lt;- plumber::plumb('/data/telco.R'); pr$run(port=8000)&quot;</span>]</a></code></pre></div>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="co"># install tidyverse dependancy</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">RUN apt<span class="op">-</span>get update <span class="op">--</span>allow<span class="op">-</span>releaseinfo<span class="op">-</span>change</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">RUN apt<span class="op">-</span>get <span class="op">-</span>y <span class="op">--</span>no<span class="op">-</span>install<span class="op">-</span>recommends install \</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">  libxml2<span class="op">-</span>dev \</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">  libcairo2<span class="op">-</span>dev \</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">  libsqlite<span class="op">-</span>dev \</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  libmariadbd<span class="op">-</span>dev \</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">  libmariadbclient<span class="op">-</span>dev \</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">  libpq<span class="op">-</span>dev \</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">  libssh2<span class="dv">-1</span><span class="op">-</span>dev </a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">  </a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="co"># copy model and scoring script</span></a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">RUN mkdir <span class="op">/</span>data</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">COPY deploy_glm.rds <span class="op">/</span>data</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">COPY telco.R <span class="op">/</span>data</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21">WORKDIR <span class="op">/</span>data</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="co"># plumb and run server</span></a>
+<a class="sourceLine" id="cb1-24" data-line-number="24">EXPOSE <span class="dv">8000</span></a>
+<a class="sourceLine" id="cb1-25" data-line-number="25">ENTRYPOINT [<span class="st">&quot;R&quot;</span>, <span class="st">&quot;-e&quot;</span>, \</a>
+<a class="sourceLine" id="cb1-26" data-line-number="26">    <span class="st">&quot;pr &lt;- plumber::plumb('/data/telco.R'); pr$run(port=8000)&quot;</span>]</a></code></pre></div>
 <style>
 div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
 </style>
@@ -1768,6 +1734,54 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
