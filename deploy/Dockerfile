@@ -1,0 +1,30 @@
+# Telco Dockerfile to expose a plumber service
+
+FROM trestletech/plumber
+MAINTAINER Kwangchun Lee <kwangchun.lee.7@gmail.com>
+
+# install tidyverse dependancy
+RUN apt-get update --allow-releaseinfo-change
+RUN apt-get -y --no-install-recommends install \
+  libxml2-dev \
+  libcairo2-dev \
+  libsqlite-dev \
+  libmariadbd-dev \
+  libmariadbclient-dev \
+  libpq-dev \
+  libssh2-1-dev 
+
+# install the tidyverse package
+RUN R -e 'install.packages(c("tidyverse"))'
+
+# copy model and scoring script
+RUN mkdir /data
+COPY deploy_glm.rds /data
+COPY telco.R /data
+WORKDIR /data
+
+# plumb and run server
+EXPOSE 8000
+ENTRYPOINT ["R", "-e", \
+    "pr <- plumber::plumb('/data/telco.R'); pr$run(port=8000)"]
+   

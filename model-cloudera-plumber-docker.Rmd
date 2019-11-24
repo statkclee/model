@@ -1,0 +1,109 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "고객이탈 - RESTful API 기본기 도커"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+
+# `Dockerfile` 작성 [^azure-docker] {#azure-docker}
+
+[^azure-docker]: [Azure, "Deploying a prediction service with Plumber"](https://cran.seoul.go.kr/web/packages/AzureContainers/vignettes/vig01_plumber_deploy.html)
+
+가장 먼저 `Dockerfile`을 작성하는데 `trestletech/plumber` 도커 이미지가 있으니 이를 가져와서 `telco` RESTful API로 작성된 예측서비스를 올리는 방식으로 구성한다. 서비스는 이미 `deploy_glm.rds`, `telco.R`에 담겨져 있으니 이를 복사해서 컨테이너 `/data` 디렉토리에 담아 넣으면 된다. 
+
+그리고 나서, `ENTRYPOINT`에 `plumber`를 실행시키면 서비스가 8000 포트에 떠 있게 된다.
+
+```{r dockerfile-telco, eval=FALSE}
+# Telco Dockerfile to expose a plumber service
+
+FROM trestletech/plumber
+MAINTAINER Kwangchun Lee <kwangchun.lee.7@gmail.com>
+
+# install the randomForest package
+RUN R -e 'install.packages(c("tidyverse"))'
+
+# copy model and scoring script
+RUN mkdir /data
+COPY deploy_glm.rds /data
+COPY telco.R /data
+WORKDIR /data
+
+# plumb and run server
+EXPOSE 8000
+ENTRYPOINT ["R", "-e", \
+    "pr <- plumber::plumb('/data/telco.R'); pr$run(port=8000)"]
+```
+
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
+</style>
+<div class = "blue">
+
+**`Bind for 0.0.0.0:4000 failed: port is already allocated` 오류** [^port-error]
+
+포트가 이미 할당되어서 다시 도커 컨테이너를 띄울 수 없는 경우, `docker rm -f` 명령어로 해당 이미 떠 있는 컨테이너를 지정하여 삭제한다.
+
+[^port-error]: [stackoverflow, "Docker - Bind for 0.0.0.0:4000 failed: port is already allocated"](https://stackoverflow.com/questions/46176584/docker-bind-for-0-0-0-04000-failed-port-is-already-allocated)
+
+```{r docker-port, eval=FALSE}
+docker container ls
+docker rm -f <container-name>
+```
+
+</div>
+
+# 도커 이미지 [^tmobile-docker-r] {#telco-docker-image}
+
+[^tmobile-docker-r]: [Jacqueline Nolis (Nov 6, 2018), "Using docker to deploy an R plumber API", Medium](https://medium.com/tmobile-tech/using-docker-to-deploy-an-r-plumber-api-863ccf91516d)
+
+`Dockerfile`에 담긴 내용을 근거로 도커 이미지를 만든다. `plumber-telco`를 이름으로 주면 현재 디렉토리에 
+
+```{r docker-build-telco, eval=FALSE}
+docker build -t plumber-telco .
+```
+
+```{r docker-run-telco, eval = FALSE}
+docker run --rm -p 8000:8000 plumber-telco
+```
+
+# 도커 RESTful API 테스트 {#telco-docker-image-test}
+
+`/healthcheck`를 통해 제대로 서비스가 올라왔는지 테스트한다.
+
+```{r docker-build-telco-restful-healthcheck, eval=FALSE}
+library(httr)
+
+response <- GET("http://localhost:8000/healthcheck")
+content(response, simplifyVector=TRUE)
+```
+
+고객이탈 예측모형을 `/predict_churn` 서비스를 통해 검증한다.
+
+```{r docker-build-telco-restful, eval=FALSE}
+response <- POST("http://localhost:8000/predict_churn",
+                 body= '{"senior": "Yes", "charge": 18.1}')
+content(response, simplifyVector=TRUE)
+```
+
