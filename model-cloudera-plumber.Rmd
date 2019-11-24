@@ -28,15 +28,18 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 # `plumber` 헬로 월드 {#plumber-helloworld}
 
-```{r run-plumber}
+```{r run-plumber,eval=FALSE}
 library(plumber)
 r <- plumb("deploy/plumber.R")
 r$run(port=8000)
 ```
 
 
-```{bash run-helloworld}
-curl --data "a=4&b=3" "http://localhost:8000/sum"
+```{r run-helloworld}
+library(httr)
+library(tidyverse)
+GET('http://localhost:8000/echo?msg="Hello_World"') %>% 
+  content()
 ```
 
 
