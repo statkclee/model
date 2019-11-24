@@ -72,10 +72,11 @@ title: 데이터 과학 -- 모형
         + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
         + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
         + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
-    - **클라우데라 설명가능한 기계학습**
-        + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
-        + [고객이탈 - Random Forest](model-cloudera-rf.html)
-        + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
+- **[클라우데라 설명가능한 기계학습](model-cloudera.html)**
+    + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
+    + [고객이탈 - Random Forest](model-cloudera-rf.html)
+    + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
+    + [고객이탈 - `tidymodels`](model-cloudera-tidymodels.html)
 - **모형 평가**
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
