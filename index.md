@@ -77,7 +77,8 @@ title: 데이터 과학 -- 모형
     + [고객이탈 - Random Forest](model-cloudera-rf.html)
     + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
     + [고객이탈 - `tidymodels`](model-cloudera-tidymodels.html)
-    + [고객이탈 - 모형 배포 `plumber`](model-cloudera-plumber.html)
+    + [고객이탈 - RESTful API 기본기 `plumber`](model-cloudera-plumber.html)
+    + [고객이탈 - RESTful API 모형 배포 `plumber`](model-cloudera-plumber-api.html)
 - **모형 평가**
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)

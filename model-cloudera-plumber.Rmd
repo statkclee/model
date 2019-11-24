@@ -1,7 +1,7 @@
 ---
 layout: page
 title: xwMOOC 모형
-subtitle: "고객이탈 - RESTful API 모형 배포 `plumber`"
+subtitle: "고객이탈 - RESTful API 기본기 `plumber`"
 author:
     name: xwMOOC
     url: https://www.facebook.com/groups/tidyverse/
@@ -28,14 +28,80 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 # `plumber` 헬로 월드 {#plumber-helloworld}
 
-```{r run-plumber,eval=FALSE}
+[`plumber` - An R package that converts your existing R code to a web API using a handful of special one-line comments.](https://www.rplumber.io/)에 나와 있는 `plumber` 예제를 바탕으로 RESTful API를 헬로월드를 작성한다.
+
+<div class = "row">
+  <div class = "col-md-3">
+**`plumber` 실행파일**
+
+`main()` 함수처럼 개발된 RESTful API를 실행시키는 파일.
+
+```{r plumber-run, eval=FALSE}
 library(plumber)
-r <- plumb("deploy/plumber.R")
+r <- plumb("deploy/plumber.R")  
 r$run(port=8000)
 ```
 
 
-```{r run-helloworld}
+  </div>
+  <div class = "col-md-9">
+**RESTful API 서비스 파일**
+
+`/echo`, `/plot`, `/sum`, `sum_two` 총 4가지 API 서비스를 GET, POST 방식으로 제공하고 있다.
+
+```{r plumber-RESTful-api, eval=FALSE}
+library(tidyverse)
+
+#* Echo back the input
+#* @param msg The message to echo
+#* @get /echo
+function(msg=""){
+  list(msg = paste0("The message is: '", msg, "'"))
+}
+
+#* Plot a histogram with ggplot
+#* @png
+#* @get /ggplot
+function() {
+  p <- data.frame(x = rnorm(100)) %>% 
+    ggplot(aes(x)) + 
+      geom_density(fill = "tomato", alpha = 0.5)
+  print(p)
+}
+
+#* Plot a histogram with Base plot
+#* @png
+#* @get /plot
+function(){
+  rand <- rnorm(100)
+  hist(rand)
+}
+
+
+#* Return the sum of two numbers
+#* @param a The first number to add
+#* @param b The second number to add
+#* @post /sum
+function(a=1, b=2){
+  as.numeric(a) + as.numeric(b)
+}
+
+#* Return the sum of two numbers
+#* @param a The first number to add
+#* @param b The second number to add
+#* @get /sum_two
+function(a, b){
+  as.numeric(a) + as.numeric(b)
+}
+```
+  </div>
+</div>
+
+## `/echo` 메시지 서비스 {#plumber-echo}
+
+가장 먼저 웹브라우저 주소창에 `http://localhost:8000/echo?msg="Hello_World"`을 입력시켰을 때 `msg` 매개변수로 "Hello_World"를 전달했을 때 이를 메아리치는 경우를 구현해보자.
+
+```{r run-helloworld-echo}
 library(httr)
 library(tidyverse)
 GET('http://localhost:8000/echo?msg="Hello_World"') %>% 
@@ -43,5 +109,42 @@ GET('http://localhost:8000/echo?msg="Hello_World"') %>%
 ```
 
 
+## `/plot` 그래프 {#plumber-plot}
 
+`/plot` 시각화를 위해서 몇가지 조작을 해야는데 먼저 `/ggplot`으로 서비스를 준비한다. 
+Rmarkdown 이미지를 넣기 위해서 `plot(0:1, 0:1, type = "n")` 사전 설정을 하고, `rasterImage(0, 0, 1, 1)`를 통해 숫자로 나온 결과를 시각화 시킨다.
 
+```{r run-helloworld-ggplot}
+library(httr)
+library(tidyverse)
+
+plot(0:1, 0:1, type = "n")
+
+GET('http://localhost:8000/ggplot') %>% 
+  content() %>% rasterImage(0, 0, 1, 1)
+```
+
+`/plot` 서비스는 Base 그래픽으로 결과를 출력하는 사례다.
+
+```{r run-helloworld-plot}
+plot(0:1, 0:1, type = "n")
+
+GET('http://localhost:8000/plot') %>% 
+  content() %>% rasterImage(0, 0, 1, 1)
+```
+
+## `/sum_two` 그래프 {#plumber-sum}
+
+`/sum_two` 서비스는 두개의 값을 받아 더하기 하는 단순한 함수로 입력값을 받아 적절히 처리하는 사례를 모사한다.
+
+```{r run-helloworld-function}
+GET('http://localhost:8000/sum_two?a=7&b=10') %>% 
+  content()
+```
+
+# R마크다운 문서 제작 {#plumber-helloworld-document}
+
+RESTful API를 R마크다운 문서화를 위해서 먼저 제작된 RESTful API를 띄워놓고 이를 R마크다운 문서에서 불러다 호출하는 방식으로 HTML 문서를 제작한다.
+이 과정에서 RESTful API 호출결과를 가져올 경우 이를 파싱해서 적절한 형태로 전환시켜야 하는데 이를 위해서 `httr` 팩키지 `content()` 함수와 시각화 객체를 객체를 PNG 파일로 삽입시키는데 `rasterImage()` 함수를 사용한다.
+
+![`plumber`와 R마크다운](fig/plumber-rmarkdown.png){#id .class width="100%"}
