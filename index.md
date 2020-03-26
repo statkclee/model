@@ -29,14 +29,11 @@ title: 데이터 과학 -- 모형
 
 ## 학습목차 
 
-- **Oldest but Goodies - `caret`**
-    - [`caret` 예측모형 맛보기](model-caret-intro.html)
-    - [`caret` 예측모형 개발](model-caret-build.html)
-    - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)    
-    - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
-- **모형 인프라(Model Infrastructure)**
-    - [`rsampling`](model-rsampling.html) 
-    - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
+<div class = "row">
+  <div class = "col-md-6">
+**모형-I**
+
+- [기계학습 개요](model-ml-intro.html)
 - **모형 데이터 전처리 - Feature Engineering(피처 공학)**
     - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
     - [피처 공학(Feature Engineering)](model-feature-engineering.html)
@@ -72,14 +69,6 @@ title: 데이터 과학 -- 모형
         + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
         + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
         + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
-- **[클라우데라 설명가능한 기계학습](model-cloudera.html)**
-    + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
-    + [고객이탈 - Random Forest](model-cloudera-rf.html)
-    + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
-    + [고객이탈 - `tidymodels`](model-cloudera-tidymodels.html)
-    + [고객이탈 - RESTful API 기본기 `plumber`](model-cloudera-plumber.html)
-    + [고객이탈 - RESTful API 모형 배포 `plumber`](model-cloudera-plumber-api.html)
-    + [고객이탈 - RESTful API 모형 배포 도커](model-cloudera-plumber-docker.html)
 - **모형 평가**
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
@@ -89,13 +78,34 @@ title: 데이터 과학 -- 모형
     - [기계학습 모형개발 30분 - `recipe` + $H_2 O$ AutoML](model-recipe-h2o-automl.html)
     - [기계학습 모형 배포](model-deploy.html)
     - [**앙상블(ensemble) 모형**](model-ensemble.html)
-- **[클라우드 컴퓨팅 환경](model-cloud-infra.html)**
-    - [예측모형 AWS EC2](model-aws-ec2.html) 
 - **실무 모형**
     - **사기 탐지(Fraud Detection)**
         - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
         - [어노말리(Anomaly) 탐지](model-anomaly.html) 
-    - **[신용평점모형 개발](credit-scoring-model.html)**    
+    - **[신용평점모형 개발](credit-scoring-model.html)**
+
+  </div>
+  <div class = "col-md-6">
+**모형-II**
+
+- **Oldest but Goodies - `caret`**
+    - [`caret` 예측모형 맛보기](model-caret-intro.html)
+    - [`caret` 예측모형 개발](model-caret-build.html)
+    - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)    
+    - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
+- **모형 인프라(Model Infrastructure)**
+    - [`rsampling`](model-rsampling.html) 
+    - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
+- **[클라우드 컴퓨팅 환경](model-cloud-infra.html)**
+    - [예측모형 AWS EC2](model-aws-ec2.html) 
+- **[클라우데라 설명가능한 기계학습](model-cloudera.html)**
+    + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
+    + [고객이탈 - Random Forest](model-cloudera-rf.html)
+    + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
+    + [고객이탈 - `tidymodels`](model-cloudera-tidymodels.html)
+    + [고객이탈 - RESTful API 기본기 `plumber`](model-cloudera-plumber.html)
+    + [고객이탈 - RESTful API 모형 배포 `plumber`](model-cloudera-plumber-api.html)
+    + [고객이탈 - RESTful API 모형 배포 도커](model-cloudera-plumber-docker.html)
 - **파이썬 실무 예측모형**
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
     - [파이썬 고객이탈 - `xgBoost`](model-python-churn.html) 
@@ -108,6 +118,9 @@ title: 데이터 과학 -- 모형
     - [캐글 - 전자상거래 옷 리뷰](model-kaggle-text.html) 
     - [예측모형 - 네트워크](model-network.html) 
     - [예측모형 - 데이터 융합(`tsne`)](model-tsne.html)
+
+  </div>
+</div>
 
 
 ### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)

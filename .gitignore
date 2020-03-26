@@ -19,3 +19,4 @@ data/churn_network.xlsx
 .Rhistory
 data/*.zip
 data/*2018*
+.Rproj.user
