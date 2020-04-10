@@ -105,5 +105,366 @@ dirty_df %>%
   </div>  
 </div>
 
-# 범위값 확인 {#data-cleaning-range-constraint}
+# 연속형 데이터 {#data-cleaning-numeric}
 
+## 범위값 확인 {#data-cleaning-range-constraint}
+
+데이터 자료형이 맞는지 확인이 되었다면 다음으로 살펴볼 수 있는 중요한 주제는 범위가 맞는지 확인하는 것이다. 데이터의 자료형의 정합성은 맞으나 잘못된 값이 들어갈 수가 있다. 예를 들어,
+
+- 맛집 별점: 1-5
+- 몸무게와 신장: 양수
+- 날짜: 현재보다 미래는 될 수 없음 
+- 점수: 0 - 100점
+- 자동차 연비: 리터당 0 - 1000 km
+- ...
+
+기술통계량과 시각화를 통해서 와인 등급(평가)을 확인할 수 있다. 원점수는 0 - 10점 사이며 이를 벗어나는 점수는 잘못된 데이터로 파악할 수 있다.
+
+<div class = "row">
+  <div class = "col-md-6">
+**기술통계량**
+
+```{r data-range-contraint}
+wine_df <- read_csv("data/wineQualityReds.csv")
+
+wine_df %>% 
+  summarise(min_quality = min(quality),
+            max_quality = max(quality))
+```
+
+  </div>
+  <div class = "col-md-6">
+**시각화**
+
+```{r data-range-contraint-viz}
+wine_df %>% 
+  ggplot(aes(x=quality)) +
+    geom_histogram(breaks = 1:10, fill = "skyblue") +
+    scale_x_continuous(breaks = 1:10)
+```
+
+  </div>
+</div>
+
+### `assertive` 함수 {#check-red-wine-range}
+
+`assertive` 팩키지 `assert_all_are_in_closed_range()` 함수를 사용해서 하한과 상한을 특정하여 범위를 넘어서는 데이터를 잡아내서 적절한 조치를 취한다.
+
+```{r check-wine-range}
+library(assertive)
+
+assert_all_are_in_closed_range(wine_df$quality, lower = 0, upper = 10)
+```
+
+
+### 오류 수정 {#check-red-wine-range-fix}
+
+`assertive` 팩키지 `assert_all_are_in_closed_range()` 함수를 통해 오류사항을 탐지한 후에 적절한 조치를 취해서 이를 고쳐야만 된다. 
+
+- 제거: 관측점이 많지 않는 경우
+- 결측값(`NA`) 처리: 결측값으로 보정
+- 범위 상한 혹은 하한으로 처리
+- 범위를 벗어난 데이터를 적절한 결측값 처리 방법이나 로직으로 채워 놓음.
+
+`quality` 와인품질 점수가 3-8점이나 `quality_range` 변수를 균등분포 [0,13] 사이에서 난수를 뽑아 와인품질로 넣어 고의적으로 범위를 벗어난 데이터로 만든다.
+
+```{r check-wine-range-fix}
+ set.seed(777)
+
+wine_df <- wine_df %>% 
+  mutate(quality_range = runif(n(),0,13) %>% as.integer)
+```
+
+범위를 넘어간 값을 `NA`를 적절한 함수나 방법(평균 등) 결측값으로 치환하거나, 제거하거나, 최대 혹은 최소값으로 치환시키는 것도 가능하다.
+
+<div class = "row">
+  
+  <div class = "col-md-4">
+  **결측값 치환**
+
+```{r remedy-range-error}
+wine_df %>% 
+  mutate(quality_range = ifelse(quality_range > 10, NA, quality_range)) %>% 
+  mutate(quality_range = ifelse(is.na(quality_range), mean(quality_range, na.rm = TRUE), quality_range)) %>%
+  ggplot(aes(x=quality_range)) +
+    geom_histogram(bins = 10) +
+    scale_x_continuous(breaks = 0:10)
+```
+
+  </div>
+  
+  <div class = "col-md-4">
+  <br><br> **제거**
+
+```{r remedy-range-error-remove}
+wine_df %>% 
+  filter(quality_range <= 10) %>% 
+  ggplot(aes(x=quality_range)) +
+    geom_histogram(bins = 10) +
+    scale_x_continuous(breaks = 0:10)
+```
+  
+  </div>
+  
+  <div class = "col-md-4">
+  <br><br> **치환**
+
+```{r remedy-range-error-replace}
+wine_df %>% 
+  mutate(quality_range = ifelse(quality_range >= 10, 10, quality_range)) %>% 
+  ggplot(aes(x=quality_range)) +
+    geom_histogram(bins = 10) +
+    scale_x_continuous(breaks = 0:10)
+```
+
+  </div>
+</div>
+
+# 중복 {#data-cleaning-duplication}
+
+## 개인정보 데이터 {#data-cleaning-duplication-pii}
+
+다양한 이유로 인해 중복된 데이터가 생성될 수 있다. 이를 확인하기 위해서 개인정보 생성기를 만들어보자. [`generator`: Personally Identifiable Information (PII)](https://github.com/paulhendricks/generator)를 사용해서 중복 데이터를 생성한다. 5명을 생성하고 의도적으로 3명만 중복을 시킨다.
+
+```{r generator-pii}
+library(generator)
+
+n <- 5
+set.seed(1)
+pii_df <- data.frame(name = r_full_names(n), 
+             dob = r_date_of_births(n), 
+             email = r_email_addresses(n), 
+             phone = r_phone_numbers(n), 
+             stringsAsFactors = FALSE)
+
+pii_df <- bind_rows(pii_df, pii_df[1:3,]) %>% 
+  arrange(name)
+
+pii_df
+```
+
+## 중복 탐지: `duplicated` {#data-cleaning-duplication-pii-fix}
+
+`duplicated()` 함수를 사용해서 중복여부를 판정할 수 있다. 
+
+```{r identify-duplicated-info}
+pii_df %>% 
+  sample_frac(size = 1, replace=FALSE) %>% 
+  mutate(check_dup = duplicated(pii_df)) %>% 
+  count(check_dup)
+```
+
+`filter()` 함수와 결합시켜 중복된 관측점을 잡아낼 수 있다.
+
+```{r identify-duplicated-info-filter}
+pii_df %>% 
+  filter(duplicated(pii_df))
+```
+
+## 중복 제거: `distinct` {#data-cleaning-duplication-pii-distinct}
+
+`distinct()` 함수를 사용해서 중복된 것을 제거하고 유일무이한 관측점만 뽑아 후속작업을 추진할 수 있다. 혹은 `filter()` 함수에 `!duplicated()`함수를 결합시켜 동일한 효과를 낼 수 있다.
+
+```{r identify-distinct-info}
+# pii_df %>% 
+#   filter(!duplicated(pii_df))
+
+pii_df %>% 
+  distinct()
+```
+
+## 부분 중복 데이터 {#data-cleaning-duplication-partial}
+
+이름(`name`)과 생년월일(`dob`)는 동일하나 주소로 위경도가 다른 데이터가 있는 경우 부분 중복이 존재하는 상황이다.
+
+```{r generator-pii-partial}
+partial_pii_df <- data.frame(name = r_full_names(n), 
+             dob = r_date_of_births(n), 
+             lat = r_latitudes(n), 
+             lon = r_longitudes(n), 
+             stringsAsFactors = FALSE)
+
+partial_pii_df <- bind_rows(partial_pii_df, partial_pii_df[1:3, ]) %>% 
+  mutate(lat = r_latitudes(8),
+         lon = r_longitudes(8)) %>% 
+  arrange(name)
+
+partial_pii_df
+```
+
+## 부분 중복 탐지 {#data-cleaning-duplication-partial-detect}
+
+부분중복을 탐지하는 방법으로 `count()` 함수를 사용한다. 즉, `name`, `dob` 기준으로 빈도수가 2이상인 경우 주소지(위경도 기준)가 두곳이상으로 판단하여 부분 중복 관측점을 뽑아낸다.
+
+```{r generator-pii-partial-detect}
+partial_dup_df <- partial_pii_df %>% 
+  count(name, dob) %>% 
+  filter(n >= 2)
+
+partial_dup_df
+```
+
+## 부분 중복 제거 {#data-cleaning-duplication-partial-remove}
+
+`distinct()` 함수를 사용해서 중복되는 관측점을 제거한다. 즉, 가장 첫번째 주소지만 가져오는 방식으로 `name`, `dob` 중복을 해소한다.
+
+```{r generator-pii-partial-remove}
+partial_pii_df %>% 
+  distinct(name, dob, .keep_all = TRUE)
+```
+
+## 부분 중복 축약 {#data-cleaning-duplication-partial-summary}
+
+두번째 방식으로 `group_by() + summarize()` 패턴을 사용해서 다양한 요약통계량(`min`, `max`, `mean` 등)을 사용해서 중복을 해소한다.
+
+```{r generator-pii-partial-summary}
+partial_pii_df %>% 
+  group_by(name, dob) %>% 
+  summarise(lat = mean(lat), lon=mean(lon))
+```
+
+조금 고급진 ... 확장이 가능한 패턴은 `group_by() + summarize()` 패턴 대신 `group_by() + mutate()` 패턴을 사용하고 나서 `distinct()`를 `.keep_name=TRUE`와 조합하여 사용하는 것이다.
+
+```{r generator-pii-partial-summary-general}
+partial_pii_df %>% 
+  group_by(name, dob) %>% 
+  mutate(mean_lat = mean(lat), mean_lon=mean(lon)) %>% 
+  distinct(name, dob, .keep_all = TRUE) %>% 
+  select(-lat, -lon)
+```
+
+# 텍스트 {#clean-text-data}
+
+범주형 데이터는 정수형 데이터와 텍스트 문자 데이터의 모습을 모두 갖추고 있다. 문자 텍스트 데이터는 정규표현식과 밀접한 관련이 있다.
+
+- [정규표현식(Regular Expression) - `R`](https://statkclee.github.io/nlp2/regex-index.html)
+
+# 범주형 데이터 {#categorical-data-cleaning}
+
+## 데이터 정제 {#factor-membership-data}
+
+연속형 변수의 범위 확인과 마찬가지로 범주형 변수의 범위도 확인이 필요하다.
+먼저 대통령 선거 득표 데이터를 바탕으로 시도명과 후보가 범주형 자료형임을 파악할 수 있다.
+
+```{r categorical-membership}
+clean_df <- dirty_df %>% 
+  select(-선거인수, -투표수) %>% 
+  gather(후보, 득표수, -시도명) %>% 
+  separate(득표수, into=c("득표수", "득표율"), sep="\r\n") %>% 
+  mutate(득표수 = parse_number(득표수),
+        득표율 = parse_number(득표율))
+
+clean_df 
+```
+
+범주형 변수에 대한 자세한 정보는 [데이터 과학: 요인(Factor) - 범주형 자료형](https://statkclee.github.io/data-science/ds-factor-cdata.html)을 참고한다. 중요한 것은 범주로 지정되지 않는 경우 제대로 처리가 되지 않는다는 것이다.
+
+`levels()` 함수를 범주형 변수에 적용하여 범주에 속한 회원여부를 확인한다.
+
+```{r membership-check}
+clean_df %>% 
+  select(시도명) %>% 
+  pull(시도명) %>% 
+  levels()
+```
+
+## 범주여부 확인 {#factor-membership}
+
+수도권 여부를 판정하여 해당 데이터만 추려낸다. 이를 위해서 또 다른 데이터프레임을 만들어서 이를 활용하여 수도권과 비수도권을 구분한다. `semi_join()` 함수를 사용해서 `수도권` 변수에 3개시도만 매칭하여 추려낸다.
+
+```{r metropolitan}
+수도권 <- tribble(~"시도명",
+               "서울특별시",
+               "경기도",
+               "인천광역시") %>% 
+  mutate(시도명 = factor(시도명))
+
+clean_df %>% 
+  semi_join(수도권) %>% 
+  select(-득표율) %>% 
+  spread(후보, 득표수)
+```
+
+비수도권의 경우 `anti_join()`을 사용하면 `semi_join()`과 반대효과를 얻을 수 있다.
+
+```{r non-metropolitan}
+clean_df %>% 
+  anti_join(수도권) %>% 
+  select(-득표율) %>% 
+  spread(후보, 득표수)
+```
+
+## 적절한 범주 {#factor-membership-number}
+
+지난 대통령선거는 다소 논란은 있지만, 문재인, 홍준표, 안철수 3명의 후보가 자웅을 겨뤘다고 볼 수 있다. 따라서 다른 후보는 기타 후보로 뭉뚱그려 처리하는 것이 간결한 정보를 전달한다는 측면에서 의미가 크다.
+
+```{r appropriate-category}
+clean_df %>% 
+  group_by(후보) %>% 
+  summarise(득표수 = sum(득표수)) %>%
+  mutate(득표율 = 득표수/sum(득표수)) %>% 
+  ungroup() %>%  
+  arrange(desc(득표수)) %>% 
+  mutate(누적득표수 = cumsum(득표수)) %>% 
+  mutate(누적비율 = 누적득표수 / sum(득표수))
+```
+
+이를 위해서 `fct_collapse()` 함수를 사용해서 후보의 범주를 재범주화하는 것이 큰 도움이 된다. 문재인, 홍준표, 안철수 후보를 제외한 나머지 후보를 "기타"로 묶어 범주를 재조정한다.
+
+```{r appropriate-recategory}
+clean_df %>% 
+  mutate(후보구분 = fct_collapse(후보, 기타 = c("유승민", "심상정")))%>% 
+  group_by(후보구분) %>% 
+  summarise(득표수 = sum(득표수)) %>%
+  mutate(득표율 = 득표수/sum(득표수)) %>% 
+  ungroup() %>%  
+  arrange(desc(득표수)) %>% 
+  mutate(누적득표수 = cumsum(득표수)) %>% 
+  mutate(누적비율 = 누적득표수 / sum(득표수))
+```
+
+# 균일성 {#uniformity}
+
+데이터의 균일성을 맞추는 것은 무척이나 중요하다. 대표적으로 다양한 국가로부터 실업율, 경제성장율 등 자료를 가져올 경우 `ISO-8601`을 지키지 않는 경우 날짜가 각 국가별로 다른 형태로 준비되어 이를 통일시켜 균일성을 확보해야만 된다.
+날짜가 미국, 유럽, 한국과 같이 다양한 형태로 뒤섞여 있는 경우 이를 `lubridate` 팩키지 `parse_date_time()` 함수에 `orders=`를 지정하여 날짜형 자료형의 균일성을 확보할 수 있다.
+
+```{r date-uniformity}
+library(lubridate)
+
+date_df <- tribble(~"국가", ~"날짜", ~"경제성장율",
+        "미국", "March 15, 2019", 3.0,
+        "유럽", "15/03/2019", 1.5,
+        "한국", "2019년 03월 15일", 3.1)
+
+date_df %>% 
+  mutate(날짜 = case_when(str_detect(국가, "미국") ~ parse_date(날짜, format="%M %d, %Y"),
+                          TRUE ~ parse_date(날짜)))
+
+date_df %>% 
+  mutate(날짜 = str_replace(날짜, "년|월|일", "-")) %>% 
+  mutate(날짜 = parse_date_time(날짜, orders = c("bdY", "dmY", "ymd")))
+```
+
+# 상호교차검증 {#cleaning-cross-checking}
+
+상호 교차검증의 필요성을 보여주는 대표적인 사례가 스코틀랜드 독립에 대한 설문조사 내용이다. 찬성과 반대를 합하였는데 이것이 100%를 넘고 있다.
+
+```{r added-scotland-image}
+webshot2::webshot("https://www.dailymail.co.uk/news/article-2761778/Something-doesn-t-add-CNN-Reports-110-turnout-Scottish-independence-vote.html", selector="#i-3e6f6d8c2620a5dc", "fig/scotland.png")
+```
+
+득표율의 총합은 100이 되어야 한다. `clean_df`는 대선 후보 5명만 뽑은 것이라 일부 누락이 발생되어 100이 되지 않는 것이 정상이다.
+
+```{r cross-checking}
+clean_df %>% 
+  group_by(시도명) %>% 
+  summarise(득표율 = sum(득표율)) %>% 
+  arrange(득표율) %>% 
+  mutate(차이 = 100 - 득표율)
+```
+
+# 결측 데이터 {#missing-data}
+
+데이터에 결측값(missing value)이 발생되면 이에 대한 다각도 점검과 결측값을 해소하는 방안에 대해서 심도있게 검토해야만 된다.
+
+- [데이터 과학: "결측데이터"](https://statkclee.github.io/data-science/ds-missing.html)
