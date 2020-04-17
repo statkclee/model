@@ -1,0 +1,33 @@
+---
+layout: page
+title: "데이터 과학 `tidyverse` 모형"
+subtitle: "데이터 품질(Data Cleaning)"
+author:
+    name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+date: "`r Sys.Date()`"
+bibliography: bibliography.bib
+link-citations: yes
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+
+# 참고문헌 {#data-quality}
+
+[ @pipino2002data; @strong1997data; @van2018statistical; @de2013introduction]
+
+# 

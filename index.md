@@ -35,6 +35,7 @@ title: 데이터 과학 -- 모형
 
 - [기계학습 개요](model-ml-intro.html)
 - [**데이터 정제(Data Cleaning)**](model-data-cleaning.html)
+- [데이터 품질(Data Quality)](model-data-quality.html)
 - **모형 데이터 전처리 - Feature Engineering(피처 공학)**
     - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
     - [피처 공학(Feature Engineering)](model-feature-engineering.html)
