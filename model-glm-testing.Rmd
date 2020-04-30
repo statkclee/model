@@ -1,0 +1,96 @@
+---
+layout: page
+title: "데이터 과학 `tidyverse` 모형"
+subtitle: "통계검정 &rarr; GLM"
+author:
+    name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+``` {r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+library(tidyverse)
+library(extrafont)
+loadfonts()
+library(showtext)
+par(family = "NanumGothic")
+```
+
+# 가설검정 [^hypothesis-testing] [^rebecca-testing] {#statistical-testing}
+
+[^hypothesis-testing]: [Kevin Hannay (Jan 13 2020), "Everything is a Regression:In search of unifying paradigms in statistics"](https://towardsdatascience.com/everything-is-just-a-regression-5a3bf22c459c)
+
+[^rebecca-testing]: [Rebecca Barter (December 4, 2018), "Which hypothesis test should I use? A flowchart: A flowchart to decide what hypothesis test to use."](http://www.rebeccabarter.com/blog/2018-12-04_hypothesis_testing/)
+
+```{r statistical-testing}
+webshot2::webshot("http://www.rebeccabarter.com/blog/2018-12-04_hypothesis_testing/", 
+                  selector = "#content > p:nth-child(3) > img", 
+                  "fig/hypothesis-testing.png")
+```
+
+
+# 가설검정 &rarr; 모형 {#statistical-testing-model}
+
+
+## NBA 선수선발 데이터 {#statistical-testing-model-data}
+
+```{r rmarkdown-model-data}
+library(tidyverse)
+
+download.file(url="http://khannay.com/data/NBA_Draft_Data.csv", destfile = "data/NBA_Draft_Data.csv")
+
+nba_df <- read_csv("data/NBA_Draft_Data.csv") %>% 
+  janitor::clean_names()
+
+nba_df %>% 
+  sample_n(100) %>% 
+  DT::datatable()
+
+```
+
+## NBA 선수선발 데이터 {#statistical-testing-model-data}
+
+```{r nba-data-viz}
+nba_df %>% 
+  ggplot(aes(x=pick_number, y=pts)) +
+    geom_point() +
+    geom_smooth(method="lm") +
+    theme_bw() +
+    labs(x="지명순서", y="평균득점")
+```
+
+## `t`-검정 {#statistical-testing-model-ttest}
+
+
+`GLM` 모형과 `t-`검정을 비교해보자.
+
+```{r nba-data-viz-ttest}
+nba_df <- nba_df %>% 
+  mutate(pick_binary = if_else(pick_number > 15, "하위", "상위")) %>% 
+  mutate(pick_binary = factor(pick_binary, levels = c("하위", "상위")))
+
+pick_pts <- nba_df %>% 
+  select(pts, pick_binary)
+
+pick_lm <- glm(pts ~ pick_binary, data=pick_pts)
+
+broom::tidy(pick_lm)
+```
+
+
+```{r nba-data-viz-ttest-glm}
+t.test(pts ~ pick_binary, data = pick_pts, var.equal = TRUE)
+summary(pick_lm)
+```

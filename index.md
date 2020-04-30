@@ -89,8 +89,9 @@ title: 데이터 과학 -- 모형
     - [`caret` 예측모형 개발](model-caret-build.html)
     - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)    
     - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
-    - [틱택토(Tic-Tac-Toe) - `parsnip`](model-tictactoe-parsnip.html) 
-    - [서포트 벡터 머신(SVM)](model_svm.html)    
+    - [틱택토(Tic-Tac-Toe) - `parsnip`](model-tictactoe-parsnip.html)
+    - [서포트 벡터 머신(SVM)](model_svm.html)
+    - [통계검정 &rarr; GLM](model-glm-testing.html)    
 - **Many Models**    
     - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
     - [`purrr` - 많은 모형(many models)](tidyverse-purrr-many-models.html) 
