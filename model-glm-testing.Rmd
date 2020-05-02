@@ -1,7 +1,7 @@
 ---
 layout: page
 title: "데이터 과학 `tidyverse` 모형"
-subtitle: "통계검정 &rarr; GLM"
+subtitle: "통계검정 &rarr; LM/GLM"
 author:
     name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
 date: "`r Sys.Date()`"
@@ -99,6 +99,13 @@ webshot2::webshot("http://www.rebeccabarter.com/blog/2018-12-04_hypothesis_testi
 
 ![](data/linear_tests_cheat_sheet.pdf){width=800px height=600px}
 
+## 수식으로 일별하기 {#testing-pdf-mathematics}
+
+비모수 통계검정도 유사하게 확장이 가능하지만 우선 평균에 대한 통계검정을 수식으로 표현하면 다음과 같다.
+
+- 일표본 `t-`검정:  $y = \beta_0 \qquad \mathcal{H}_0: y = 0$
+- 이표본 `t-`검정:  $y = \beta_0 + \beta_1 x_1 \qquad \mathcal{H}_0: \beta_1 = 0$
+- 다표본 분산분석:  $y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3 +... \qquad \mathcal{H}_0: y = \beta_0$
 
 # NBA 선수선발 데이터 {#statistical-testing-model-data}
 
@@ -131,9 +138,7 @@ nba_df %>%
     labs(x="지명순서", y="평균득점")
 ```
 
-# 피어슨 상관관계 [^chi-test-rpubs] {#statistical-testing-correlation}
-
-[^chi-test-rpubs]: [Phillip M. Alday (May 2018), "Explicit GLM(M) Equivalents for Standard Tests", RPubs](https://rpubs.com/palday/glm-test)
+# 피어슨 상관관계 {#statistical-testing-correlation}
 
 피어슨 상관관계를 모형으로 표현하면 다음과 같다.
 
@@ -193,7 +198,7 @@ cor.test(nba_df$mp, nba_df$pts, method = "pearson")
   <div class = "col-md-4">
 
 ```{r nba-correlation-glm}
-pts_cor_lm <- glm(pts ~ 1 + mp, data = nba_df)
+pts_cor_lm <- lm(pts ~ 1 + mp, data = nba_df)
 broom::tidy(pts_cor_lm)
 ```
 
@@ -202,7 +207,7 @@ broom::tidy(pts_cor_lm)
   <div class = "col-md-4">
   
 ```{r nba-correlation-glm-scaled}
-pts_cor_lm <- glm(scale(pts) ~ 1 + scale(mp), data = nba_df)
+pts_cor_lm <- lm(scale(pts) ~ 1 + scale(mp), data = nba_df)
 broom::tidy(pts_cor_lm)
 ```
 
@@ -210,27 +215,226 @@ broom::tidy(pts_cor_lm)
 </div>
 
 
-# `t`-검정 {#statistical-testing-model-ttest}
+# 일표본 `t`-검정 {#statistical-testing-model-ttest}
 
-`GLM` 모형과 `t-`검정을 비교해보자. 
+`GLM` 모형과 `t-`검정을 비교해보자.  즉, 수식은 다음과 같고 의미하는 바는 평균이 0과 다름이 있느냐를 따지게 된다. $y = \beta_0 + \beta_1*x$에서 $x=0$이라 절편만 검정하게 된다.
+
+$$y = \beta_0 \qquad \mathcal{H}_0: \beta_0 = 0$$
+
+<div class = "row">
+  <div class = "col-md-6">
+**`t-`검정**
+
+```{r nba-data-viz-ttest-one-sample-h}
+one_sample_ttest <- t.test(nba_df$pts, mu =0)
+
+broom::tidy(one_sample_ttest)
+```
+
+  </div>
+  <div class = "col-md-6">
+**선형 모형**
+
+```{r nba-data-viz-ttest-one-sample}
+one_sample_lm <- lm(pts ~ 1, data=nba_df)
+
+broom::tidy(one_sample_lm)
+```
+
+  </div>
+</div>
+
+
+## 대응표본 `t`-검정 {#statistical-testing-model-paired-ttest}
+
+반복측정, 예를 들어 동일한 선수가 동일한 조건에서 약물복용 이후 약물복용 효과를 측정하고자 하는 경우 대응표본 `t`-검정(Paired t-test)이 되고 수식으로 다음과 같이 표현된다.
+
+$y_2-y_1 = \beta_0 \qquad \mathcal{H}_0: \beta_0 = 0$
+
+먼저 앞선 경우와 비교하기 위해서 시각화를 한다. `sleep` 데이터는 최면약(soporific drug)으로 통제집단과 비교하여 효과가 있는지를 10명의 환자에게 투여하여 비교해서 자체 내장된 데이터셋이다.
 
 ```{r nba-data-viz-ttest}
+library(ggthemes)
+sleep %>% 
+  ggplot(aes(x = group, y = extra, color=ID)) +
+    geom_point(show.legend = FALSE) +
+    geom_line(aes(group = ID), show.legend = FALSE) +
+    theme_tufte()
+
+sleep_df <- sleep %>% 
+  spread(group, extra)
+```
+
+<div class = "row">
+  <div class = "col-md-6">
+**대응표본 `t-`검정**
+
+```{r nba-data-paired-ttest}
+t.test(sleep_df$`1`, sleep_df$`2`, paired=TRUE) %>% 
+  broom::tidy(.)
+```
+
+  </div>
+  <div class = "col-md-6">
+**통계모형**
+
+```{r nba-data-paired-ttest-model}
+lm(sleep_df$`1` - sleep_df$`2` ~ 1) %>% 
+  broom::tidy(.)
+```
+
+  </div>
+</div>
+
+
+# 독립 두 표본 `t`-검정 {#statistical-testing-two-sample-ttest}
+
+독립된 두 표본(two-sample) 평균검정은 선형모형으로 다음과 같이 나타낼 수 있다. 여기서 $x_i$는 0 혹은 1 을 갖는 범주형 변수로 두 표본을 표식하는데 사용된다. 이를 확장하면 다집단에 대한 평균검정도 할 수 있는데 이 경우 ANOVA로 확장된다.  
+
+$y_i = \beta_0 + \beta_1 x_i \qquad \mathcal{H}_0: \beta_1 = 0$
+
+이를 위해서 선수선발 16 이상은 하위, 1 - 15 순위는 상위권으로 두어 두개의 집단으로 나눠 평균득점에 차이가 있는 살펴보자.
+
+```{r nba-data-viz-ttest-dataset}
 nba_df <- nba_df %>% 
   mutate(pick_binary = if_else(pick_number > 15, "하위", "상위")) %>% 
   mutate(pick_binary = factor(pick_binary, levels = c("하위", "상위")))
-
-pick_pts <- nba_df %>% 
-  select(pts, pick_binary)
-
-pick_lm <- glm(pts ~ pick_binary, data=pick_pts)
-
-broom::tidy(pick_lm)
 ```
 
+<div class = "row">
+  <div class = "col-md-6">
+**독립표본 `t-`검정**
+
+```{r nba-data-viz-ttest-two}
+t.test(pts ~ pick_binary, data = nba_df, var.equal = TRUE) %>% 
+  broom::tidy(.)
+```
+
+  </div>
+  <div class = "col-md-6">
+**범주를 갖는 회귀모형**
 
 ```{r nba-data-viz-ttest-glm}
-t.test(pts ~ pick_binary, data = pick_pts, var.equal = TRUE)
-summary(pick_lm)
+lm(pts ~ pick_binary, data=nba_df) %>% 
+  broom::tidy(.)
 ```
+
+  </div>
+</div>
+
+
+# 분산분석(ANOVA) {#anova-glm}
+
+$x_i$는 ($x=0$ or $x=1$)을 갖는 지시변수로,  다른 모든 변수가 $x_i=0$이 될 때  $x_i=1$는 1을 갖는다. 수식으로는 다음과 같이 표현되고 그룹간에 평균적인 차이가 있는지 검정하는 것으로 집단이 2개이상될 때 사용한다.
+
+$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3 +... \qquad \mathcal{H}_0: y = \beta_0$
+
+2표본 이상 다집단에 대한 평균에 대한 차이를 분석하기 위해서 다음과 같이 팀을 3개 뽑아내서 새로운 데이터프레임으로 준비를 한다. type-II sum of square 혹은 type-III sum of square 에 따라 차이가 있기는 하지만 `glm` 모형으로 비교를 할 수 있다.
+
+```{r nba-data-viz-anova-dataset}
+anova_df <- nba_df %>% 
+  filter(tm %in% c("BOS", "MIN", "CHI"))
+```
+
+<div class = "row">
+  <div class = "col-md-6">
+**ANOVA 분산분석**
+
+```{r nba-data-anova}
+car::Anova(aov(pts ~ tm, anova_df), type='II') %>% 
+  broom::tidy(.)
+```
+
+  </div>
+  <div class = "col-md-6">
+**가변수 회귀모형**
+
+```{r nba-data-anova-glm}
+glm(pts ~ tm, data=anova_df) %>% 
+  broom::glance(.) %>% 
+  mutate(sumsq = null.deviance - deviance) %>% 
+  select(null.deviance, sumsq, deviance, everything())
+```
+
+  </div>
+</div>
+
+# 교호작용(interaction) {#anova-interaction}
+
+앞선 일원분산분석을 확장하여 이원분산분석도 가능한데 이런 경우 교호작용을 파악하는 것이 중요하다. 이를 위해서 두가지 모형에 대해서 비교를 해보자. 수식으로는 다음과 같고 두가지 요인 하나는 팀(`tm`), 다른 하나는 상위 혹은 하위 선수선발 가변수(`pick_binary`)로 두 변수간에 상승 혹은 역효과가 평균득점에 효과를 나타내는지 살펴보자.
+
+$y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_1 X_2 \qquad \mathcal{H}_0: \beta_3 = 0$
+
+<div class = "row">
+  <div class = "col-md-6">
+**교호작용 검정**
+
+```{r anova-interaction}
+car::Anova(aov(pts ~ pick_binary * tm, anova_df))  %>% 
+  broom::tidy(.)
+```
+
+  </div>
+  <div class = "col-md-6">
+**interaction 항을 갖는 회귀모형**
+
+```{r anova-interaction-glm}
+anova_null = lm(pts ~ 1 + tm + pick_binary, anova_df)
+anova_full = lm(pts ~ 1 + tm + pick_binary + tm:pick_binary, anova_df)
+
+anova(anova_null, anova_full) %>% 
+  broom::tidy(.)
+```
+
+
+  </div>
+</div>
+
+
+
+# ANCOVA {#ancova-glm}
+
+평균득점같은 연속형 변수에 대한 검정을 할 때 다른 요인을 고려한 후에 특정 요인에 대한 효과를 살펴보고자 하는 경우가 상식적이다. 이런 경우 나이(`age`)를 고려한 후에 다양한 효과를 파악하는 것도 가능하다. $x_i$는 앞서와 같은 지시변수로 0 혹은 1을 갖는다는 점에서 동일하다.
+
+$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_3 age$
+
+<div class = "row">
+  <div class = "col-md-6">
+**Ancova 통계검정**
+
+```{r ancova-age}
+car::Anova(aov(pts ~ pick_binary + age, anova_df), type = 'III') %>% 
+  broom::tidy(.)
+```
+
+
+  </div>
+  <div class = "col-md-6">
+**Ancova GLM**
+
+```{r ancova-age-glm}
+ancova_full_lm <- lm(pts ~ 1 + pick_binary + age, data=anova_df)
+ancova_reduced_lm <- lm(pts ~ 1 + pick_binary, data=anova_df)
+
+anova(ancova_full_lm, ancova_reduced_lm, test="LRT") %>% 
+  broom::tidy(.) 
+
+```
+
+  </div>
+</div>
+
+# 범주형 검정 [^categorical-testing] {#categorical-test}
+
+[^categorical-testing]: [Phillip M. Alday (May 2018), "Explicit GLM(M) Equivalents for Standard Tests"](https://rpubs.com/palday/glm-test)
+
+## 비율검정 {#binomial-proportion}
+
+## $\chi$ 검정 {#chisquare-test}
+
+
+
+
+
 
 
