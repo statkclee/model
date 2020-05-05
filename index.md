@@ -54,6 +54,7 @@ title: 데이터 과학 -- 모형
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
     - [포켓몬 PCA](model-pca.html)        
 - **[GDPR - 모형 설명](model-explain.html)**
+    - [GDPR 벌금 예측모형](model-gdpr-fine.html)
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
         - [연속형 변수 - 회귀모형](model-gdpr-regression.html)
     - [예측모형 (caret+DALEX+biz) - 뉴욕과 SF 부동산](model-r2d3-dalex-with-biz.html) 
