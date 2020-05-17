@@ -36,15 +36,15 @@ title: 데이터 과학 -- 모형
 - [기계학습 개요](model-ml-intro.html)
 - [**데이터 정제(Data Cleaning)**](model-data-cleaning.html)
 - [데이터 품질(Data Quality)](model-data-quality.html)
-- **모형 데이터 전처리 - Feature Engineering(피처 공학)**
+- 모형 데이터 전처리 - Feature Engineering(피처 공학)
     - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
     - [피처 공학(Feature Engineering)](model-feature-engineering.html)
     - [피처 공학 기법 - 직사각형 데이터프레임](model-feature-engineering-tech.html)
     - [피처 공학 - 선택 혹은 추출](model-feature-engineering-selection.html)
     - [피처 공학 - 변수선택 자동화](model-feature-engineering-automation.html)
-- **탐색적 데이터분석(EDA)**
+- 탐색적 데이터분석(EDA)
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
-- **[`tidyverse` 모형 - `tidymodels`](tidyverse-model.html)**
+- **[`tidyverse` 모형 - `tidymodels`: `tidyverse` 성명서](tidyverse-model.html)**
     - [`caret` &rarr; `parsnip`](tidyverse-parsnip.html) 
     - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
     - [`parsnip` - 초모수(hyperparameter)](tidyverse-parsnip-advanced.html) 
@@ -53,7 +53,7 @@ title: 데이터 과학 -- 모형
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
     - [포켓몬 PCA](model-pca.html)        
-- **[GDPR - 모형 설명](model-explain.html)**
+- [GDPR - 모형 설명](model-explain.html)
     - [GDPR 벌금 예측모형](model-gdpr-fine.html)
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
         - [연속형 변수 - 회귀모형](model-gdpr-regression.html)
@@ -62,11 +62,11 @@ title: 데이터 과학 -- 모형
         + [DALEX - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-dalex.html)
         + [DALEX + `caret` - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-caret-dalex.html)
         + [DALEX - $H_2O$, `mpg`와 `attrition` 데이터](model-h2o-dalex.html)
-    - **모형 시각화**
+    - 모형 시각화
         + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
         + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
         + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
-- **모형 평가**
+- 모형 평가
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
 - **모형 자동화(AutoML)**
