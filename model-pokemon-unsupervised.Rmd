@@ -39,6 +39,7 @@ par(family = "NanumGothic")
 - N-NMF(Non-Negative Matrix Factorization)
 - 요인분석(Factor Analysis)
 - t-SNE
+- UMAP
 
 <img src="fig/ml-dimension-reduction-pokemon.png" alt="차원축소 기법" width="100%" />
 
@@ -173,7 +174,7 @@ pkmon_df %>%
 
 주성분을 몇개까지 선택할 것인지에 대해서 설명되는 분산량을 누적한 누적 설명되는 분산량을 기준으로 80%, 90% 등 선정을 한다.
 
-## 차원축소 주성분 분석 통계량 {#pokemon-pca-statistics}
+### 차원축소 주성분 분석 통계량 {#pokemon-pca-statistics}
 
 `FactoMineR` 팩키지 `PCA()` 함수를 사용해서 차원을 축소하려는 변수를 넣고, 부가변수도 지정한다. `summary()` 함수를 통해서 주성분분석 주요내용을 확인할 수 있다.
 특히, `PCA()`함수에 범주형 변수는 `quali.sup`, 연속형 변수는 `quanti.sup`으로 지정한다. 
@@ -199,7 +200,7 @@ pkmon_pca$eig
 pkmon_pca$var$contrib
 ```
 
-## 차원축소 주성분 분석 시각화 {#pokemon-pca-viz}
+### 차원축소 주성분 분석 시각화 {#pokemon-pca-viz}
 
 `biplot`을 통해 주성분분석 결과를 통해 변수들간에 연관성이 큰 변수를 이해하고 관측점들 관계도 동시에 시각화한다.
 
@@ -268,7 +269,7 @@ pkmon_plotly_df %>%
   add_markers(size=2)
 ```
 
-## PCA 시각화 {#pokemon-pca-viz}
+## `tidymodels` PCA 시각화 {#pokemon-pca-viz}
 
 주성분별로 각 변수가 얼마나 기여했는지를 `ggplot`으로 시각화하여 파악할 수 있다. 앞서 변수 4개를 가지고 90%이상 설명할 수 있음을 파악했다.
 
