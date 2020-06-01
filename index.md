@@ -52,7 +52,7 @@ title: 데이터 과학 -- 모형
     - [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
-    - [포켓몬 PCA](model-pca.html)        
+    - [포켓몬 PCA](model-pokemon-unsupervised.html)        
 - [GDPR - 모형 설명](model-explain.html)
     - [GDPR 벌금 예측모형](model-gdpr-fine.html)
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
