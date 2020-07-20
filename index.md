@@ -29,38 +29,32 @@ title: 데이터 과학 -- 모형
 
 ## 학습목차 
 
-- **Oldest but Goodies - `caret`**
-    - [`caret` 예측모형 맛보기](model-caret-intro.html)
-    - [`caret` 예측모형 개발](model-caret-build.html)
-    - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)    
-    - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
-- **모형 인프라(Model Infrastructure)**
-    - [`rsampling`](model-rsampling.html) 
-    - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
-- **모형 데이터 전처리 - Feature Engineering(피처 공학)**
+<div class = "row">
+  <div class = "col-md-6">
+**모형-I**
+
+- [기계학습 개요](model-ml-intro.html)
+    - [예측모형 파이프 - R 모형설계행렬(Recipe)](ml-r-design-matrix.html) 
+- [**데이터 정제(Data Cleaning)**](model-data-cleaning.html)
+- [데이터 품질(Data Quality)](model-data-quality.html)
+- 모형 데이터 전처리 - Feature Engineering(피처 공학)
     - [클래스 불균형(Class imbalance)](model-class-imbalance.html)
     - [피처 공학(Feature Engineering)](model-feature-engineering.html)
     - [피처 공학 기법 - 직사각형 데이터프레임](model-feature-engineering-tech.html)
     - [피처 공학 - 선택 혹은 추출](model-feature-engineering-selection.html)
     - [피처 공학 - 변수선택 자동화](model-feature-engineering-automation.html)
-- **탐색적 데이터분석(EDA)**
+- 탐색적 데이터분석(EDA)
     - [지도학습모형 &rarr; EDA - 포도주(`wine`)](model-eda-wine.html)
-- **[`tidyverse` 모형 - `tidymodels`](tidyverse-model.html)**
-    - [`purrr` - 많은 모형(many models)](tidyverse-purrr-many-models.html) 
+- **[`tidyverse` 모형 - `tidymodels`: `tidyverse` 성명서](tidyverse-model.html)**
     - [`caret` &rarr; `parsnip`](tidyverse-parsnip.html) 
-    - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
-    - [`parsnip` - 초모수(hyperparameter)](tidyverse-parsnip-advanced.html) 
-    - [예측모형 파이프 - R 모형설계행렬(Recipe)](ml-r-design-matrix.html) 
+    - [임직원 이탈 예측: `tidymodel`](tidyverse-parsnip-advanced.html): 2020-07-20
     - [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
-    - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)
-    - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
-    - [틱택토(Tic-Tac-Toe) - `parsnip`](model-tictactoe-parsnip.html) 
-    - [서포트 벡터 머신(SVM)](model_svm.html)    
-    - **데이터베이스와 깔끔한 모형**
-        - [데이터베이스 - `dplyr`](model-database-dplyr.html)     
-- **[GDPR - 모형 설명](model-explain.html)**
+    - [포켓몬 PCA](model-pokemon-unsupervised.html)        
+    - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
+- [GDPR - 모형 설명](model-explain.html)
+    - [GDPR 벌금 예측모형](model-gdpr-fine.html)
     - [예측모형 GDPR 도전](model-gdpr-challenge.html)
         - [연속형 변수 - 회귀모형](model-gdpr-regression.html)
     - [예측모형 (caret+DALEX+biz) - 뉴욕과 SF 부동산](model-r2d3-dalex-with-biz.html) 
@@ -68,15 +62,11 @@ title: 데이터 과학 -- 모형
         + [DALEX - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-dalex.html)
         + [DALEX + `caret` - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-caret-dalex.html)
         + [DALEX - $H_2O$, `mpg`와 `attrition` 데이터](model-h2o-dalex.html)
-    - **모형 시각화**
+    - 모형 시각화
         + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
         + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
         + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
-    - **클라우데라 설명가능한 기계학습**
-        + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
-        + [고객이탈 - Random Forest](model-cloudera-rf.html)
-        + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
-- **모형 평가**
+- 모형 평가
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
 - **모형 자동화(AutoML)**
@@ -85,11 +75,43 @@ title: 데이터 과학 -- 모형
     - [기계학습 모형개발 30분 - `recipe` + $H_2 O$ AutoML](model-recipe-h2o-automl.html)
     - [기계학습 모형 배포](model-deploy.html)
     - [**앙상블(ensemble) 모형**](model-ensemble.html)
+- **실무 모형**
+    - **사기 탐지(Fraud Detection)**
+        - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
+        - [어노말리(Anomaly) 탐지](model-anomaly.html) 
+    - **[신용평점모형 개발](credit-scoring-model.html)**
+
+  </div>
+  <div class = "col-md-6">
+**모형-II**
+
+- **Oldest but Goodies - `caret`**
+    - [`caret` 예측모형 맛보기](model-caret-intro.html)
+    - [`caret` 예측모형 개발](model-caret-build.html)
+    - [초모수 미세조정(Hyper Parameter Tuning)](model-hyper-parameter.html)    
+    - [`caret` 예측모형 실전코드](model-caret-in-practice.html)
+    - [틱택토(Tic-Tac-Toe) - `parsnip`](model-tictactoe-parsnip.html)
+    - [서포트 벡터 머신(SVM)](model_svm.html)
+    - [통계검정 &rarr; GLM](model-glm-testing.html)    
+- **Many Models**    
+    - [기계학습 - `gapminer` + `rsample` + `purrr`](model-ml-purrr.html) 
+    - [`purrr` - 많은 모형(many models)](tidyverse-purrr-many-models.html) 
+- **데이터베이스와 깔끔한 모형**
+    - [데이터베이스 - `dplyr`](model-database-dplyr.html)
+- **모형 인프라(Model Infrastructure)**
+    - [`rsampling`](model-rsampling.html) 
+    - [시계열 데이터 - 항공여객(Air Passenger) 데이터](model-rsampling-time-series.html) 
+    - [항공여객 데이터 ARIMA 모형 - `rsample`](model_rsample-arima.html)    
 - **[클라우드 컴퓨팅 환경](model-cloud-infra.html)**
     - [예측모형 AWS EC2](model-aws-ec2.html) 
-- **사기 탐지(Fraud Detection)**
-    - [단변량/다변량 이상점 검출](https://statkclee.github.io/ml/ml-detect-outliers-mahalanobis.html) 
-    - [어노말리(Anomaly) 탐지](model-anomaly.html) 
+- **[클라우데라 설명가능한 기계학습](model-cloudera.html)**
+    + [고객이탈 - 로지스틱 회귀모형](model-cloudera-logistic.html)
+    + [고객이탈 - Random Forest](model-cloudera-rf.html)
+    + [고객이탈 - DALEX + LIME](model-cloudera-lime.html)
+    + [고객이탈 - `tidymodels`](model-cloudera-tidymodels.html)
+    + [고객이탈 - RESTful API 기본기 `plumber`](model-cloudera-plumber.html)
+    + [고객이탈 - RESTful API 모형 배포 `plumber`](model-cloudera-plumber-api.html)
+    + [고객이탈 - RESTful API 모형 배포 도커](model-cloudera-plumber-docker.html)
 - **파이썬 실무 예측모형**
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
     - [파이썬 고객이탈 - `xgBoost`](model-python-churn.html) 
@@ -103,78 +125,6 @@ title: 데이터 과학 -- 모형
     - [예측모형 - 네트워크](model-network.html) 
     - [예측모형 - 데이터 융합(`tsne`)](model-tsne.html)
 
-
-### [xwMOOC 오픈 교재](https://statkclee.github.io/xwMOOC/)
-
-- **컴퓨팅 사고력(Computational Thinking)**
-    - [컴퓨터 과학 언플러그드](http://statkclee.github.io/unplugged)  
-    - [리보그 - 프로그래밍과 문제해결](https://statkclee.github.io/code-perspectives/)  
-         - [러플](http://statkclee.github.io/rur-ple/)  
-    - [파이썬 거북이](http://swcarpentry.github.io/python-novice-turtles/index-kr.html)  
-    - [정보과학을 위한 파이썬](https://statkclee.github.io/pythonlearn-kr/)  
-        + [정보 과학을 위한 R - R for Informatics](https://statkclee.github.io/r4inf/)
-    - [소프트웨어 카펜트리 5.3](http://statkclee.github.io/swcarpentry-version-5-3-new/)
-    - [기호 수학(Symbolic Math)](https://statkclee.github.io/symbolic-math/)
-    - [데이터 과학을 위한 R 알고리즘](https://statkclee.github.io/r-algorithm/)
-    - [데이터 과학을 위한 저작도구](https://statkclee.github.io/ds-authoring/)
-        - [The Official xwMOOC Blog](https://xwmooc.netlify.com/)
-    - [비즈니스를 위한 오픈 소스 소프트웨어](http://statkclee.github.io/open-source-for-business/)    
-- **데이터 과학**
-    - [R 데이터과학](https://statkclee.github.io/data-science/)
-    - [시각화](https://statkclee.github.io/viz/)
-    - [데이터 과학– 기초 통계](https://statkclee.github.io/statistics/)    
-        - [공개 기초 통계학 - OpenIntro Statistics](https://statkclee.github.io/openIntro-statistics-bookdown/)
-    - [보안 R](https://statkclee.github.io/security/) - TBA
-    - **다양한 데이터**
-        + [텍스트 - 자연어처리(NLP)](https://statkclee.github.io/text/)
-        + [네트워크(network)](https://statkclee.github.io/network)
-        + [공간통계를 위한 데이터 과학](https://statkclee.github.io/spatial/)        
-        + [고생대 프로젝트](http://statkclee.github.io/trilobite)
-        + [금융(finance)](https://statkclee.github.io/finance/)
-        + [자동차 데이터 분석](https://statkclee.github.io/automotive/)
-        + 비즈니스 프로세스(Business Process) - bupar
-    - **모형**
-        + [데이터 과학 - 모형](https://statkclee.github.io/model/)
-    - [~~R 팩키지~~](http://r-pkgs.xwmooc.org/)
-    - [~~통계적 사고~~](http://think-stat.xwmooc.org/)
-- **빅데이터**
-    - [빅데이터(Big Data)](http://statkclee.github.io/bigdata)
-    - [데이터 제품](https://statkclee.github.io/data-product/)
-    - [R 도커](http://statkclee.github.io/r-docker/)
-- **기계학습, 딥러닝, 인공지능**
-    - [고성능 컴퓨팅(HPC)](http://statkclee.github.io/hpc)
-    - [기계학습](http://statkclee.github.io/ml)
-    - [딥러닝](http://statkclee.github.io/deep-learning)
-    - [R 병렬 프로그래밍](http://statkclee.github.io/parallel-r/)
-    - [인공지능 연구회](https://statkclee.github.io/ai-lab/)
-- [IoT 오픈 하드웨어(라즈베리 파이)](http://statkclee.github.io/raspberry-pi)
-    - [$100 오픈 컴퓨터](https://statkclee.github.io/one-page/)   
-    - [$100 오픈 슈퍼컴퓨터](https://statkclee.github.io/hpc/)
-- [선거와 투표](http://statkclee.github.io/politics)
-    - [저녁이 있는 삶과 새판짜기 - 제7공화국](https://statkclee.github.io/hq/)
-
-
-- [컴퓨터 과학 언플러그드](http://unplugged.xwmooc.org)  
-- [리보그](http://reeborg.xwmooc.org)  
-     - [러플](http://rur-ple.xwmooc.org)  
-- [파이썬 거북이](http://swcarpentry.github.io/python-novice-turtles/index-kr.html)  
-- [정보과학을 위한 파이썬](http://python.xwmooc.org)  
-- [소프트웨어 카펜트리 5.3](http://swcarpentry.xwmooc.org)
-- [IoT 오픈 하드웨어(라즈베리 파이)](https://statkclee.github.io/raspberry-pi/)
-    - [$100 오픈 컴퓨터](http://computer.xwmooc.org/)   
-    - [$100 오픈 슈퍼컴퓨터](http://computers.xwmooc.org/)
-- **데이터 과학**
-    - [R 데이터과학](http://statkclee.github.io/data-science)
-    - [R 팩키지](http://r-pkgs.xwmooc.org/)
-    - [R 도커](http://statkclee.github.io/r-docker/)
-    - [통계적 사고](http://think-stat.xwmooc.org/)
-    - [데이터 과학을 위한 저작도구](https://statkclee.github.io/ds-authoring/)
-
-- **기계학습, 딥러닝, 인공지능**
-    - [R 병렬 컴퓨팅](http://statkclee.github.io/parallel-r)
-    - [데이터 과학자가 바라본 기계학습](https://statkclee.github.io/ml/)
-    - [xwMOOC 딥러닝](https://statkclee.github.io/deep-learning/)
-    - [고생대 프로젝트](http://statkclee.github.io/trilobite)
-- [기호 수학(Symbolic Math)](http://sympy.xwmooc.org/)
-- [선거와 투표](http://politics.xwmooc.org/)
+  </div>
+</div>
 
