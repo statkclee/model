@@ -1,0 +1,394 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "나무모형 예측모형(CART, RF, ..., SGBM)"
+author:
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+bibliography: ../bibliography.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
+---
+
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                    comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+library(here)
+```
+
+
+# 데이터셋  {#kaggle-liver-disease-data}
+
+[캐글 간질환 데이터셋](https://www.kaggle.com/uciml/indian-liver-patient-records/home)은 오염된 음식, 마약, 오염된 공기, 음주 등 다양한 원인으로 간관련 질병에 대한 데이터를 담고 있다. 마지막 `dataset` 변수가 간질환이 있는지 없는지를 나타내고 있고 이를 예측하는 기계학습 모형을 구축하는 것이 목표가 된다.
+
+```{r kaggle-dataset}
+library(tidyverse)
+library(janitor)
+
+raw_data <- here::here("data", "indian_liver_patient.csv")
+
+dat <- read_csv(raw_data) %>% 
+  clean_names() %>% 
+  rename(target = dataset) %>% 
+  mutate(target = factor(2L - target)) %>% 
+  filter(complete.cases(.)) %>% 
+  mutate(gender=factor(gender)) %>% 
+  na.omit()
+```
+
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
+</style>
+<div class = "blue">
+
+**일반화 오차(Generalization Error)**
+
+일반화 오차는 구축한 예측모형($\hat{f}$)이 모형구축에 사용되지 않는 데이터에 얼마나 일반화될 수 있는가를 나타내는 측도가 되고, 일반화 오차는 편이의 제곱, 분산, 줄일수 없는 오차로 구성된다.
+
+$$\hat{f} \text{의 오차} = \text{편이}^2 + \text{분산} + \text{줄일 수 없는 오차}$$
+
+</div>
+
+## 훈련/시험 데이터셋 {#train-test-dataset}
+
+`tidymodels`를 구성하고 있는 `rsample` 팩키지를 사용해서 훈련/시험 데이터셋으로 구분한다.
+
+```{r cart-model-dataset}
+library(tidymodels)
+library(tictoc)
+
+### 훈련 vs 검증/시험
+tidy_split <- rsample::initial_split(dat, prop = 0.7, strata = target)
+
+tidy_train <- training(tidy_split)
+tidy_test  <- testing(tidy_split)
+
+## 초모수 탐색: Hyperparameter Tuning
+tidy_kfolds <- vfold_cv(tidy_train, v = 3)
+```
+
+## 피처 공학 [^feature-engineering-recipe] {#train-test-dataset-feature}
+
+[^feature-engineering-recipe]: [`recipes`: Ordering of Steps](https://recipes.tidymodels.org/articles/Ordering.html)
+
+요리법(`recipes`)를 사용해서 피처 공학 작업을 수행할 경우 다음 순서를 따라 전처리 과정을 거친다. 물론, Box-Cox 변환과 Yeo-Johnson변환, 가변수, `step_interact` 등 다양한 경우의 수가 존재하여 특히 주의를 기울인다.
+
+1. Impute
+1. Individual transformations for skewness and other issues
+1. Discretize (if needed and if you have no other choice)
+1. Create dummy variables
+1. Create interactions
+1. Normalization steps (center, scale, range, etc)
+1. Multivariate transformation (e.g. PCA, spatial sign, etc)
+
+```{r feature-engineering-recipes}
+tidy_rec <- recipe(target ~ ., data = tidy_train) %>% 
+  step_string2factor(all_nominal(), -all_outcomes())  %>% 
+  step_YeoJohnson(all_numeric()) %>% 
+  step_normalize(all_numeric()) %>% 
+  step_dummy(all_nominal(), -all_outcomes())
+```
+
+# 나무모형 예측모형 {#kaggle-ml-model}
+
+## CART 예측모형 {#kaggle-ml-model-cart}
+
+캐글 간질환 데이터를 훈련/시험 데이터로 나눠서 훈련데이터로 예측모형을 구축하고 이에 대한 예측성능은 시험데이터를 통해서 수행한다.
+
+<img src="fig/tree-cart.png" alt="CART 의사결정나무 모형" width="37%" /> 
+
+예측모형 데이터프레임이 구성되면 이를 훈련 데이터프레임(`train_df`)과 시험 데이터프레임(`test_df`)으로 나누고 의사결정 나무모형(`rpart()`)으로 학습을 수행한다. 학습된 모형 성능을 `yardstick` 팩키지 `roc_auc()` 함수로 식별한다.
+
+
+```{r liver-tidymodels-cart}
+### CART 모형
+rpart_model <- parsnip::decision_tree(
+  tree_depth = tune(),
+  min_n = tune()) %>% 
+  set_mode("classification") %>% 
+  set_engine("rpart")
+
+## 초모수 탐색범위 설정
+rpart_grid <- grid_regular(parameters(rpart_model), levels = 3)
+
+rpart_grid
+```
+
+앞서 정의한 CART 모형의 초모수를 추정하기 위해서 교차검증 표본(Cross Validation)을 생성한 후에 초모수 탐색범위 격자를 일일이 적합시켜 가장 최적의 초모수 조합을 찾아내고 이의 성능을 파악한다.
+
+```{r liver-cart-hyper-parameter}
+tic()
+rpart_tune <- tune_grid(rpart_model,
+                          tidy_rec,
+                          resamples = tidy_kfolds,
+                          grid = rpart_grid,
+                          metrics = yardstick::metric_set(accuracy, roc_auc),
+                          control = tune::control_grid(verbose = TRUE))
+toc()
+
+rpart_param <- rpart_tune %>% select_best("roc_auc")
+
+best_rpart_model <- finalize_model(rpart_model, rpart_param)
+best_rpart_model
+```
+
+CART 모형 성능을 평가한다. 이를 위해서 `best_rpart_model`을 준비하여 `workflow()`에 태운다. 그리고 나서 시험데이터(tidy_split)를 `last_fit()`함수로 예측값을 만들고 이를 활용하여 시험 관측점(testing sample)을 대상으로 성능을 평가한다.
+
+```{r rpart-performance-evaluation}
+rpart_wf <- workflow() %>% 
+  add_model(best_rpart_model) %>% 
+  add_recipe(tidy_rec)
+
+rpart_result <- last_fit(rpart_wf, tidy_split)
+
+rpart_result %>% 
+  unnest(.predictions) %>% 
+  conf_mat(truth = target, estimate = .pred_class) %>% 
+  summary() %>%
+  select(-.estimator) %>%
+  filter(.metric %in%
+    c("accuracy", "precision", "recall", "f_meas")) %>%
+  knitr::kable()
+```
+
+
+## 배깅(bagging) [^astronaut-bagging] {#kaggle-ml-model-bagging}
+
+[^astronaut-bagging]: [Julia Silge (Jul 15, 2020), "Bagging with tidymodels and #TidyTuesday astronaut missions", Blog](https://juliasilge.com/blog/astronaut-missions-bagging/)
+
+앙상블 모형(Ensemble Model)과 비교하여 배깅(Bagging)모형은 예측모형 데이터프레임에서 부츠트랩 표본을 추출하여 이를 기반으로 의사결정모형(Decision Tree Model)을 적합시켜 예측값이 나오면 이를 투표를 통해서 예측값을 산출하는 방식을 취한다. 배깅으로 많이 사용되는 팩키지는 `ipred` 팩키지의 `bagging()` 함수다.
+`tidymodels`에 대응되는 팩키지는 `baguette`로 `bag_tree()` 함수를 사용해서 작업한다.
+
+<img src="fig/tree-bagging.png" alt="CART 의사결정나무 모형" width="57%" /> 
+
+
+```{r liver-tree-bagging, eval = FALSE}
+### Bagging 모형 -----
+library(baguette)
+
+bagging_wf <- workflow() %>% 
+  add_recipe(tidy_rec)
+
+# bagging_wf
+
+bagging_spec <- baguette::bag_mars() %>% 
+  set_engine("earth", times = 100) %>% 
+  set_mode("classification")
+
+bagging_rs <- bagging_wf %>%
+  add_model(bagging_spec) %>% 
+  fit(tidy_test)
+
+bagging_rs %>% 
+  unnest(.predictions) %>% 
+  conf_mat(truth = target, estimate = .pred_class) %>% 
+  summary() %>%
+  select(-.estimator) %>%
+  filter(.metric %in%
+    c("accuracy", "precision", "recall", "f_meas")) %>%
+  knitr::kable()
+```
+
+
+## 앙상블(ensemble) [^caret-ensemble] {#kaggle-ml-model-ensemble}
+
+[^caret-ensemble]: [Sibanjan Das(2018), "Develop Custom Ensemble Models Using Caret in R"](https://dzone.com/articles/build-custom-ensemble-models-using-caret-in-r)
+
+예측모형 데이터프레임을 변경시키지 않고 KNN, 일반화선형모형, 의사결정나무 모형을 적합시켜 다수결 원칙에 따라 예측값을 정한다. `caretEnsemble` 팩키지를 동원하여 예측작업을 수행한다.
+비선형 앙상블 모형은 데이터가 많을 때, 유사한 정확도를 갖는 모형이 많을 때, 하지만 모형간의 상관이 작을 때 예측 정화성을 높일 수 있다. [^caret-ensemble-cran]
+
+[^caret-ensemble-cran]: [Zach Mayer(2016-01-31, "A Brief Introduction to caretEnsemble"](https://cran.r-project.org/web/packages/caretEnsemble/vignettes/caretEnsemble-intro.html)
+
+<img src="fig/tree-ensemble.png" alt="앙상블(Ensemble)" width="57%" />
+
+```{r liver-caret-ensemble, eval = FALSE}
+# 모형적합
+ensemble_glm   <- train(target ~ ., data = train_df, method = "glm", family=binomial)
+ensemble_rpart <- train(target ~ ., data = train_df, method = "rpart")
+ensemble_knn   <- train(target ~ ., data = train_df, method = "knn")
+
+# 모형 앙상블
+ensemble_df <- data.frame(
+  glm        = predict(ensemble_glm,   newdata=test_df) %>% as.integer,
+  rpart      = predict(ensemble_rpart, newdata=test_df) %>% as.integer,
+  svm        = predict(ensemble_knn,   newdata=test_df) %>% as.integer,
+  glm_prob   = predict(ensemble_glm,   newdata=test_df, type="prob")[,2],
+  rpart_prob = predict(ensemble_rpart, newdata=test_df, type="prob")[,2],
+  svm_prob   = predict(ensemble_knn,   newdata=test_df, type="prob")[,2],
+  target = test_df$target
+)
+
+ensemble_df <- ensemble_df %>% 
+  tbl_df %>% 
+  mutate(voting = ifelse(glm + rpart + svm >= 5/3, 1, 0),
+         vote_pred = (glm_prob + rpart_prob + svm_prob) /3)
+
+# 모형 평가
+test_df <- test_df %>% 
+  bind_cols(ensemble_df %>% select(vote_pred))
+
+(ensemble_auc <- roc_auc(test_df, target, vote_pred))
+```
+
+
+## 확률숲(Random Forest) [^best-julia-silge-random-forest] {#kaggle-ml-model-randomForest}
+
+[^best-julia-silge-random-forest]: [Julia Silge (Mar 26, 2020), "Tuning random forest hyperparameters with #TidyTuesday trees data"](https://juliasilge.com/blog/sf-trees-random-tuning/)
+
+Random Forest는 앞서 관측점을 무작위 표본추출하는 배깅을 한걸음 더 들어가 변수도 무작위로 선정하여 더욱 강건한 예측모형을 구축할 수 있도록 한다. 또한, 무작위 추출한 OOB(Out-of-Bag) 표본으로 따로 떼어내서 의사결정나무의 과적합을 판단하는 데이터로 사용된다.
+
+<img src="fig/tree-random-forest.png" alt="Random Forest" width="57%" />
+
+
+```{r liver-tree-random-forest, eval = TRUE}
+## Random Forest 모형
+rf_spec <- parsnip::rand_forest(
+  mtry = tune(), 
+  trees = tune(), 
+  min_n = tune()) %>% 
+  set_engine("ranger") %>% 
+  set_mode("classification")
+
+rf_wf <- workflow() %>%
+  add_recipe(tidy_rec) %>%
+  add_model(rf_spec)
+
+## 초모수 탐색범위 설정
+doParallel::registerDoParallel()
+
+rf_tuned_rs <- tune_grid(
+  rf_wf,
+  resamples = tidy_kfolds,
+  grid = 20,
+  metrics = yardstick::metric_set(accuracy, roc_auc, precision, f_meas, recall))
+
+rf_tuned_rs
+```
+
+최적 초모수(hyper-parameter)를 `ggplot`으로 시각화를 한다.
+
+```{r random-forest-evaluation-ggplot}
+rf_tuned_rs %>%
+  collect_metrics() %>%
+  filter(.metric == "roc_auc") %>%
+  select(mean, mtry, min_n, trees) %>%
+  pivot_longer(mtry:trees,
+    values_to = "value",
+    names_to = "parameter"
+  ) %>%
+  ggplot(aes(value, mean, color = parameter)) +
+  geom_point(show.legend = FALSE) +
+  facet_wrap(~parameter, scales = "free_x") +
+  labs(x = NULL, y = "AUC")
+```
+
+Hyperparameter tuning 작업을 통해서 초모수를 선정하여 `finalize_model()` 함수로 초모수가 확정된 Random Forest모형을 장착시킨다.
+
+```{r best-random-forest-model}
+best_rf_params <- select_best(rf_tuned_rs, "roc_auc")
+
+
+best_rf_model <- finalize_model(
+  rf_spec,
+  best_rf_params
+)
+
+best_rf_model 
+```
+
+시험(testing) 데이터를 통해서 예측모형 성능을 객관적으로 평가하도록한다.
+
+```{r liver-random-forest-evaluation}
+rf_wf <- workflow() %>%
+  add_recipe(tidy_rec) %>%
+  add_model(best_rf_model)
+
+best_rf_rs <- rf_wf %>%
+  last_fit(tidy_split)
+
+best_rf_rs %>%
+  unnest(.predictions) %>%
+  conf_mat(truth = target, estimate = .pred_class) %>%
+  summary() %>%
+  select(-.estimator) %>%
+  filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) %>%
+  knitr::kable()
+# collect_metrics()
+```
+
+
+## SGBM(Stochastic Gradient Boosting) {#kaggle-ml-model-sgb}
+
+adaBoost가 진화된 Gradiant Boosting Tree는 R에서 [GBM](https://github.com/gbm-developers/gbm), [xgBoost](https://cran.r-project.org/web/packages/xgboost/)으로 구현되어 있으며 캐글에서 예측모형의 끝판왕으로 유명하다. 기본적으로 의사결정나무모형을 기반으로 하고 있으며 Random Forest가 병렬 예측모형이라면 GBM은 순차 예측모형으로 앞선 의사결정나무에서 정확히 예측하지 못한 잔차를 다시 학습하여 보다 정교한 예측모형을 구축해 나간다.
+
+<img src="fig/tree-gbm.png" alt="GBM" width="77%" />
+
+
+```{r liver-tree-gbm, eval = FALSE}
+# 모형적합
+liver_ctrl <- trainControl(method="repeatedcv", number=10, repeats = 5)
+
+liver_gbm <-train(target ~ . , data=train_df,
+                  method = "gbm",
+                  trControl=liver_ctrl,
+                  verbose=FALSE
+               )
+
+# 모형성능
+test_df <- test_df %>% 
+  mutate(gbm_pred = predict(liver_gbm, newdata=test_df, type="prob")[,2])
+
+(gbm_auc <- roc_auc(test_df, target, gbm_pred))
+
+```
+
+
+# 나무모형 성능평가 {#kaggle-ml-model-comparison}
+
+의사결정나무를 시작으로 앙상블, 배깅, Random Forest, GBM 모형까지 모형튜닝은 최소화하면서 간질환 예측을 위한 예측모형을 구축해봤다. 이제 전반적인 성능을 시험데이터(`test_df`)를 통해서 모형성능을 비교해보자.
+
+```{r tree-model-comparison, eval = FALSE}
+library(extrafont)
+loadfonts()
+tree_perf_df <- data.frame(
+  cart = cart_auc,
+  bagging = bagging_auc,
+  ensemble = ensemble_auc,
+  rf = rf_auc,
+  gbm = gbm_auc
+)
+
+tree_perf_df %>% 
+  gather(model, auc) %>% 
+    ggplot(aes(x=fct_reorder(model, auc), y=auc)) +
+      geom_col(width=0.35) +
+      labs(x="나무모형", y="AUC",
+           title="나무모형을 활용한 간질환 예측모형 성능") +
+      theme_minimal(base_family="NanumGothic") +
+      geom_text(aes(label=round(auc,3)), position=position_dodge(width=0.9), vjust=-0.25) +
+      scale_y_continuous(limits = c(0,0.8))
+
+```
+
