@@ -1,0 +1,320 @@
+---
+layout: page
+title: xwMOOC 모형
+subtitle: "고객이탈 - RESTful API 기본기 `plumber`"
+author:
+    name: xwMOOC
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+
+# 고객이탈 예측모형 [^telco-susan] {#predictive-model-churn}
+
+[^telco-susan]: [Susan Li (Nov 16, 2017 ), "Predict Customer Churn with R", Towards Data Science](https://towardsdatascience.com/predict-customer-churn-with-r-9e62357d47b4)
+
+## 데이터 전처리 {#predictive-model-preprocess}
+
+```{r telco-glm-api}
+library(tidyverse)
+
+telco <- read_csv("data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+
+## 범주형 변수
+cat_variables <- names(telco[9:14])
+
+telco_df <- telco %>%
+  select(-customerID, -TotalCharges) %>% 
+  drop_na() %>% 
+  mutate_at(.vars = cat_variables,
+            .funs = ~recode_factor(., `No internet service`="No")) %>%
+  mutate_at(.vars = "MultipleLines",
+            .funs = ~recode_factor(., `No phone service`="No")) %>% 
+  mutate(tenure = case_when(tenure >= 0 & tenure <= 12 ~ '0-12 Month',
+                            tenure > 12 & tenure <= 24 ~ '12-24 Month',
+                            tenure > 24 & tenure <= 48 ~ '24-48 Month',
+                            tenure > 48 & tenure <= 60~ '48-60 Month', 
+                            tenure > 60 ~'> 60 Month')) %>% 
+  mutate(SeniorCitizen = if_else(SeniorCitizen == 0, "No", "Yes")) %>% 
+  mutate_if(is.character, as.factor)
+  
+
+telco_df %>% 
+  sample_n(10) %>% 
+  knitr::kable()
+```
+
+## GLM 모형 {#predictive-model-logit-glm}
+
+가장 일반적인 방식으로 GLM 모형에 `stepwise` 변수선택 방법으로 최적모형을 구축해보자.
+
+```{r glm-telco-model}
+telco_full <- glm(Churn ~ ., 
+                family = binomial(link="logit"),
+                data = telco_df)
+
+telco_stepwise <- telco_full %>% 
+  MASS::stepAIC(trace = FALSE)
+
+print(summary(telco_full))
+```
+
+
+## 변수선택 {#predictive-model-logit-variable}
+
+GLM 모형을 배포하기에 앞서 각 변수별로 고객이탈(Churn)을 예측하는데 가장 높은 정확도를 보이는 변수를 추출한다. 이를 바탕으로 RESTful API로 모형을 배포한다.
+
+```{r glm-telco-model-accuracy}
+# 독립변수 벡터
+telco_variables <- setdiff(names(telco_df), "Churn")
+
+# Accuracy 계산 함수
+calculate_accuracy <- function(basetable, variable) {
+  
+  one_full <- glm(paste("Churn", variable, sep="~"), 
+                  family = binomial(link="logit"),
+                  data = basetable)
+  
+  cutoff_prob <- table(telco_df$Churn)[2] / nrow(telco_df)
+  pred_telco <- ifelse(predict(one_full, telco_df, type = "response") > cutoff_prob, "Yes", "No")
+  
+  conf_matrix <- table(telco_df$Churn, pred_telco)
+  
+  variable_accuracy <- (conf_matrix[1,1] + conf_matrix[2,2]) / sum(conf_matrix)  
+  
+  return(variable_accuracy)
+}
+
+# 변수별 정확도 계산
+telco_accuracy <- vector("numeric", 0)
+
+for(telco_variable in telco_variables) {
+  telco_accuracy[telco_variable] <- calculate_accuracy(telco_df, telco_variable)
+  # cat(telco_variable, "\n")
+}
+
+accuracy_df <- tibble(
+  varname = telco_variables,
+  accuracy = telco_accuracy
+)
+
+accuracy_df %>% 
+  arrange(desc(accuracy)) %>% 
+  DT::datatable() %>% 
+  DT::formatSignif("accuracy", digits=3)
+```
+
+## 예측모형 수식도출 {#predictive-model-logit}
+
+`SeniorCitizen` 변수가 가장 높은 예측성을 보이는 변수라 이를 예측모형으로 작성한다.
+`glm` 객체로부터 변수를 추출하여 수식을 만들어 낼 수 있다.
+
+```{r calculate-senior-citizen}
+prod_glm <- glm(Churn ~ SeniorCitizen, 
+                      family = binomial(link="logit"),
+                      data = telco_df)
+
+initial_formula <- paste(coef(prod_glm), names(coef(prod_glm)), sep = ' * ', collapse = ' + ')
+
+glm_formula <- str_remove_all(initial_formula, "\\(Intercept\\)") %>% 
+  str_remove(., " \\* ")
+
+glm_formula
+```
+
+즉, 앞서 산출한 $\beta X_i$를 $\operatorname{logit}(p_i) = \ln \left(\frac{p_i}{1-p_i}\right) = \beta_0 + \beta_1 x_{1,i} + \cdots + \beta_m x_{m,i}$ 관계에 따라 역로짓변환 시켜면 다음과 같이 수식을 전개할 수 있으며 고객이탈확률을 산출할 수 있게 된다.
+
+$$p = \frac{1}{exp(-\beta X_i)} = \frac{1}{exp(1.17439390137758 - 0.83852208506855 * SeniorCitizen)} $$
+
+`SeniorCitizen` 이면 "Yes", 아니면 "No"가 되기 때문에 값은 다음 두가지 이탈확률값을 가지게 된다. 이를 앞서 계산한 `table(telco_df$Churn)[2] / nrow(telco_df)` 즉, `r table(telco_df$Churn)[2] / nrow(telco_df)` 값보다 높으면 이탈, 낮으면 잔존고객으로 정의한다.
+
+```{r calculate-senior-citizen-prob}
+1/(1+exp(1.17439390137758 - 0.83852208506855 * 1))
+1/(1+exp(1.17439390137758 - 0.83852208506855 * 0))
+```
+
+# RESTful API 개발 {#predictive-model-RESTful-API}
+
+앞서 산출한 수학공식을 [고객이탈 - RESTful API 기본기 plumber](https://statkclee.github.io/model/model-cloudera-plumber.html) `/sum_two`와 동일한 로직으로 고객이탈 확률을 계산하는 API로 제작한다.
+
+- http://localhost:8000/churn_probability?senior=Yes
+    - [0.2361]
+- http://localhost:8000/churn_probability?senior=No
+    - [0.4168]
+
+<div class = "row">
+  <div class = "col-md-4">
+  
+**메인호출 함수**
+
+`telco_RESTful.R`는 `telco.R`에서 작성한 서비스를 기동시키는 역할을 수행한다.
+
+```{r calculate-senior-citizen-api-main, eval=FALSE}
+library(plumber)
+r <- plumb("telco.R")
+r$run(port=8000)
+```
+
+  </div>
+  <div class = "col-md-8">
+**RESTful API 서비스**
+
+`/healthcheck`, `/churn_probability` 두가지 서비스를 제공한다.
+
+```{r calculate-senior-citizen-api, eval=FALSE}
+# telco.R
+library(tidyverse)
+
+#* Echo back the input
+#* @param msg The message to echo
+#* @get /healthcheck
+function(msg=""){
+  list(msg = paste0("We are alive!!!"))
+}
+
+#* Return Churn Probability and Class
+#* @param senior Is Senior Citizen?
+#* @get /churn_probability
+function(senior){
+  senior_val <- ifelse(senior == "Yes", 1, 0)
+  1/(1+exp(1.17439390137758 - 0.83852208506855 * senior_val))
+}
+```
+
+  </div>
+</div>
+
+이제 RESTful API를 호출하여 고객이탈확률을 예측하여 보자.
+
+```{r telco-basic}
+library(httr)
+library(tidyverse)
+GET('http://localhost:8000/churn_probability?senior=Yes') %>% 
+  content()
+GET('http://localhost:8000/churn_probability?senior=No') %>% 
+  content()
+```
+
+# RESTful API 일반화 {#predictive-model-RESTful-API-gen}
+
+수식을 뽑아낸 방법이 아닌 GLM R 객체를 활용하는 방식으로 RESTful API 제작을 일반화할 수 있다. 이를 위해서 먼저 `deploy_glm.rds` 이름으로 예측모형 객체를 저장시키고 나중에 `plumber`에서 불러오는 방식으로 이를 활용한다.
+
+```{r generalize-restful-api}
+telco_api_df <- telco_df %>% 
+  select(Churn, SeniorCitizen, MonthlyCharges)
+
+deploy_glm <- glm(Churn ~ SeniorCitizen + MonthlyCharges, 
+                      family = binomial(link="logit"),
+                      data = telco_api_df)
+
+deploy_glm %>% 
+  readr::write_rds("deploy/deploy_glm.rds")
+
+predict(deploy_glm, newdata = telco_api_df %>% sample_n(10), type = "response")
+```
+
+`broom` 팩키지를 통해서 중요한 변수명을 추출한다.
+
+```{r generalize-restful-api-broom}
+broom::tidy(deploy_glm)
+```
+
+마지막으로 RESTful API 개발에 앞서 `test_api_df` 를 만들어 혹시라도 모를 버그를 사전에 방지한다.
+
+```{r generalize-restful-api-test}
+test_api_df <- tibble(SeniorCitizen = "Yes",
+                      MonthlyCharges = 19.2)
+
+predict(deploy_glm, newdata = test_api_df, type = "response")
+```
+
+
+## 서비스 추가 {#predictive-model-RESTful-API-add}
+
+<div class = "row">
+  <div class = "col-md-4">
+  
+**메인호출 함수**
+
+`telco_RESTful.R`는 `telco.R`에서 작성한 서비스를 기동시키는 역할을 수행한다.
+
+```{r calculate-api-main, eval=FALSE}
+library(plumber)
+r <- plumb("telco.R")
+r$run(port=8000)
+```
+
+  </div>
+  <div class = "col-md-8">
+**RESTful API 서비스**
+
+`/healthcheck`, `/churn_probability` 두가지 서비스외 추가로 예측모형 객체 `prod_glm`을 직접 사용해서 예측모형을 개발한다.
+
+```{r calculate-api-internet, eval=FALSE}
+# telco.R
+library(tidyverse)
+
+deploy_glm <- 
+  read_rds("deploy/deploy_glm.rds")
+
+#* Echo back the input
+#* @param msg The message to echo
+#* @get /healthcheck
+function(msg=""){
+  list(msg = paste0("We are alive!!!"))
+}
+
+#* Return Churn Probability and Class
+#* @param senior Is Senior Citizen?
+#* @get /churn_probability
+function(senior){
+  senior_val <- ifelse(senior == "Yes", 1, 0)
+  1/(1+exp(1.17439390137758 - 0.83852208506855 * senior_val))
+}
+
+#* Return Churn Probability and Class
+#* @param senior Is Senior Citizen?
+#* @param charge Monthly Charges?
+#* @get /predict_churn
+function(senior, charge){
+  test_api_df <- tibble(SeniorCitizen = senior,
+                        MonthlyCharges = as.numeric(charge))
+  
+  predict(deploy_glm, newdata = test_api_df, type = "response")
+}
+```
+
+  </div>
+</div>
+
+
+이제 RESTful API를 직접 호출하여 고객이탈확률을 좀더 정교하게 계산하여 보자.
+
+```{r telco-basic-model}
+GET('http://localhost:8000/predict_churn?senior=Yes&charge=18.1') %>% 
+  content()
+GET('http://localhost:8000/predict_churn?senior=Yes&charge=38.1') %>% 
+  content()
+GET('http://localhost:8000/predict_churn?senior=No&charge=25.1') %>% 
+  content()
+GET('http://localhost:8000/predict_churn?senior=No&charge=29.1') %>% 
+  content()
+```
+

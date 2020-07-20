@@ -83,6 +83,7 @@ title: 데이터 과학 -- 모형
 
   </div>
   <div class = "col-md-6">
+
 **모형-II**
 
 - **Oldest but Goodies - `caret`**

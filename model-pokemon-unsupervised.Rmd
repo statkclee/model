@@ -1,0 +1,361 @@
+---
+layout: page
+title: "데이터 과학 `tidyverse` 모형"
+subtitle: "비지도 학습 - 포켓몬"
+author:
+    name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+``` {r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+library(tidyverse)
+library(extrafont)
+loadfonts()
+library(showtext)
+par(family = "NanumGothic")
+```
+
+# 전통방식 [^prcatical-guide-to-cluster-analaysis-in-r] {-#pokemon-data-unsupervised}
+
+[^prcatical-guide-to-cluster-analaysis-in-r]: [Mr Alboukadel Kassambara (2017), Practical Guide to Cluster Analysis in R: Unsupervised Machine Learning, Amazon Digital Services LLC](https://www.amazon.com/Practical-Guide-Cluster-Analysis-Unsupervised-ebook/dp/B077KQBXTN/ref=la_B076JDHZC8_1_1?s=books&ie=UTF8&qid=1511857119&sr=1-1)
+
+**차원(dimension)**은 데이터셋의 단순히 칼럼(변수)라고 볼 수 있고, **차원수(Dimensionality)**는 데이터셋을 규정하는 차원의 수라고 정의하자. 데이터셋을 규정하는 잠재된 내재 차원은 측정된 칼럼 혹은 변수를 통해 데이터로 발현된 것으로 가정한다.
+따라서, 데이터셋에 잠재된 차원을 찾아내는 방법이 필요하고 이에 더하여 **차원의 저주(Curse of dimensionality)**로 인하여 차원이 증가할수록 필요로하는 관측점의 수가 기하급수적으로 증가하게 되어 차원을 축약하는 것이 반듯이 필요하다. 그리고 자료형에 따라 다양한 차원축소방법이 개발되어 활용되고 있다.
+
+- 주성분분석(Principal Component Analysis)
+- N-NMF(Non-Negative Matrix Factorization)
+- 요인분석(Factor Analysis)
+- t-SNE
+- UMAP
+
+<img src="fig/ml-dimension-reduction-pokemon.png" alt="차원축소 기법" width="100%" />
+
+초딩에게 인기가 많은 포켓몬 캐릭터를 군집으로 묶어낸다. 주성분 분석을 통해 전처리하고 나서 계층적 군집화 및 k-평균 군집화 통계분석을 수행하고, 계층적 군집화와 평균 군집화 결과를 비교해보자. 이러한 분석에 대한 Base R 문법에 따른 분석 결과에 대한 자세한 사항은 [xwMOOC 기계학습: 차원축소 - 포켓몬, Tidyverse Korea, 2019-04-04](https://statkclee.github.io/ml/ml-pokemon-unsupervised.html) 웹사이트를 참조한다.
+
+# 포켓몬 데이터 {#import-pokemon-data}
+
+[캐글 포켓몬](https://www.kaggle.com/abcsds/pokemon) 데이터가 공개되어 721종류 포켓몬에 대한 데이터와 포켓몬 유형에 대한 정보가 담겨있다. 각 포켓몬에 대한 데이터 원본은 [http://pokemondb.net/pokedex](http://pokemondb.net/pokedex)에서 확인한다. 포켓몬 데이터를 캐글에서 다운로드 받아 불러온다. "Shuckle" 포켓몬은 이상점에 해당되니 대상에서 제거하고, 주성분분석과 군집분석을 위해 필요한 칼럼만 뽑아낸다. [Pokemon and TrelliscopeJS](https://ryanhafen.com/blog/pokemon/)에서 포켓몬에 대한 이미지 데이터도 가져와서 분석 및 시각화에 동원한다.
+
+``` {r pokemon-import-ingest}
+# 0. 환경설정 --------------------------------------------
+library(tidyverse)
+library(trelliscopejs)
+
+# 1. 포켓몬 데이터 ---------------------------------------
+pkmon_dat <- read_csv("data/Pokemon.csv") 
+
+pkmon_df <- pkmon_dat %>%  
+  janitor::clean_names() %>% 
+  dplyr::filter(name != "Shuckle") %>% 
+  select(-number, -type_2) %>% 
+  mutate_if(is.character, as.factor) %>% 
+  mutate(generation = factor(generation)) %>% 
+  distinct()
+
+pkmon_df %>% 
+  sample_n(100) %>% 
+  DT::datatable(rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T) )
+```
+
+포켓몬 각각의 이미지가 포함된 데이터를 바탕으로 시각화를 위한 데이터를 준비한다.
+
+``` {r pokemon-import}
+pokmon_img <- read_csv("https://raw.githubusercontent.com/hafen/pokRdex/master/pokRdex_mod.csv") %>%
+  mutate_at(vars(matches("_id$")), as.character)
+
+pokmon_img %>% 
+  sample_n(10) %>% 
+  DT::datatable(rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T) )
+```
+
+# `tidymodels` 방식 [^tidymodels-pca] {#preprocess-pokemon-data-tidymodels}
+
+[^tidymodels-pca]: [Julia Silge (2020. 4. 15.), "Principal component analysis for hip hop songs with tidymodels"](https://www.youtube.com/watch?v=OvgzIx5mDNM)
+
+군집분석 및 주성분분석을 위해 가장 먼저 척도조정이 필수적이다. 과거 척도조정이 이루어지지 않는 경우 특정변수에 왜곡이 발생할 우려가 있다. 이런 왜곡을 잡아내는데 `scale` 함수를 활용한다. `colMeans`, `apply` 함수에 `sd` 값을 통해 척도조정이 잘 이루어졌는지 확인했다.
+
+`tidyverse`를 구성하는 주요 팩키지 중 하나인 [`tidymodels`](https://github.com/tidymodels)를 기본 도구로 활용해서 포켓몬 데이터에 대한 주성분 분석을 위한 데이터 전처리 작업을 수행해본다. [^prcomp-tidymodels-pca]
+
+[^prcomp-tidymodels-pca]: [stackoverflow, "How can I get PCA cumulative proportion with Tidymodels?"](https://stackoverflow.com/questions/62077910/how-can-i-get-pca-cumulative-proportion-with-tidymodels)
+
+```{r tidymodels-pca}
+library(tidymodels)
+
+pkmon_rec <- recipe( ~ ., data = pkmon_df) %>%
+  update_role(name, type_1, generation, legendary, new_role = "id") %>%
+  step_normalize(all_predictors()) %>% 
+  step_pca(all_numeric()) 
+
+pkmon_prep <- prep(pkmon_rec)
+
+## PCA 설명력
+pkmon_prep$steps[[2]]$res %>% summary
+```
+
+`prcomp()` 함수를 사용해서 검정해보자.
+
+```{r tidymodels-pca-prcomp}
+pkmon_pca <- pkmon_df %>% select(total:speed) %>% 
+  mutate_if(is.numeric, scale, scale = TRUE) %>% 
+  prcomp(., center = TRUE, scale =TRUE)
+
+summary(pkmon_pca)
+```
+
+# 탐색적 데이터 분석 {#pokemon-pca-eda}
+
+차원축소기법은 변수간의 상관관계를 바탕으로 이를 축약해 나가는 것이 기본이라 상관관계를 통해 사전적으로 파악하는 것이 필요하다. 
+
+## 상관계수 [^ggcorrplot] {#pokemon-pca-eda-correlation}
+
+[^ggcorrplot]: [STHDA, "ggcorrplot: Visualization of a correlation matrix using ggplot2"](http://www.sthda.com/english/wiki/ggcorrplot-visualization-of-a-correlation-matrix-using-ggplot2)
+
+`corrr` 팩키지를 통해서 상관계수를 데이터프레임으로 변환시켜 후속/연결 작업을 수월히 수행할 수 있다.
+
+```{r pokemon-pca-correlation}
+library(corrr)
+
+pkmon_df %>% 
+  mutate_if(is.numeric, scale) %>% 
+  select_if(is.numeric) %>% 
+  correlate() %>% # (2)
+  shave(upper = TRUE) %>% # (3)
+  stretch(na.rm = TRUE) %>% 
+  arrange(-r) %>% 
+  DT::datatable() %>% 
+    DT::formatRound("r", digits = 2)
+```
+
+## 상관계수 시각화 {#pokemon-pca-eda-correlation-viz}
+
+[`ggcorrplot`](https://github.com/kassambara/ggcorrplot)은 ggplot2 기반이라 [`corrplot`](https://cran.r-project.org/web/packages/corrplot/index.html)이 갖는 기능을 그대로 옮겨왔다. 
+
+```{r pokemon-pca-correlation-viz}
+library(ggcorrplot)
+
+pkmon_df %>% 
+  select_if(is.numeric) %>% 
+  cor() %>% 
+  ggcorrplot(hc.order = TRUE, type = "lower",
+             outline.col = "white",
+             lab = TRUE)
+
+```
+
+
+# 차원축소 방법 {#pokemon-pca-dimension-reduction}
+
+
+## 차원축소 주성분 분석 {#pokemon-pca}
+
+차원축소를 개념적으로 추진하는 파이프라인은 상관관계를 제거하고, 주성분을 신규 차원으로 추출해서 
+데이터셋의 잠재된 차원 식별하여 시각화 도구로 커뮤니케이션하는 것으로 정의되지만,
+실무적으로는 상관계수 행렬을 분해하여 좌표계를 바꾸고 차원수를 줄여 시각화 도구로 커뮤니케이션하게 되는 절차를 거치게 됩니다.
+이제 데이터단으로 내려오게 되면, 중심화/표준화를 통해 데이터 전처리 작업을 수행하고 회전과 투영으로 좌표계를 변환하고 설명되는 분산을 최대화되는 차원을 선택하여 차원 축소작업을 마무리한다.
+
+
+<img src="fig/ml-pokemon-pca.png" alt="PCA ..." width="100%" />
+
+군집분석 등 후속분석을 위해 활용될 수 있는 변수가 많은 경우 차원을 축소할 필요가 있다.
+이런 목적으로 Base R `prcomp()` 함수를 사용해서 주성분 분석을 수행했다. 물론 `scale=TRUE`, `center=TRUE` 인자를 넣어 척도를 조정한다.
+
+주성분을 몇개까지 선택할 것인지에 대해서 설명되는 분산량을 누적한 누적 설명되는 분산량을 기준으로 80%, 90% 등 선정을 한다.
+
+### 차원축소 주성분 분석 통계량 {#pokemon-pca-statistics}
+
+`FactoMineR` 팩키지 `PCA()` 함수를 사용해서 차원을 축소하려는 변수를 넣고, 부가변수도 지정한다. `summary()` 함수를 통해서 주성분분석 주요내용을 확인할 수 있다.
+특히, `PCA()`함수에 범주형 변수는 `quali.sup`, 연속형 변수는 `quanti.sup`으로 지정한다. 
+
+``` {r pokemon-pca-new-statistics}
+## 2.2. PCA 주성분분석 ----------------------------------------
+library(FactoMineR)
+library(factoextra)
+
+pkmon_scaled_df <- pkmon_df %>% 
+  mutate_if(is.numeric, scale) 
+  
+pkmon_pca <- PCA(pkmon_scaled_df, quali.sup = c(1:2, 10:11), graph = FALSE)
+```
+
+`pkmon_pca$eig`을 통해서 고유값을 추출하고, `dimdesc()` 함수를 통해서 주성분에 대한 각 변수 기여도를 살펴볼 수 있고, `pkmon_pca$var$contrib`을 통해 각 변수별로 주성분에 대한 관련성도 파악이 가능하다.
+
+``` {r pokemon-pca-new-additional}
+pkmon_pca$eig
+
+# dimdesc(pkmon_pca, axes = 1:2)
+
+pkmon_pca$var$contrib
+```
+
+### 차원축소 주성분 분석 시각화 {#pokemon-pca-viz}
+
+`biplot`을 통해 주성분분석 결과를 통해 변수들간에 연관성이 큰 변수를 이해하고 관측점들 관계도 동시에 시각화한다.
+
+### 변수 및 관측점 대한 PCA 시각화 {#pokemon-pca-viz-var}
+
+주성분과 변수에 대한 관련성, 주성분과 관측점에 대한 관련성을 시각화한다.
+
+``` {r pokemon-pca-biplot-var, fig.width=10}
+pca_var_g <- fviz_pca_var(pkmon_pca, select.var = list(cos2 = 0.5), repel = TRUE)
+pca_ind_g <- fviz_pca_ind(pkmon_pca, select.ind = list(cos2 = 0.7), repel = TRUE)
+
+cowplot::plot_grid(pca_var_g, pca_ind_g, ncol=2)
+```
+
+### 주성분에 대한 변수 기여도 시각화 {#pokemon-pca-viz-var-contribution}
+
+주성분에 대한 변수 기여도 시각화한다.
+
+``` {r pokemon-pca-biplot-var-contribution}
+pca_1_g <- fviz_cos2(pkmon_pca, choice = "var", axes = 1, top = 5)
+pca_2_g <- fviz_cos2(pkmon_pca, choice = "var", axes = 2, top = 5)
+
+cowplot::plot_grid(pca_1_g, pca_2_g, ncol=2)
+
+```
+
+### `biplot` 시각화 {#pokemon-pca-viz-var-contribution-biplot}
+
+주성분 평면에 변수와 관측점을 함께 시각화하고, 보조변수(`pkmon_df$legendary`)를 바탕으로 이를 시각화한다. 
+
+``` {r pokemon-pca-biplot, fig.width=10, fig.height=8}
+# fviz_pca_biplot(pkmon_pca)
+
+fviz_pca_ind(pkmon_pca, habillage = pkmon_df$legendary, addEllipses = TRUE)
+```
+
+## `t-SNE` {#pokemon-tsne}
+
+[`t-SNE`, t-Distributed Stochastic Neighbor Embedding (t-SNE)](https://lvdmaaten.github.io/tsne/)를 참조하여 포켓몬 스탯을 기반으로 하여 전설(legendry)을 시각화한다. [`Rtsne`: R wrapper for Van der Maaten's Barnes-Hut implementation of t-Distributed Stochastic Neighbor Embedding](https://github.com/jkrijthe/Rtsne)를 R에서 사용한다.
+
+```{r pokemon-tsne}
+library(Rtsne)
+
+pkmon_feat_dat <- pkmon_df %>% 
+  select(total:speed) %>% 
+  as.matrix()
+
+pkmon_feat <- normalize_input(pkmon_feat_dat)
+
+pkmon_tsne_df <- Rtsne(pkmon_feat, perplexity = 25, dims = 3, check_duplicates = FALSE)
+```
+
+`plotly`를 동원하여 3차원 공간에 차원축소하여 시각화한 후에 전설이 갖는 특징을 일별한다.
+
+```{r pokemon-tsne-plotly}
+library(plotly)
+
+pkmon_plotly_df <- as_tibble(pkmon_tsne_df$Y) %>% 
+  bind_cols(pkmon_df %>% select(name, type_1, legendary))
+
+pkmon_plotly_df %>% 
+  plot_ly(x = ~V1, y = ~V2, z = ~V3, color = ~legendary, hoverinfo = 'text',
+          text= ~glue::glue("pokemon: {name}<br>
+                            type: {type_1}<br>,
+                            legend: {legendary}")) %>% 
+  add_markers(size=2)
+```
+
+## `tidymodels` PCA 시각화 {#pokemon-pca-viz}
+
+주성분별로 각 변수가 얼마나 기여했는지를 `ggplot`으로 시각화하여 파악할 수 있다. 앞서 변수 4개를 가지고 90%이상 설명할 수 있음을 파악했다.
+
+```{r pokemon-pca-contribution}
+pokemon_tidy_pca <- tidy(pkmon_prep, 2)
+
+pokemon_tidy_pca %>%
+  filter(component %in% paste0("PC", 1:4)) %>%
+  mutate(component = fct_inorder(component)) %>%
+  ggplot(aes(value, terms, fill = terms)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~component, nrow = 1) +
+  labs(y = NULL)
+```
+
+각 주성분별로 기여한 것을 절대값을 기준으로 다시 비교하기 좋게 시각화한다.
+PC1은 전체적인 스탯을 나타내고 있고, PC2는 빠르기는 하지만 방어력이 떨어지는 차원, PC3은 공격력은 떨어지지만 특수 기능이 있는 측면, 마지막 PC4는 맷집이 좋은 측면을 각각 나타내고 있다.
+
+```{r pokemon-pca-contribution-tidytext}
+library(tidytext)
+
+pokemon_tidy_pca %>%
+  filter(component %in% paste0("PC", 1:4)) %>%
+  group_by(component) %>%
+  top_n(5, abs(value)) %>%
+  ungroup() %>%
+  mutate(terms = reorder_within(terms, abs(value), component)) %>%
+  ggplot(aes(abs(value), terms, fill = value > 0)) +
+  geom_col() +
+  facet_wrap(~component, scales = "free_y") +
+  scale_y_reordered() +
+  labs(
+    x = "절대기여도",
+    y = NULL, fill = "양수?"
+  ) + 
+  theme_bw(base_family="NanumGothic")
+```
+
+다차원 공간에서 주성분 두개로 차원을 축소하여 `ggplot`에 시각화 시킨다.
+
+```{r pkmon-pca-visualization}
+juice(pkmon_prep) %>%
+  ggplot(aes(PC1, PC2, label = name)) +
+  geom_point(aes(color = legendary), alpha = 0.7, size = 2) +
+  geom_text(check_overlap = TRUE, hjust = "inward", family = "NanumGothic") +
+  labs(color = NULL)
+```
+
+PCA 3차원에 `legendary`여부를 표식하여 3차원 공간에 함께 표현해보자.
+
+```{r pkmon-pca-visualization-plotly}
+juice(pkmon_prep) %>%
+  plot_ly(x = ~PC1, y = ~PC2, z = ~PC3, color = ~legendary, hoverinfo = 'text',
+          text= ~glue::glue("pokemon: {name}<br>
+                            type: {type_1}<br>,
+                            legend: {legendary}")) %>% 
+  add_markers(size=2)
+```
+
+
+## UMAP 임베딩 {#pokemon-umap-embedding}
+
+[Leland McInnes, John Healy, James Melville (2018), "UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction"](https://arxiv.org/abs/1802.03426) 방법론도 동일하게 적용시킬 수 있으며 앞선 `step_pca()` 레서피 대신에 `step_umap()`으로 바꾸기만 하면 관련 최신 방법론을 수월히 적용시킬 수 있다.
+
+```{r pkmon-embed-umap}
+library(embed)
+
+pkmon_umap_rec <- recipe( ~ ., data = pkmon_df) %>%
+  update_role(name, type_1, generation, legendary, new_role = "id") %>%
+  step_normalize(all_predictors()) %>% 
+  step_umap(all_numeric(), num_comp = 3) 
+
+pkmon_umap_prep <- prep(pkmon_umap_rec)
+
+pkmon_umap_prep
+```
+
+`umap`기법으로 추출한 차원을 앞선 `t-SNE`, `PCA`와 마찬가지로 `umap` 기법으로 `legedary`여부를 3차원 공간에 시각화해보자.
+
+```{r pkmon-embed-umap-viz}
+juice(pkmon_umap_prep) %>% 
+  plot_ly(x = ~umap_1, y = ~umap_2, z = ~umap_3, color = ~legendary, hoverinfo = 'text',
+          text= ~glue::glue("pokemon: {name}<br>
+                            type: {type_1}<br>,
+                            legend: {legendary}")) %>% 
+  add_markers(size=2)
+
+```
+
