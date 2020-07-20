@@ -48,7 +48,7 @@ title: 데이터 과학 -- 모형
 - **[`tidyverse` 모형 - `tidymodels`: `tidyverse` 성명서](tidyverse-model.html)**
     - [`caret` &rarr; `parsnip`](tidyverse-parsnip.html) 
     - [임직원 이탈 예측: `tidymodel`](tidyverse-parsnip-advanced.html): 2020-07-20
-    - [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
+    - [`tidymodels`: 나무모형](model_tree_tidymodels.html), [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
     - [포켓몬 PCA](model-pokemon-unsupervised.html)        
