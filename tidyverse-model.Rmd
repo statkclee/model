@@ -3,16 +3,28 @@ layout: page
 title: xwMOOC 모형
 subtitle: "`tidymodels` - tidyverse 모형: `tidyverse` 성명서"
 author:
-    name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  - name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+    url: https://www.facebook.com/groups/tidyverse/
+    affiliation: Tidyverse Korea
+    affiliation_url: https://www.facebook.com/groups/tidyverse/
 date: "`r Sys.Date()`"
 output:
   html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
     toc: yes
+    toc_depth: 2
     toc_float: true
     highlight: tango
     code_folding: show
     number_section: true
     self_contained: true
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: blue
 editor_options: 
   chunk_output_type: console
 ---
