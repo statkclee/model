@@ -6,18 +6,10 @@ AlwaysSaveHistory: Default
 
 EnableCodeIndexing: Yes
 UseSpacesForTab: Yes
-<<<<<<< HEAD
-NumSpacesForTab: 4
-Encoding: UTF-8
-
-RnwWeave: Sweave
-LaTeX: pdfLaTeX
-=======
 NumSpacesForTab: 2
 Encoding: UTF-8
 
-RnwWeave: knitr
+RnwWeave: Sweave
 LaTeX: XeLaTeX
->>>>>>> 14ceda59f87b6d4209c355f92acf7256b6bbcf85
 
 BuildType: Makefile

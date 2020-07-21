@@ -1,16 +1,32 @@
 ---
 layout: page
-title: xwMOOC 모형
-subtitle: GDPR과 모형 이해와 설명
+title: "xwMOOC 모형: `tidymodels`"
+subtitle: "GDPR powered by `tidymodels`, `shiny`, `dalex`, `plumber`"
+author:
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
 date: "`r Sys.Date()`"
 output:
   html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
     toc: yes
+    toc_depth: 2
     toc_float: true
     highlight: tango
     code_folding: show
     number_section: true
     self_contained: true
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
 ---
  
 ``` {r, include=FALSE}
@@ -23,6 +39,9 @@ library(knitr)
 library(kableExtra)
 
 ```
+
+
+![](fig/tidymodels-workflow.png)
 
 # GDPR [^gdpr-gov] [^gdpr-paper] {#gdpr-algorithm}
 
