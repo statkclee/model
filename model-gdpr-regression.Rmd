@@ -30,86 +30,103 @@ editor_options:
 ---
  
 ``` {r setup, include=FALSE}
-
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
                       comment="", digits = 3, tidy = FALSE, fig.align = 'center')
 
 ```
 
+# 데이터셋 {#tidytuesday-dataset}
 
+[`tidytuesdayR`](https://github.com/thebioengineer/tidytuesdayR) 팩키지는 기존 Tidy Tuesday 데이터 과학 해킹데이터를 정리한 데이터 팩키지다. [GDPR Fines](https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-04-21) 데이터를 다운로드 받아 데이터 정제 작업을 수행하고 벌금 예측모형을 개발한다. `tidytuesdayR`를 사용해서 데이터를 가져오려고 했으나 [`tt_load()` invalid multibyte string error #64](https://github.com/thebioengineer/tidytuesdayR/issues/64) 이슈가 발생되어 직접 웹사이트에서 데이터를 가져오도록 한다.
 
-# 연속형 회귀모형 설명 [^explainable-regression-model] {#continuous-regression}
-
-[^explainable-regression-model]: [Bernardo Lares(July 24, 2018), "Machine Learning Results in R: one plot to rule them all! (Part 2 – Regression Models)"](https://datascienceplus.com/machine-learning-results-in-r-one-plot-to-rule-them-all-part-2-regression-models/)
-
-
-# 회귀분석 모형 {#explainable-ai-regression-model}
-
-`car` 팩키지에서 `Prestiage` 데이터프레임을 바탕으로 소득에 대한 회귀모형을 적합시켜 소득예측을 하는 모형을 개발한다.
-
-```{r cars-dataset}
-# 0. 환경설정 ------
+```{r tidytuesday-dataset}
+library(tidytuesdayR)
 library(tidyverse)
-library(car)
-library(MASS)
+library(tidymodels)
 
-# 1. 데이터 정제 ------
-prestige_df <- Prestige %>% tbl_df %>% 
-    filter(complete.cases(.))
+fines <- read_tsv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-04-21/gdpr_violations.tsv")
+gdpr_text <- read_tsv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-04-21/gdpr_text.tsv")
 
-# 2. 회귀모형 ------
-prestige_lm <- lm(income ~ education + prestige + women + type, data=prestige_df)
-
-prestige_best_lm <- stepAIC(prestige_lm)
+fines
 ```
 
+# 데이터셋 {#tidytuesday-dataset}
 
-# 회귀분석 설명 {#explainable-ai-regression-model-explain}
+예측모형 개발을 위한 `Basetable` 생성에 대한 전처리 및 피처 공학(feature engineering) 관련 사항은 [Modeling #TidyTuesday GDPR violations with tidymodels](https://juliasilge.com/blog/gdpr-violations/)을 참고한다.
 
-`lares` 팩키지 회귀모형 설명 기능을 통해 소득이 15,000 이하일 경우 나름 회귀모형의 예측이 있는 것으로 파악되지만, 소득이 매우 높은 경우 예측력이 떨어지는 것이 파악된다.
+```{r tidytuesday-dataset-feature-engineering}
+gdpr_tidy <- fines %>%
+  transmute(id,
+    price,
+    # country = name,
+    article_violated,
+    articles = str_extract_all(article_violated, "Art.[:digit:]+|Art. [:digit:]+")
+  ) %>%
+  mutate(total_articles = map_int(articles, length)) %>%
+  unnest(articles) %>%
+  add_count(articles) %>%
+  filter(n > 10) %>%
+  select(-n)
 
-```{r cars-dataset-explain, fig.width=10, fig.height=8}
-library(lares)
-library(broom)
+gdpr_df <- gdpr_tidy %>%
+  mutate(value = 1) %>%
+  select(-article_violated) %>%
+  pivot_wider(
+    names_from = articles, values_from = value,
+    values_fn = list(value = max), values_fill = list(value = 0)
+  ) %>%
+  janitor::clean_names()
 
-prestige_df <- augment(prestige_best_lm, prestige_df)
-
-# lares::mplot_lineal(tag = prestige_df$income, 
-#                     score = prestige_df$.fitted,
-#                     subtitle = "소득에 대한 회귀모형",
-#                     model_name = "linear regression model with stepAIC")
-
-lares::mplot_full(tag = prestige_df$income, 
-                    score = prestige_df$.fitted,
-                    splits = 10,
-                    subtitle = "소득에 대한 회귀모형",
-                    model_name = "linear regression model with stepAIC")
-
+gdpr_df
 ```
 
+## 훈련/시험 전처리 {#gdpr-feature-engineering}
 
-# Random Forest 모형 {#explainable-ai-regression-rf-model}
+훈련/시험 데이터로 나누고 `recipes` 팩키지를 활용하여 feature engineering 작업을 수행한다.
 
-선형회귀 모형이 아닌 Random Forest 모형을 적합시켜 예측성능을 높여보자.
-소득이 큰 경우 오차가 커서 척도를 로그척도로 변환시킨 후에 회귀모형을 적합시킨다.
-그리고 나서 동일한 방법으로 예측모형을 시각화하여 설명가능한 형태로 나타낸다.
+```{r split-sample-fe}
+# 훈련/시험 데이터셋
+tidy_split <- initial_split(gdpr_df, prop = 0.8, strata = price)
 
-```{r cars-dataset-model-rf, fig.width=10, fig.height=8}
-library(randomForest)
+tidy_train <- training(tidy_split)
+tidy_test  <- testing(tidy_split)
 
-prestige_rf <- randomForest(log(income) ~ education + prestige + women + type, data=prestige_df)
+# Feature Engineering
 
-prestige_df$pred <- predict(prestige_rf, newdata = prestige_df, type="response") %>% exp
+gdpr_rec <- recipe(price ~ ., data = gdpr_df) %>%
+  update_role(id, new_role = "id") %>%
+  step_log(price, base = 10, offset = 1, skip = TRUE) %>%
+  # step_other(country, threshold = 0.1, other = "Other") %>%
+  step_dummy(all_nominal()) %>%
+  step_zv(all_predictors()) %>% 
+  prep()
 
-lares::mplot_full(tag = prestige_df$income, 
-                    score = prestige_df$pred,
-                    splits = 10,
-                    subtitle = "소득에 대한 RandomForest 모형",
-                    model_name = "random forest with broomstick")
-
+gdpr_rec %>% juice()
 ```
 
+# 예측모형 생성 {#build-predictive-models}
+
+```{r gdpr-predictive-model}
+glm_spec <- linear_reg() %>%
+  set_engine("lm") %>% 
+  set_mode("regression")
+
+gdpr_wf <- workflow() %>%
+  add_recipe(gdpr_rec) %>%
+  add_model(glm_spec) 
+
+gdpr_fit <- fit(gdpr_wf, tidy_train) 
+```
+
+# 예측모형 평가 {#build-predictive-models-evaluate}
+
+```{r gdpr-predictive-model-evaluate, eval = FALSE}
+
+gdpr_fit %>%
+  predict(tidy_test) %>%
+  bind_cols(tidy_test) %>% 
+  metrics(truth = price, estimate = .pred)
 
 
-
+```
 
