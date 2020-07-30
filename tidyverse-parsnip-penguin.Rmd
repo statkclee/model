@@ -1,0 +1,111 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "펭귄 성별예측모형: `tidymodels`"
+author:
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+bibliography: ../bibliography.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
+---
+
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                    comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+library(here)
+```
+
+
+# 펭귄 데이터셋 [^penguins-dataset] {#penguins-dataset}
+
+[^penguins-dataset]: [Tidyverse Korea (2020-06-21), "펭귄 vs 붓꽃 데이터"](https://statkclee.github.io/data-science/ds-iris-penguin.html)
+
+데이터 과학의 기본 데이터셋으로 인정받던 붓꽃(Iris) 데이터가 이제는 자리를 펭귄 데이터셋에게 자리를 물려주는 듯 싶다. 기초 통계학, 시각화 뿐만 아니라 `tidymodels`에도 이를 기본 데이터셋으로 활용하는 사례가 심심치 않게 보여주고 있다. 이런 추세는 최근 [TidyTuesday](https://github.com/rfordatascience/tidytuesday) 2020년 31번째 데이터셋(2020-07-28)으로 **팔머 팽귄(Palmer Penguins)**으로 당첨되면서 Iris 데이터를 대체하는 것은 기정사실화 된 듯 싶다.
+
+```{r penguins}
+library(tidyverse)
+tuesdata <- tidytuesdayR::tt_load('2020-07-28')
+
+penguin <- tuesdata$penguins
+
+penguin
+```
+
+
+# 데이터 전처리 {#preprocessing-dataset}
+
+나름 잘 정리되어 있어 결측값만 처리하고 연도와 펭귄이 거주하고 있는 섬만 제거한다.
+
+```{r penguins-preprocessing}
+penguin_df <- penguin %>%
+  filter(!is.na(sex)) %>%
+  select(-year, -island)
+```
+
+
+# 성별예측 모형 {#predict-sex}
+
+펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
+
+## 훈련/교차검증/시험 데이터셋 {#predict-sex-split}
+
+`initial_split()` 함수로 훈련/시험 데이터셋으로 나누고, `vfold_cv()`함수를 사용해서 hyper parameter 튜닝 등을 통한 최적 모형 선정을 위해서 교차검증 데이터셋을 준비한다.
+
+```{r predict-sex}
+library(tidymodels)
+
+penguin_split <- initial_split(penguin_df, prop = 0.8, strata = sex)
+penguin_train <- training(penguin_split)
+penguin_test <- testing(penguin_split)
+
+penguin_vfold <- vfold_cv(penguin_train, v =10, repeats = 1) 
+```
+
+## 모형 작업흐름 {#predict-sex-model-workflow}
+
+먼저 `workflow()`를 설정한다. 다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
+
+```{r predict-sex-model-workflow}
+penguin_wf <- workflow() %>%
+  add_formula(sex ~ .)
+```
+
+## 모형 아키텍처 {#predict-sex-model-architecture}
+
+```{r predict-sex-model-architecture}
+glm_spec <- logistic_reg() %>%
+  set_engine("glm")
+
+rf_spec <- rand_forest() %>%
+  set_mode("classification") %>%
+  set_engine("ranger")
+```
+
+## 모형 적합(fit) {#predict-sex-model-fit}
+
+```{r predict-sex-model-fit}
+penguin_wf  %>% 
+  add_model(glm_spec)
+```
