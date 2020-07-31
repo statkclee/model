@@ -61,7 +61,8 @@ penguin
 ```{r penguins-preprocessing}
 penguin_df <- penguin %>%
   filter(!is.na(sex)) %>%
-  select(-year, -island)
+  select(-year, -island) %>% 
+  mutate_if(is.character, as.factor)
 ```
 
 
@@ -80,7 +81,7 @@ penguin_split <- initial_split(penguin_df, prop = 0.8, strata = sex)
 penguin_train <- training(penguin_split)
 penguin_test <- testing(penguin_split)
 
-penguin_vfold <- vfold_cv(penguin_train, v =10, repeats = 1) 
+penguin_cv <- vfold_cv(penguin_train, v =10, repeats = 1) 
 ```
 
 ## 모형 작업흐름 {#predict-sex-model-workflow}
@@ -94,18 +95,102 @@ penguin_wf <- workflow() %>%
 
 ## 모형 아키텍처 {#predict-sex-model-architecture}
 
+펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM, Random Forest, MARS 모형을 선택한다.
+
 ```{r predict-sex-model-architecture}
 glm_spec <- logistic_reg() %>%
-  set_engine("glm")
+  set_mode("classification") %>% 
+  set_engine("glm") 
 
 rf_spec <- rand_forest() %>%
   set_mode("classification") %>%
   set_engine("ranger")
+
+mars_spec <- mars() %>% 
+  set_mode("classification") %>% 
+  set_engine("earth")
 ```
 
 ## 모형 적합(fit) {#predict-sex-model-fit}
 
+CV 교차검증 표본을 대상으로 각 모형에 적합시킨다.
+
 ```{r predict-sex-model-fit}
-penguin_wf  %>% 
-  add_model(glm_spec)
+glm_rs <- penguin_wf  %>% 
+  add_model(glm_spec) %>% 
+  fit_resamples(
+    resamples = penguin_cv,
+    control = control_resamples(save_pred = TRUE),
+    metrics = metric_set(accuracy, kap, roc_auc)
+  )
+
+rf_rs <- penguin_wf  %>% 
+  add_model(rf_spec) %>% 
+  fit_resamples(
+    resamples = penguin_cv,
+    control = control_resamples(save_pred = TRUE),
+    metrics = metric_set(accuracy, kap, roc_auc)
+  )
+
+mars_rs <- penguin_wf  %>% 
+  add_model(mars_spec) %>% 
+  fit_resamples(
+    resamples = penguin_cv,
+    control = control_resamples(save_pred = TRUE),
+    metrics = metric_set(accuracy, kap, roc_auc)
+  )
 ```
+
+## 모형 평가 {#evaluate-model}
+
+상기 세가지 모형에 대해 3가지 다른 성능평가지표를 통해 평가한다.
+
+```{r predict-sex-model-evaluate}
+glm_eval <- glm_rs %>% 
+  mutate(model = "GLM") %>% 
+  collect_metrics() 
+
+rf_eval <- rf_rs %>% 
+  mutate(model = "RF") %>% 
+  collect_metrics()
+
+mars_eval <- mars_rs %>% 
+  mutate(model = "MARS") %>% 
+  collect_metrics()
+
+glm_eval %>% 
+  bind_rows(rf_eval) %>% 
+  bind_rows(mars_eval) %>% 
+  ggplot(aes(x=mean, y=.metric, color = model)) +
+    geom_point(size = 1.5) +
+    geom_errorbar(aes(xmin = mean - std_err,
+                      xmax = mean + std_err), width=0.3) +
+    facet_wrap(~ .metric) +
+    theme_bw() +
+    theme(legend.position = "top") +
+    labs(x="", y="")
+```
+
+## 시험 데이터 성능측정 {#evaluate-model-test}
+
+가장 성능이 좋은 GLM 모형을 최종 예측모형으로 선정하고 시험데이터에 넣어 최종 모형 성능을 평가한다.
+`penguin_wf`에 `last_fit()`하여 최종 모형을 선정한다. 해당 모형에 대한 시험(test) 데이터를 통해 성능을 확인할 수 있다.
+
+```{r predict-sex-model-evaluate-test}
+penguin_final <- penguin_wf %>%
+  add_model(glm_spec) %>%
+  last_fit(penguin_split)
+
+penguin_final %>% 
+  collect_metrics()
+```
+
+많이 친숙한 `confusion matrix`를 작성해 마무리한다.
+
+```{r predict-sex-model-evaluate-test-conf}
+penguin_final %>% 
+  collect_predictions() %>%
+  conf_mat(sex, .pred_class)
+```
+
+# Hyper Parameter 
