@@ -1,0 +1,231 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "펭귄 성별예측모형: `tidymodels` - Hyper Parameter"
+author:
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+bibliography: ../bibliography.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
+---
+
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                    comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+library(here)
+```
+
+
+# 펭귄 데이터셋 [^penguins-dataset] {#penguins-dataset}
+
+[^penguins-dataset]: [Tidyverse Korea (2020-06-21), "펭귄 vs 붓꽃 데이터"](https://statkclee.github.io/data-science/ds-iris-penguin.html)
+
+데이터 과학의 기본 데이터셋으로 인정받던 붓꽃(Iris) 데이터가 이제는 자리를 펭귄 데이터셋에게 자리를 물려주는 듯 싶다. 기초 통계학, 시각화 뿐만 아니라 `tidymodels`에도 이를 기본 데이터셋으로 활용하는 사례가 심심치 않게 보여주고 있다. 이런 추세는 최근 [TidyTuesday](https://github.com/rfordatascience/tidytuesday) 2020년 31번째 데이터셋(2020-07-28)으로 **팔머 팽귄(Palmer Penguins)**으로 당첨되면서 Iris 데이터를 대체하는 것은 기정사실화 된 듯 싶다.
+
+```{r penguins}
+library(tidyverse)
+tuesdata <- tidytuesdayR::tt_load('2020-07-28')
+
+penguin <- tuesdata$penguins
+
+penguin
+```
+
+
+# 데이터 전처리 {#preprocessing-dataset}
+
+나름 잘 정리되어 있어 결측값만 처리하고 연도와 펭귄이 거주하고 있는 섬만 제거한다.
+
+```{r penguins-preprocessing}
+penguin_df <- penguin %>%
+  filter(!is.na(sex)) %>%
+  select(-year, -island) %>% 
+  mutate_if(is.character, as.factor)
+```
+
+
+# 성별예측 모형 {#predict-sex}
+
+펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
+
+## 훈련/교차검증/시험 데이터셋 {#predict-sex-split}
+
+`initial_split()` 함수로 훈련/시험 데이터셋으로 나누고, `vfold_cv()`함수를 사용해서 hyper parameter 튜닝 등을 통한 최적 모형 선정을 위해서 교차검증 데이터셋을 준비한다.
+
+```{r predict-sex}
+library(tidymodels)
+
+penguin_split <- initial_split(penguin_df, prop = 0.8, strata = sex)
+penguin_train <- training(penguin_split)
+penguin_test <- testing(penguin_split)
+
+penguin_cv <- vfold_cv(penguin_train, v =10, repeats = 1) 
+```
+
+## 모형 작업흐름 {#predict-sex-model-workflow}
+
+먼저 `workflow()`를 설정한다. 다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
+
+```{r predict-sex-model-workflow}
+penguin_wf <- workflow() %>%
+  add_formula(sex ~ .)
+```
+
+## 모형 아키텍처 {#predict-sex-model-architecture}
+
+펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM, Random Forest, MARS 모형을 선택한다. GLM 모형이 가장 좋은 성능을 앞서 보여줬기 때문에 Baseline 모형으로 GLM(일반화 선형 모형)을 선택하고 Hyper Parameter 튜닝을 하여 성능을 좀더 높여보도록 한다. [Search parsnip models](https://www.tidymodels.org/find/parsnip/) 웹사이트에 모형에 대한 전반적인 사항을 파악할 수 있다. 
+
+
+```{r predict-sex-model-architecture}
+glm_spec <- logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") 
+
+lasso_spec <- logistic_reg(penalty = tune(), mixture = 1) %>%
+  set_mode("classification") %>%
+  set_engine("glmnet")
+```
+
+## 모형 적합(fit) {#predict-sex-model-fit}
+
+CV 교차검증 표본을 대상으로 각 모형에 적합시킨다. 단순한 모형 비교와 다른 점은 Hyper Parameter를 찾아야 되기 때문에 `grid_regular()` 함수를 사용해서 격자 탐색(Grid Search)를 통해 최적 Hyper Parameter를 찾아낸다. 
+
+### Baseline 모형 적합(fit) {#predict-sex-model-fit-baseline}
+
+먼저 앞선 GLM 벤치마킹 기본 모형을 적합시킨다.
+
+```{r predict-sex-model-fit}
+doParallel::registerDoParallel()
+
+glm_rs <- penguin_wf  %>% 
+  add_model(glm_spec) %>% 
+  fit_resamples(
+    resamples = penguin_cv,
+    control = control_resamples(save_pred = TRUE),
+    metrics = metric_set(accuracy, kap, roc_auc)
+  )
+```
+
+### Lasso 모형 적합(fit) {#predict-sex-model-fit-baseline-hp}
+
+Hyper Paramter 튜닝작업을 통해 최적 Hyper Paramter를 찾아낸다. 
+
+```{r grid-regular-tuning}
+lasso_grid <- grid_regular(
+  penalty(range = c(-4, 0)),
+  levels = 10
+)
+
+lasso_grid
+```
+
+`tune_grid()` 함수를 적용시켜 라소 회귀모형에 적시된 `penalty=`에 대한 초모수를 특정한다.
+
+```{r grid-regular-tuning-fit}
+lasso_rs <- tune_grid(
+  penguin_wf %>% add_model(lasso_spec),
+  resamples = penguin_cv,
+  grid = lasso_grid, 
+  control = control_grid(save_pred = TRUE, verbose = TRUE)
+) 
+
+lasso_rs
+```
+
+이제 초모수를 특정해보자. `autoplot()`을 통해 시각화할 수 있다.
+
+```{r grid-regular-tuning-fit-specification-viz}
+autoplot(lasso_rs)
+```
+
+`collect_metrics()` 또는 `show_best()` 함수로 최적 Hyper Paramter를 선정할 수 있다.
+
+```{r grid-regular-tuning-fit-specification-metric}
+lasso_rs %>% 
+  show_best("roc_auc")
+```
+
+이제 최적 모형을 만들어서 기준 `roc_auc`로 최적 초모수가 적용된 라소 모형을 생성한다.
+
+```{r lasso-fit-best-model}
+best_roc_auc <- select_best(lasso_rs, "roc_auc")
+best_roc_auc
+
+lasso_spec_final <- finalize_workflow(penguin_wf %>% add_model(lasso_spec), best_roc_auc)
+lasso_spec_final
+```
+
+## 모형 평가 {#evaluate-model}
+
+Baseline GLM 모형과 비교하여 `glmnet` 라소 모형을 사용하여 Hyper Paramter 튜닝을 한 모형의 성능이 `roc_auc`는 향상되었으나 `accuracy`는 여전히 GLM이 우세한 것을 시각적으로 확인할 수 있다.
+
+```{r predict-sex-model-evaluate}
+glm_eval <- glm_rs %>% 
+  mutate(model = "GLM") %>% 
+  collect_metrics() 
+
+lasso_glm_rs <- lasso_spec_final %>% 
+  fit_resamples(
+    resamples = penguin_cv,
+    control = control_resamples(save_pred = TRUE),
+    metrics = metric_set(accuracy, kap, roc_auc)
+  )
+
+lasso_glm_eval <- lasso_glm_rs %>% 
+  mutate(model = "Lasso GLM") %>% 
+  collect_metrics() 
+
+glm_eval %>% 
+  bind_rows(lasso_glm_eval) %>% 
+  ggplot(aes(x=mean, y=.metric, color = model)) +
+    geom_point(size = 1.5) +
+    geom_errorbar(aes(xmin = mean - std_err,
+                      xmax = mean + std_err), width=0.3) +
+    facet_wrap(~ .metric) +
+    theme_bw() +
+    theme(legend.position = "top") +
+    labs(x="", y="")
+```
+
+## 시험 데이터 성능측정 {#evaluate-model-test}
+
+`last_fit()`함수를 사용하여 최종 모형을 아주 귀중한 시험 데이터(Test Data)에 적용시켜 최종 예측모형 성능을 평가한다.
+
+```{r predict-sex-model-evaluate-test}
+penguin_final_fit <- lasso_spec_final %>%
+  last_fit(penguin_split)
+
+penguin_final_fit %>% 
+  collect_metrics()
+```
+
+많이 친숙한 `confusion matrix`를 작성해 마무리한다.
+
+```{r predict-sex-model-evaluate-test-conf}
+penguin_final_fit %>% 
+  collect_predictions() %>%
+  conf_mat(sex, .pred_class)
+```
+
