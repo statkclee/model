@@ -1,0 +1,59 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "펭귄 성별예측모형: `tidymodels` - RESTful API"
+author:
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+bibliography: ../bibliography.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
+---
+
+``` {r, include=FALSE}
+# source("tools/chunk-options.R")
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                    comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+```
+
+
+# 예측모형 가져오기 {#load-predictive-model}
+
+예측모형을 가져와서 다음 후속 업무에 제대로 사용될 수 있는지 파악해보자.
+
+```{r load-predictive-model}
+library(tidyverse)
+library(tidymodels)
+# penguin_predictvie_model <- fit(lasso_spec_final, data = penguin_df)
+# write_rds(penguin_predictvie_model, "data/penguin_predictvie_model.rds")
+penguin_predictvie_model <- read_rds("data/penguin_predictvie_model.rds")
+
+obs_df <- tibble("species" = "Adelie",
+                  "bill_length_mm" =  39.1,
+                  "bill_depth_mm" =  18.7,
+                  "flipper_length_mm" =  181,
+                  "body_mass_g" = 3750)
+
+predict(penguin_predictvie_model, obs_df)
+predict(penguin_predictvie_model, obs_df, type = "prob")
+```
+
