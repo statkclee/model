@@ -36,9 +36,9 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 ```
 
 
-# 예측모형 가져오기 {#load-predictive-model}
+# 예측모형 Hello World! {#load-predictive-model}
 
-예측모형을 가져와서 다음 후속 업무에 제대로 사용될 수 있는지 파악해보자.
+예측모형을 가져와서 다음 후속 업무에 제대로 사용될 수 있는지 파악해보자. `.rds` 확장자를 갖는 파일에 예측모형을 바이너리로 배포한다. 이것을 `plumber`를 사용해서 RESTful API로 감싸 배포하는 방법을 살펴보자. [Josiah Parry (2019-09-12), "Intro to Tidy modeling", GitHub](https://josiahparry.com/post/2019-09-12-intro-tidymodels/)도 유사한 사례로 볼 수 있다.
 
 ```{r load-predictive-model}
 library(tidyverse)
@@ -56,4 +56,63 @@ obs_df <- tibble("species" = "Adelie",
 predict(penguin_predictvie_model, obs_df)
 predict(penguin_predictvie_model, obs_df, type = "prob")
 ```
+
+
+# Plumber RESTful API {#plumber-RESTful-API}
+
+[배관공(plumber)](https://www.rplumber.io/articles/introduction.html)를 사용해서 수월하게 `tidymodels` 예측모형을 RESTful API로 변환시킬 수 있다. `tidy odels` 이전 RESTful API 사용에 대한 내용은 [R 병렬 프로그래밍 - RESTful API](https://statkclee.github.io/parallel-r/)부분을 참고한다.
+
+## 펭귄 한마리 {#plumber-RESTful-API-one-penguin}
+
+먼저 `jsonlite` 팩키지 `toJSON()` 함수를 사용해서 펭귄 한마리를 만들어보자.
+
+
+``` {r one-penguin}
+jsonlite::toJSON(obs_df)
+```
+
+`.json` 파일 확장자를 갖는 파일로 데이터프레임에서 펭귄 한마리를 추출해서 저장시킨다.
+
+```{bash json-data}
+Rscript -e "library(palmerpenguins); data(penguins); jsonlite::toJSON(penguins[1,])" > data/penguin_one.json
+```
+
+## `predict` API 명세 {#plumber-RESTful-API-one-penguin-predict}
+
+`api.R` 파일에 다양한 API를 명세하는데 `predict/` API를 준비하여 명세한다.
+
+```{r api-return-example}
+#* Perform a prediction by submitting in the body of a POST request
+#* @post /predict 
+
+get_prediction <- function(req) {
+    example <- req$postBody
+    parsed_example <- jsonlite::fromJSON(example)
+
+    penguin_predictvie_model <- readr::read_rds("data/penguin_predictvie_model.rds")
+    prediction <- predict(penguin_predictvie_model, new_data = parsed_example)
+    probability <- predict(penguin_predictvie_model, new_data = parsed_example, type = "prob")
+
+    return(dplyr::bind_cols(prediction, probability) %>% 
+             bind_cols(parsed_example))
+}
+```
+
+## API 실행 파일 {#plumber-RESTful-API-one-penguin-run}
+
+`run.R` 파일을 실행시켜 RESTful API를 웹서비스로 띄워 펭귄 정보를 넘기면 성별 여부를 판정하고 관련 정보를 반환시키게 작성한다.
+
+```{r api-return-execute, eval = FALSE}
+r <- plumber::plumb(here::here("penguin/api.R"))
+r$run(port = 8000)
+```
+
+## 실행 결과 {#plumber-RESTful-API-one-penguin-example}
+
+RESTful API `predict/`를 띄운 상태에서 `.json` 파일을 던져 결과를 실행시킨다.
+
+```{bash one-penguin-execution}
+curl localhost:8000/predict --header "Content-Type: application/json"   --request POST   --data @data/penguin_one.json
+```
+
 
