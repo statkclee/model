@@ -3,25 +3,33 @@ layout: page
 title: "xwMOOC 모형 - `tidymodels`"
 subtitle: "`parsnip` + `tidytext` + `textrecipes`"
 author:
-    name: xwMOOC
-    url: https://www.facebook.com/groups/tidyverse/
-    affiliation: Tidyverse Korea
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
 date: "`r Sys.Date()`"
 output:
   html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
     toc: yes
+    toc_depth: 2
     toc_float: true
     highlight: tango
     code_folding: show
     number_section: true
     self_contained: true
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
 editor_options: 
   chunk_output_type: console
 ---
  
-``` {r, include=FALSE}
-# source("tools/chunk-options.R")
-
+``` {r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
                       comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
 ```
@@ -41,11 +49,11 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
 
 **[한국인이 가장 사랑하는 세계적인 작가는? - 현존 작가 베르나르 베르베르, 고전작가 생텍쥐페리](http://www.econovill.com/news/articleView.html?idxno=219074)**
 
-'불멸의 고전 작가' 투표에서는 '어린 왕자'의 앙투안 드 생텍쥐페리가 5513표(7%)를 얻어 최고의 영예를 안았다. '셜록 홈즈' 시리즈의 아서 코난 도일은 4366표(5.6%)로 2위, '레 미제라블'의 빅토르 위고는 4266표(5.4%)로 3위를 차지했다. 이어 헤르만 헤세가 5.4%로 4위에 올랐고, 윌리엄 셰익스피어(5.3%), 어니스트 헤밍웨이(5.1%), 제인 오스틴(4.7%), 조지 오웰(3.9%) 등이 5~8위로 뒤를 이었다. 
+'불멸의 고전 작가' 투표에서는 '어린 왕자'의 앙투안 드 생텍쥐페리가 5,513표(7%)를 얻어 최고의 영예를 안았다. '셜록 홈즈' 시리즈의 아서 코난 도일은 4,366표(5.6%)로 2위, '레 미제라블'의 빅토르 위고는 4,266표(5.4%)로 3위를 차지했다. 이어 헤르만 헤세가 5.4%로 4위에 올랐고, 윌리엄 셰익스피어(5.3%), 어니스트 헤밍웨이(5.1%), 제인 오스틴(4.7%), 조지 오웰(3.9%) 등이 5~8위로 뒤를 이었다. 
 
 </div>
 
-## 데이터 가져오기 {#tidymodels-text-data}
+# 데이터 가져오기 {#tidymodels-text-data}
 
 구텐베르그에 모든 고전 영문소설이 공개된 것은 아니다. 따라서 몇분정도 유명한 서양작가의 소설을 찾아 코난 도일과 제인 오스틴의 소설을 대표로 다운로드 받아 이를 분류하는 모형을 개발해 본다.
 
@@ -70,7 +78,9 @@ books %>%
   count(title)
 ```
 
-## 훈련/시험 데이터 쪼개기 {#tidytext-split}
+# 훈련/시험 데이터 쪼개기 [^useR2020-tutorial] {#tidytext-split}
+
+[^useR2020-tutorial]: [Emil Hvitfeldt, Julia Silge (24 July 2020), "Predictive modeling with text using tidy data principles", Materials for our useR! 2020 ](https://github.com/EmilHvitfeldt/useR2020-text-modeling-tutorial)
 
 `rsample` 팩키지 `initial_split()` 함수로 훈련/시험 데이터를 7:3으로 쪼갠다.
 
@@ -83,49 +93,115 @@ train_df <- training(books_split)
 test_df <- testing(books_split)
 ```
 
-## 피처 공학(feature engineering) {#tidytext-feature-engineering}
+# 피처 공학(feature engineering) {#tidytext-feature-engineering}
 
 `textrecipes` 팩키지를 사용하여 텍스트에 대한 전처리 작업을 수행하여 피처 공학을 통해 `basetable`을 제작한다.
-[`textrecipes`](https://github.com/tidymodels/textrecipes)는 토큰화, 불용어 제거 등이 포함된다.
+[`textrecipes`](https://github.com/tidymodels/textrecipes)는 토큰화, 불용어 제거 등이 포함된다. `max_tokens = tune()`를 도입하여 최대 토큰수도 튜닝하여 결정한다.
 
 ```{r tidytext-fe}
 library(textrecipes)
+library(stopwords)
 
-book_rec <- recipe(title ~ ., data = train_df) %>%
-  step_filter(text != "") %>%
-  step_tokenize(text) %>%
-  step_stopwords(text, keep = TRUE) %>%
-  step_untokenize(text) %>%
-  step_tokenize(text, token = "ngrams", options = list(n = 3, n_min = 1)) %>%
-  step_tokenfilter(text, min_times = 10) %>%
-  step_tf(text) %>%
-  prep(training = train_df)
+title_rec <- recipe(title ~ ., data = train_df) %>%
+  step_filter(text != "") %>% 
+  step_tokenize(text) %>% 
+  step_ngram(text, num_tokens = 2, min_num_tokens = 1) %>%
+  step_tokenfilter(text,  max_tokens = 250) %>%
+  step_tfidf(text)
 
-book_rec
-
-book_train_baked <- juice(book_rec)
-book_test_baked  <- bake(book_rec, test_df)
+title_rec %>% prep() %>% juice()
 ```
 
 
-## 모형 적합 {#tidytext-fit}
+# 모형 선정 {#tidytext-spec}
 
-`XGBoost` 예측모형을 저작 분류문제를 해결하는데 사용한다.
+`XGBoost` 예측모형을 저작 분류문제를 해결하는데 사용할 수 도 있는데, 
+텍스트 데이터에 기반하여 분류기를 제작할 경우 다음 모형이 상대적으로 컴퓨팅 자원도 적게 소모하면서 더 좋은 성능을 보여준다.
+이유는 Basetable 모형행렬이 매우 성긴 구조를 갖기 때문에 다음 모형이 XGBoost, Random Forest 와 같은 나무모형보다 권장된다.
 
-```{r tidytext-fit}
-title_xgb <- boost_tree(
-    mode = "classification",
-    learn_rate = 0.1,
-    tree_depth = 5,
-    sample_size = 1) %>%
-  set_engine("xgboost") %>%
-  fit(title ~ ., data = book_train_baked)
+- `glmnet`: Regularized linear models
+- SVM: Support vector machines
+- 나이브 베이즈: naive Bayes
+
+```{r tidytext-model-spec}
+lasso_spec <- logistic_reg(penalty = tune(), mixture = 1) %>%
+  set_mode("classification") %>%
+  set_engine("glmnet")
+lasso_spec
 ```
 
 
-## 모형 평가 {#tidytext-evaluate}
+## CV & 초모수 격자탐색 {#tidytext-spec-hyper-parameter}
 
-`XGBoost` 예측모형을 활용하여 시험 데이터에 대한 예측값과 확률을 계산한다.
+`glmnet` Lasso 회귀모형을 적합시킬 때 초모수(hyper paramter) 하나를 특정해야한다. 
+이를 위해서 다음과 같이 격자탐색기를 특정하고 이를 교차검증표본(Cross Validation)으로 초모수를 특정한다.
+
+
+```{r tidytext-model-hyper-parameter}
+param_grid <- grid_regular(
+  penalty(range = c(-4, 0)),
+  levels = 10
+)
+param_grid
+```
+
+초모수 특정을 위해서 빵과 버터, 김치와 밥처럼 함께 따라다니는 것이 교차검증표본(Cross Validation)이다.
+`vfold_cv()` 함수를 가장 많이 사용한다. 
+
+
+```{r tidytext-model-vfolds}
+title_folds <- vfold_cv(train_df, strata = title)
+title_folds
+```
+
+
+# 작업흐름(workflow) {#setup-workflow-title}
+
+`workflow()`를 통해 앞서 훈련/시험 분리, 전처리, 예측모형, 모형 공식 등을 모듈화시킨 것을 한곳으로 연결시켜 자동화한다.
+
+
+```{r tidytext-workflow-automation}
+title_wf <- workflow() %>%
+  add_recipe(title_rec) %>%
+  add_model(lasso_spec)
+
+title_wf
+```
+
+## 초모수 특정 {#setup-workflow-title}
+
+`glmnet` 모형에서 특정되지 않는 `penalty = `를 CV로 튜닝하여 최적 초모수를 잡아낸다.
+
+```{r tidytext-workflow-tune}
+library(tictoc)
+
+tic()
+# doParallel::registerDoParallel() #윈도우에서 오류가 생김
+
+lasso_rs <- tune_grid(
+  title_wf,
+  resamples = title_folds,
+  grid = param_grid, 
+  control = control_grid(save_pred = TRUE, verbose = TRUE)
+) 
+toc()
+
+lasso_rs
+```
+
+
+# 모형 평가 {#tidytext-evaluate}
+
+
+
+```{r}
+lasso_rs %>% 
+  collect_metrics()
+```
+
+
+
+
 
 ```{r tidytext-evaluate}
 book_pred_df <- book_test_baked %>%

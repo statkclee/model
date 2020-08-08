@@ -52,11 +52,11 @@ title: 데이터 과학 -- 모형
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
     - [포켓몬 PCA](model-pokemon-unsupervised.html)        
-    - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
     - [펭귄 성별예측모형: `tidymodels`](tidyverse-parsnip-penguin.html)
     - [펭귄 성별예측모형: `tidymodels` - Hyper Parameter](tidyverse-parsnip-penguin-hyper-parameter.html)
     - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)    
-- [GDPR powered by `tidymodels`, `shiny`, `dalex`, `plumber`](model-explain.html)
+    - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
+        - [GDPR powered by `tidymodels`, `shiny`, `dalex`, `plumber`](model-explain.html)
     - [GDPR 벌금 예측모형: EDA](model-gdpr-fine.html)
     - [예측모형 GDPR: 설명가능한 특정 모형](model-gdpr-challenge.html)
     - [예측모형 GDPR: `tidymodels`](model-gdpr-regression.html): 2020-07-21
