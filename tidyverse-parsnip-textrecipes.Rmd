@@ -172,7 +172,7 @@ title_wf
 
 `glmnet` 모형에서 특정되지 않는 `penalty = `를 CV로 튜닝하여 최적 초모수를 잡아낸다.
 
-```{r tidytext-workflow-tune, eval = FALSE}
+```{r tidytext-workflow-tune, eval = TRUE}
 library(tictoc)
 
 tic()
