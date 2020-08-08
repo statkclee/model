@@ -193,36 +193,49 @@ lasso_rs %>%
 
 # 모형 평가 {#tidytext-evaluate}
 
+2020-08-08 현재 윈도우10에서 돌릴 경우 여러 문제가 생기기 때문에 가능하면 맥이나 리눅스에서 직접 돌리는 것이 문제의 본질에 집중할 수 있을 것으로 보인다. 맥에서 돌린 모형 결과를 윈도우에서 가져와서 나머지 작업을 이어서 한다.
 
 
 ```{r tidytext-evaluate-lasso}
-lasso_rs <- reade_rds("data/lasso_rs.rds")
+lasso_rs <- read_rds("data/lasso_rs.rds")
 lasso_rs %>% 
   collect_metrics()
 ```
 
 
+## 라소모형 시각화 {#visualize-lasso-penality}
 
+`autoplot()` 혹은 `select_best()` 함수를 사용해서 초모수 튜닝 결과를 다음 후속 모형평가와 예측에 사용할 수 있다.
 
+```{r visualize-lasso-penality-paramter}
+lasso_rs %>% 
+  autoplot()
+```
 
-```{r tidytext-evaluate}
-book_pred_df <- book_test_baked %>%
-  select(title) %>%
-  bind_cols(
-    book_class = predict(title_xgb, new_data=book_test_baked),
-    book_prop  = predict(title_xgb, new_data=book_test_baked, type="prob")
-  )
+## ROC 시각화 {#visualize-rocauc}
 
-book_pred_df %>% 
-  sample_n(100) %>% 
-  DT::datatable()
+ROC 곡선을 그려 모형 성능에 대한 시각화 작업을 수행한다.
+
+```{r visualize-roc}
+best_roc_auc <- select_best(lasso_rs, "roc_auc")
+best_roc_auc
+```
+
+`collect_predictions()` 함수는 앞선 예측값에 더하여 ROC 곡선생성에 필요한 확률값도 함께 포함하고 있다.
+이를 입력값으로 삼아 `roc_curve()`를 그릴 수 있다.
+
+```{r tidytext-evaluate-prediction}
+collect_predictions(lasso_rs, parameters = best_roc_auc) %>%
+  group_by(id) %>%
+  roc_curve(truth = title, `.pred_Pride and Prejudice`) %>%
+  autoplot()
 ```
 
 예측모형 성능에 대한 주요 측도를 뽑아본다.
 
 ```{r tidytext-performance-metrics}
-book_pred_df %>%
-  conf_mat(title, .pred_class ) %>%
+collect_predictions(lasso_rs, parameters = best_roc_auc) %>%
+  conf_mat(truth = title, `.pred_class`) %>% 
   summary() %>% 
   select(-.estimator) %>%
   filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) 
@@ -231,7 +244,78 @@ book_pred_df %>%
 `roc_curve()`와 `autoplot()`을 쭉 연결시켜 시각화를 빠르게 수행한다.
 
 ```{r tidytext-roc-curve-fit}
-book_pred_df %>% 
+collect_predictions(lasso_rs, parameters = best_roc_auc) %>%
+  roc_curve(title, `.pred_Pride and Prejudice`) %>%
+  autoplot()
+```
+
+
+# 변수 중요도 {#textrecipe-variable-importance}
+
+`title_wf`에 초모수 튜닝 결과를 반영시켜 최종 작업흐름을 완성한다.
+이를 위해서 사용되는 함수가 `finalize_workflow()`다.
+
+```{r final-model}
+wf_spec_final <- finalize_workflow(title_wf, best_roc_auc)
+wf_spec_final
+```
+
+
+`vip` 팩키지를 동원해서 변수중요도를 추출하는데 먼저 데이터프레임을 준비한다.
+
+```{r model-final-vip}
+library(vip)
+
+vi_data <- wf_spec_final %>%
+  fit(train_df) %>%
+  pull_workflow_fit() %>%
+  vi(lambda = best_roc_auc$penalty) %>%
+  mutate(Variable = str_remove_all(Variable, "tfidf_text_")) %>%
+  filter(Importance != 0)
+
+vi_data
+```
+
+오만과 편견(Pride and Prejudice), 셜록홈즈의 모험(The Adventures of Sherlock Holmes)으로 분류하는데 큰 영향을 주는 변수를 상위 20개만 뽑아 시각화해서 서로 비교해보자.
+
+
+```{r visualize-variable-importance}
+vi_data %>%
+  mutate( Importance = abs(Importance)) %>%
+  filter(Importance != 0) %>%
+  group_by(Sign) %>%
+  top_n(20, Importance) %>%
+  ungroup() %>%
+  mutate(Sign = factor(Sign, c("POS", "NEG"), c("Holmes", "Pride"))) %>%
+  ggplot(aes(x = Importance,y = fct_reorder(Variable, Importance), fill = Sign)) +
+    geom_col(show.legend = FALSE) +
+    scale_x_continuous(expand = c(0, 0)) +
+    facet_wrap(~Sign, scales = "free") +
+    labs(y = NULL )
+```
+
+
+# 최종 모형 및 성능 {#textrecipe-deploy}
+
+이제 예측모형을 마지막 배포하기에 앞서 시험데이터(test data)를 통해서 최종 모형 성능화 예측모형을 완성시켜보자.
+
+```{r visualize-deploy-predictive-model}
+final_fit <- last_fit(wf_spec_final, books_split)
+final_fit
+```
+
+초모수 튜닝까지 끝난 최종 모형에 대한 평가측도는 다음과 같다.
+
+```{r deploy-model-metrics}
+final_fit %>%
+  collect_metrics()
+```
+
+`collect_predicions()` 함수와 `roc_curve()` 함수를 사용해서 시각화하자.
+
+```{r autoplot_roc-final-visualize}
+final_fit %>%
+  collect_predictions() %>%
   roc_curve(title, `.pred_Pride and Prejudice`) %>%
   autoplot()
 ```
