@@ -172,11 +172,11 @@ title_wf
 
 `glmnet` 모형에서 특정되지 않는 `penalty = `를 CV로 튜닝하여 최적 초모수를 잡아낸다.
 
-```{r tidytext-workflow-tune}
+```{r tidytext-workflow-tune, eval = FALSE}
 library(tictoc)
 
 tic()
-# doParallel::registerDoParallel() #윈도우에서 오류가 생김
+doParallel::registerDoParallel() #윈도우에서 오류가 생김
 
 lasso_rs <- tune_grid(
   title_wf,
@@ -186,7 +186,8 @@ lasso_rs <- tune_grid(
 ) 
 toc()
 
-lasso_rs
+lasso_rs %>% 
+  write_rds("data/lasso_rs.rds")
 ```
 
 
@@ -194,7 +195,8 @@ lasso_rs
 
 
 
-```{r}
+```{r tidytext-evaluate-lasso}
+lasso_rs <- reade_rds("data/lasso_rs.rds")
 lasso_rs %>% 
   collect_metrics()
 ```
