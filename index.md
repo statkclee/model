@@ -54,7 +54,8 @@ title: 데이터 과학 -- 모형
     - [포켓몬 PCA](model-pokemon-unsupervised.html)        
     - [펭귄 성별예측모형: `tidymodels`](tidyverse-parsnip-penguin.html)
     - [펭귄 성별예측모형: `tidymodels` - Hyper Parameter](tidyverse-parsnip-penguin-hyper-parameter.html)
-    - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)    
+    - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)
+    - [펭귄 성별예측모형 설명: `tidymodels` - MDP / DALEX](tidyverse-parsnip-penguin-DALEX.html)
     - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
         - [GDPR powered by `tidymodels`, `shiny`, `dalex`, `plumber`](model-explain.html)
     - [GDPR 벌금 예측모형: EDA](model-gdpr-fine.html)
@@ -65,10 +66,10 @@ title: 데이터 과학 -- 모형
         + [DALEX - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-dalex.html)
         + [DALEX + `caret` - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-caret-dalex.html)
         + [DALEX - $H_2O$, `mpg`와 `attrition` 데이터](model-h2o-dalex.html)
-    - 모형 시각화
-        + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
-        + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
-        + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
+- 모형 시각화
+    + [회귀모형 - `purrr` + `trelliscopejs`](model_purrr_trelliscopejs.html)
+    + [비지도학습 tsne - `mtcars`](model_tsne_mtcars.html)
+    + [만성 신부전증(Kidney) 예측 - LIME](model_kidney-lime.html)
 - 모형 평가
     - [tidyposterior](model-tidyposterior.html)
     - [예측모형 가치(Business Value)](model-business-value.html)
