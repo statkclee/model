@@ -41,10 +41,14 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 
 ## DALEX 환경설정  {#explainable-AI-packages}
 
+[DALEX](https://modeloriented.github.io/DALEX/) 설치 후 `install_dependencies()` 함수로 관련 의존성을 모두 설치한다.
+[`modelStudio`](https://cran.r-project.org/web/packages/modelStudio/index.html)는 기계학습 예측모형에 대한 탐색적 분석을 자동화할 수 있게 도와준다.
+
 ```{r load-packages}
 library(tidyverse)
 library(tidymodels)
 library(DALEX)
+# install_dependencies()
 library(modelStudio)
 ```
 
@@ -79,9 +83,11 @@ penguin_fit <- fit(penguin_wf, penguin_df)
 
 # 모형 설명
 
+y_penguin <- as.numeric(penguin_df$sex)
+
 explainer <- explain(penguin_fit,
                      data = penguin_df,
-                     y = penguin_df$sex,
+                     y = y_penguin,
                      label = "Penguin GLM")
 
 modelStudio(explainer)
@@ -92,7 +98,7 @@ modelStudio(explainer)
 
 먼저 펭귄 성별 예측모형을 가져와서 정상 동작여부를 파악한다. 헬로우 월드를 던져본다. 맥에서는 잘됐는데 윈도우에서는 안된다.
 
-```{r read-predictive-model}
+```{r read-predictive-model, eval =FALSE}
 penguin_predictvie_model <- read_rds("data/penguin_predictvie_model.rds")
 
 obs_df <- tibble("species" = "Adelie",
@@ -104,9 +110,12 @@ obs_df <- tibble("species" = "Adelie",
 predict(penguin_predictvie_model, obs_df)
 ```
 
-## `parsnip` 예측모형 {#parsnip-penguin-predictive-model}
+## `parsnip` 예측모형 [^predictive-model] {#parsnip-penguin-predictive-model}
+
+[^predictive-model]: [ModelStu002](https://rpubs.com/subasish/577019)
 
 ```{r penguin-workflow-vanilla}
+library(ranger)
 # 데이터 가져오기
 tuesdata <- tidytuesdayR::tt_load('2020-07-28')
 
@@ -118,9 +127,9 @@ penguin_df <- tuesdata$penguins %>%
 
 # 모형적합
 
-penguin_fit <- logistic_reg() %>%
-  set_mode("classification") %>% 
-  set_engine("glm") %>% 
+penguin_fit <- rand_forest() %>%
+  set_mode("classification") %>%
+  set_engine("ranger") %>%
   fit(sex ~ ., data = penguin_df)
 
 # 모형 설명
@@ -131,11 +140,18 @@ custom_predict <- function(object, newdata) {
   return(response)
 }
 
+y_penguin <- as.numeric(penguin_df$sex)
+
 explainer <- DALEX::explain(penguin_fit,
                             data = penguin_df,
-                            y = penguin_df$sex,
-                            label = "Penguin GLM",
-                            predict_function = custom_predict)
+                            y = y_penguin)
 
-modelStudio(explainer)
+obs_df <- tibble("species" = "Adelie",
+                  "bill_length_mm" =  39.1,
+                  "bill_depth_mm" =  18.7,
+                  "flipper_length_mm" =  181,
+                  "body_mass_g" = 3750)
+
+modelStudio(explainer, new_observation = obs_df)
+
 ```
