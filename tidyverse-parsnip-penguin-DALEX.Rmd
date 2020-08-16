@@ -36,62 +36,106 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 ```
 
 
-# 모델 개발 프로세스 [^dr-why] {#DALEX-MDP}
+# 설명가능한 AI 환경설정 {#explainable-AI}
 
-[^dr-why]: [Collection of tools for Visual Exploration, Explanation and Debugging of Predictive Models](https://github.com/ModelOriented/DrWhy/blob/master/README.md)
 
-RUP에서 영감을 받아 개발된 모형개발 프로세스(Model Development Process) [@biecek2019model]를 활용하여 예측모형 개발 전반 과정을 현대화시킬 수 있다.
+## DALEX 환경설정  {#explainable-AI-packages}
 
-```{r model-development-process}
+```{r load-packages}
 library(tidyverse)
-library(slickR)
-library(pdftools)
-
-MDP_pdf <- pdf_convert("data/ModelDevelopmentProcess.pdf", format = 'png',verbose = FALSE)
+library(tidymodels)
+library(DALEX)
+library(modelStudio)
 ```
 
-논문이 그리 길지 않기 때문에 전체 PDF 파일을 다운로드 받아 PNG 파일로 변환시키고 나서 이를 회전목마처럼 중요부분을 일별할 수 있게 만들어보자.
 
-```{bash move-png-to-data-directory}
-mv Model*.png data/
+## `workflow` 예측모형 {#explainable-AI-packages}
+
+`workflow` 객체를 `explainer` 객체로 변환할 때 다음 오류로 윈도우에서는 동작이 제대로 되지 않고 있다.
+
+> Error in UseMethod("explain") : <br>
+>   no applicable method for 'explain' applied to an object of class "workflow"
+
+```{r penguin-workflow, eval = FALSE}
+# 데이터 가져오기
+tuesdata <- tidytuesdayR::tt_load('2020-07-28')
+
+# Basetable 준비
+penguin_df <- tuesdata$penguins %>% 
+  filter(!is.na(sex)) %>%
+  select(-year, -island) %>% 
+  mutate_if(is.character, as.factor)
+
+# 모형적합
+glm_spec <- logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") 
+
+penguin_wf <- workflow() %>%
+  add_formula(sex ~ .) %>% 
+  add_model(glm_spec)
+
+penguin_fit <- fit(penguin_wf, penguin_df)
+
+# 모형 설명
+
+explainer <- explain(penguin_fit,
+                     data = penguin_df,
+                     y = penguin_df$sex,
+                     label = "Penguin GLM")
+
+modelStudio(explainer)
 ```
 
-소프트웨어 개발 프로세스에서 많은 부분 차용을 해왔으며, 특히 예측모형 개발 전반을 다루는 거의 유일한 모형 개발 방법론이 아닐까 싶다.
 
-```{r MDP-model-process}
-MDP_pdf_df <- tibble(page = glue::glue("data/{MDP_pdf}") )
-  
-slickR(MDP_pdf_df$page, height = 800)
+## 예측모형 가져오기 {#explainable-AI-model}
+
+먼저 펭귄 성별 예측모형을 가져와서 정상 동작여부를 파악한다. 헬로우 월드를 던져본다. 맥에서는 잘됐는데 윈도우에서는 안된다.
+
+```{r read-predictive-model}
+penguin_predictvie_model <- read_rds("data/penguin_predictvie_model.rds")
+
+obs_df <- tibble("species" = "Adelie",
+                  "bill_length_mm" =  39.1,
+                  "bill_depth_mm" =  18.7,
+                  "flipper_length_mm" =  181,
+                  "body_mass_g" = 3750)
+
+predict(penguin_predictvie_model, obs_df)
 ```
 
-## `MDPverse` {#MDPverse}
+## `parsnip` 예측모형 {#parsnip-penguin-predictive-model}
 
-모형 개발과정을 크게 4단계(Problem formulation, Crisp Modeling, Fine tuning, Maintaining and decommissioning)로 나누고 각 단계별로 총 5개의 세부 추진 업무(Data preparation, Data understanding, Model assembly, Model audit, Model delivery)를 나열하고 있다.
+```{r penguin-workflow-vanilla}
+# 데이터 가져오기
+tuesdata <- tidytuesdayR::tt_load('2020-07-28')
 
-![](fig/DALEXverse.png)
+# Basetable 준비
+penguin_df <- tuesdata$penguins %>% 
+  filter(!is.na(sex)) %>%
+  select(-year, -island) %>% 
+  mutate_if(is.character, as.factor)
 
-## 탐색적 모형 분석 문법(grammar) {#explanatory-model-analysis}
+# 모형적합
 
-탐색적 데이터 분석(Explanatory Data Analysis, EDA)과 마찬가지로 탐색적 모형 분석(Explanatory Model Analysis, EMA)과정에 더해서 최근 각광받고 있는 문법(grammar)도 추가된 Dr Why가 제시되었다. 크게 다음과 같은 세가지 과정을 거치게 된다.
+penguin_fit <- logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") %>% 
+  fit(sex ~ ., data = penguin_df)
 
-- 모형 공장 (Model Factory): tidymodels, mlr, caret, h2o 등에서 다양한 예측모형이 생성된다.
-- 모형 어댑터 (Model Adapter): 탐색적 모형 분석을 위해서 모형공장에서 생성된 서로 다른 내부 모형 표현, 모수, 모형 예측 형태를 비교가능한 동일한 형태로 변환시키는 과정
-- 모형 설명자 (Model Explainers): 시각적 모형 탐색, 설명, 디버깅을 지원하고 로컬(인스턴스 수준)과 글로벌(배치 수준) 모형 탐색도 가능하게 한다.
+# 모형 설명
 
-![](fig/grammar_of_explanations.png)
+custom_predict <- function(object, newdata) {
+  pred <- predict(object, newdata)
+  response <- pred$.pred
+  return(response)
+}
 
-## 한걸음 더 들어가보자 {#explanatory-model-analysis-function}
+explainer <- DALEX::explain(penguin_fit,
+                            data = penguin_df,
+                            y = penguin_df$sex,
+                            label = "Penguin GLM",
+                            predict_function = custom_predict)
 
-한걸음 더 들어가게 되면 DrWhy 체계는 모형공장(Model Factory)와 데이터를 입력값으로 받아 DALEX2가 모형 어댑터로 다양한 예측모형을 `explain()`, `predict()`, `loss_function()`을 활용하여 표준화시켜 탐색적 모형 분석을 가능하게 한다. 
-
-
-![](fig/DrWhy.png)
-
-## 탐색적 모형 분석 책 [@biecek2020explanatory] {#EMA-book}
-
-Przemyslaw Biecek 와 Tomasz Burzykowski이 저술한 Explanatory model analysis: Explore, explain and examine predictive models 책을 기준으로 펭귄 성별 예측을 시도해보자.
-
-
-![](fig/UMEPpiramide.png)
-
-
+modelStudio(explainer)
+```
