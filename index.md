@@ -57,13 +57,14 @@ title: 데이터 과학 -- 모형
     - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)
     - [`tidymodels` - MDP / DALEX](tidyverse-parsnip-DALEX.html)
         - [펭귄 성별예측모형 설명: `tidymodels` - MDP / DALEX](tidyverse-parsnip-penguin-DALEX.html)
-    - [`parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
-        - [GDPR powered by `tidymodels`, `shiny`, `dalex`, `plumber`](model-explain.html)
     - [펭귄 성별예측모형: `tidyposterior`](model-tidyposterior.html)
-- GDPR
+    - [펭귄 성별예측모형: `tidymodels` - Shiny](tidyverse-parsnip-penguin-shiny.html)
+- **GDPR**
     - [GDPR 벌금 예측모형: EDA](model-gdpr-fine.html)
     - [예측모형 GDPR: 설명가능한 특정 모형](model-gdpr-challenge.html)
     - [예측모형 GDPR: `tidymodels`](model-gdpr-regression.html): 2020-07-21
+    - [책 저자 분류모형: `parsnip` + `tidytext` + `textrecipes`](tidyverse-parsnip-textrecipes.html) 
+        - [GDPR powered by `tidymodels`, `shiny`, `dalex`, `plumber`](model-explain.html)
     - [예측모형 (caret+DALEX+biz) - 뉴욕과 SF 부동산](model-r2d3-dalex-with-biz.html) 
         + [DALEX - mpg(연비 데이터)](model-mpg-dalex.html)
         + [DALEX - R2D3, 뉴욕과 SF 부동산 분류 데이터](model-r2d3-dalex.html)

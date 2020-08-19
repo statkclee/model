@@ -1,0 +1,49 @@
+---
+title: "합을 구하는 매우 단순한 앱"
+author: "Tidyverse Korea"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    social: menu
+    source_code: embed
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+library(shiny)
+library(tidyverse)
+library(shinydashboard)
+library(tidymodels)
+
+calculate_sum <- function(x, y) {
+    res <- x + y
+    return(res)
+}
+```
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+```{r input}
+sliderInput('firstNumber', 'First Number', min=1, max=100,
+            value=50, step=1, round=0)
+
+sliderInput('secondNumber', 'Second Number', min=1, max=100,
+            value=50, step=1, round=0)
+```
+
+두 숫자를 받아 합을 구하는 Flexdashboard 앱.
+
+Row
+-----------------------------------------------------------------------
+
+### 구하라 두 숫자 합계
+    
+```{r calculate-sum}
+
+first  <- reactive(as.integer(input$firstNumber))
+second <- reactive(as.integer(input$secondNumber))
+
+renderText(glue::glue("합계: {first() + second()}"))
+```
+
