@@ -40,7 +40,7 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 가장 기본적인 기능이 담긴 Simple Dashboard 앱을 제작해보자. 즉, 두개 입력을 받아 함수 연산을 한 후에 출력을 만들어내는 것이다.
 두개의 입력은 숫자고 함수 연산은 덧셈이지만 이 기본적인 기능이 예측모형 출력결과를 나타내는데 큰 도움이 된다.
 
-```{r download-file}
+```{r download-simple-dashboard}
 xfun::embed_file('penguin_shiny/simple_dashboard.Rmd')
 ```
 
@@ -59,8 +59,8 @@ xfun::embed_file('penguin_shiny/simple_dashboard.Rmd')
 `flexdashboard` Layout 문법에 맞춰 4개의 입력값을 받아 이를 제대로 전달되는지 확인하다.
 본격적으로 예측모형과 연결시키지 않고 단순히 펭귄 성별과 성별예측확률은 난수를 생성하여 기본 기능을 처리한다.
 
-```{r download-file}
-xfun::embed_file('penguin_shiny/simple_dashboard_ui.Rmd')
+```{r download-penguin-ui}
+xfun::embed_file('penguin_shiny/penguin_dashboard_ui.Rmd')
 ```
 
 
@@ -69,5 +69,11 @@ xfun::embed_file('penguin_shiny/simple_dashboard_ui.Rmd')
 
 # 예측모형 서버 구현 {#dashboard-server-wireframe-flexdashboard}
 
+`tidymodels`로 개발한 예측모형을 `flexdashboard`에 연결시키 위해서는 입력변수가 reactive 라는 특성을 갖기 때문에 이를 데이터프레임, 예측모형 추론, 성별 예측과 성별 예측확률에 쭉 연결시키는 점을 유념하여 개발한다.
+
+```{r download-penguin-server}
+xfun::embed_file('penguin_shiny/penguin_dashboard.Rmd')
+```
 
 
+![](fig/penguin-shiny-predictive-model.gif)

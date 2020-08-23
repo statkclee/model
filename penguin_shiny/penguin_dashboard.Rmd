@@ -39,41 +39,56 @@ Column {data-width=600}
 -------------------------------------
 
 ```{r penguin-features}
+library(tidyverse)
+library(tidymodels)
+
 bill_length_mm  <- reactive(as.integer(input$bill_length_mm))
 bill_depth_mm  <- reactive(as.integer(input$bill_depth_mm))
 flipper_length_mm  <- reactive(as.integer(input$flipper_length_mm))
 body_mass_g  <- reactive(as.integer(input$body_mass_g))
-```
 
-```{r penguin-predictive-model}
-library(tidyverse)
-library(tidymodels)
-
-penguin_predictvie_model <- read_rds("../data/penguin_predictvie_model.rds")
-
-obs_df <- tibble("species" = "Adelie",
-                  "bill_length_mm" =  39.1,
-                  "bill_depth_mm" =  18.7,
-                  "flipper_length_mm" =  181,
-                  "body_mass_g" = 3750)
-
-predict(penguin_predictvie_model, obs_df)
+# penguin_df <- tibble("species" = "Adelie",
+#                   "bill_length_mm" =  39.1,
+#                   "bill_depth_mm" =  18.7,
+#                   "flipper_length_mm" =  181,
+#                   "body_mass_g" = 3750)
 
 ```
 
-    
 ### 성별
     
 ```{r predict-gender}
-random_penguin <- sample(c("Chinstrap","Gentoo", "Adelie"), size =1)
-renderText(glue::glue("- Penguin: {random_penguin}"))
+# random_penguin <- sample(c("Chinstrap","Gentoo", "Adelie"), size =1)
+# renderText(glue::glue("- Penguin: {random_penguin}"))
+
+penguin_predictvie_model <- read_rds("../data/penguin_predictvie_model.rds")
+
+penguin_df <- reactive({
+  tibble("species" = "Adelie",
+                     "bill_length_mm" =  input$bill_length_mm,
+                     "bill_depth_mm" =  input$bill_depth_mm,
+                     "flipper_length_mm" =  input$flipper_length_mm,
+                     "body_mass_g" = input$body_mass_g)
+  })
+
+pred_sex <- reactive({
+  predict(penguin_predictvie_model, penguin_df()) %>% unlist %>% as.character
+})
+
+renderPrint(pred_sex())
 ```
 
 ### 성별 확률
     
 ```{r predict-gender-probability}
-prob_penguin <- runif(n=1, min=0.5, max=1)
-renderText(glue::glue("- Penguin Prob : {round(prob_penguin*100,2)} %"))
+# prob_penguin <- runif(n=1, min=0.5, max=1)
+# renderText(glue::glue("- Penguin Prob : {round(prob_penguin*100,2)} %"))
+
+prob_sex <- reactive({
+  predict(penguin_predictvie_model, penguin_df(), type="prob")[,1]
+})
+
+renderText(glue::glue("- Penguin Prob : {round(prob_sex()*100,2)} %"))
 ```
 
    
