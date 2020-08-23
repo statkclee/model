@@ -47,4 +47,3 @@ second <- reactive(as.integer(input$secondNumber))
 renderText(glue::glue("합계: {first() + second()}"))
 
 ```
-

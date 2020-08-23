@@ -36,7 +36,12 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 # 간단한 flexdashboard 앱 {#very-simple-flexdashboard-app}
 
+
+
 ```{r download-file}
 xfun::embed_file('penguin_shiny/simple_dashboard.Rmd')
 ```
+
+
+![](fig/simple_app.gif)
 
