@@ -3,7 +3,7 @@ title: "합을 구하는 매우 단순한 앱"
 author: "Tidyverse Korea"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: rows
+    orientation: columns
     social: menu
     source_code: embed
 runtime: shiny
@@ -25,25 +25,83 @@ Inputs {.sidebar}
 -----------------------------------------------------------------------
 
 ```{r input}
-sliderInput('firstNumber', 'First Number', min=1, max=100,
-            value=50, step=1, round=0)
 
-sliderInput('secondNumber', 'Second Number', min=1, max=100,
-            value=50, step=1, round=0)
+sliderInput('bill_length_mm', 'Bill Length (mm)', min=32, max=50, value=43, step=1)
+sliderInput('bill_depth_mm',  'Bill Depth (mm)',  min=13, max=22, value=17, step=1)
+sliderInput('flipper_length_mm', 'Flipper Length (mm)', min=170, max=235, value=200, step=1)
+sliderInput('body_mass_g', 'Body Mass (g)', min=2700, max=6300, value=4200, step=100)
+
 ```
 
-두 숫자를 받아 합을 구하는 Flexdashboard 앱.
+펭귄 성별을 예측하는 예측모형
 
-Row
------------------------------------------------------------------------
+Column {data-width=600}
+-------------------------------------
 
-### 구하라 두 숫자 합계
+```{r penguin-features}
+bill_length_mm  <- reactive(as.integer(input$bill_length_mm))
+bill_depth_mm  <- reactive(as.integer(input$bill_depth_mm))
+flipper_length_mm  <- reactive(as.integer(input$flipper_length_mm))
+body_mass_g  <- reactive(as.integer(input$body_mass_g))
+```
+
+```{r penguin-predictive-model}
+library(tidyverse)
+library(tidymodels)
+
+penguin_predictvie_model <- read_rds("../data/penguin_predictvie_model.rds")
+
+obs_df <- tibble("species" = "Adelie",
+                  "bill_length_mm" =  39.1,
+                  "bill_depth_mm" =  18.7,
+                  "flipper_length_mm" =  181,
+                  "body_mass_g" = 3750)
+
+predict(penguin_predictvie_model, obs_df)
+
+```
+
     
-```{r calculate-sum}
+### 성별
+    
+```{r predict-gender}
+random_penguin <- sample(c("Chinstrap","Gentoo", "Adelie"), size =1)
+renderText(glue::glue("- Penguin: {random_penguin}"))
+```
 
-first  <- reactive(as.integer(input$firstNumber))
-second <- reactive(as.integer(input$secondNumber))
+### 성별 확률
+    
+```{r predict-gender-probability}
+prob_penguin <- runif(n=1, min=0.5, max=1)
+renderText(glue::glue("- Penguin Prob : {round(prob_penguin*100,2)} %"))
+```
 
-renderText(glue::glue("합계: {first() + second()}"))
+   
+Column {data-width=400}
+-------------------------------------
+   
+### Bill Length (mm)
+
+```{r penguin-features-bill_length_mm}
+renderText(glue::glue("- Bill Length (mm): {bill_length_mm()}"))
+```
+ 
+### Bill Depth (mm)
+    
+```{r penguin-features-bill_depth_mm}
+renderText(glue::glue("- Bill Depth (mm): {bill_depth_mm()}"))
+```
+
+
+### Flipper Length (mm)
+    
+```{r penguin-features-flipper_length_mm}
+renderText(glue::glue("- Bill Depth (mm): {flipper_length_mm()}"))
+```
+
+### Body Mass (g)
+    
+```{r penguin-features-body_mass_g}
+renderText(glue::glue("- Body Mass (g): {body_mass_g()}"))
 ```
 
