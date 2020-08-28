@@ -1,0 +1,202 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "펭귄 성별예측모형: `tidymodels` - XGBoost"
+author:
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+```
+
+#`tidymodels`와 XGBoost [^tychobra-xgboost] [^Lightgbm-tidymodels]  {#tidymodels-xgboost}
+
+[^tychobra-xgboost]: [Andy Merlino and Nick Merlino (2020/05/19), "Using XGBoost with Tidymodels"](https://www.tychobra.com/posts/2020-05-19-xgboost-with-tidymodels/)
+
+[^Lightgbm-tidymodels]: [Roel's R-tefacts (August 27, 2020), "How to Use Lightgbm with Tidymodels - Treesnip standardizes everything"](https://blog.rmhogervorst.nl/blog/2020/08/27/how-to-use-lightgbm-with-tidymodels-framework/)
+
+"Deep Learning in R" 책에서 François Chollet 와 JJ Allaire는 다음과 같이 XGBoost 의 가치를 평가했다. 즉, 직사각형 정형 데이터에는 XGBoost가 적합하고 비정형 데이터는 딥러닝 모형이 첫번째 데이터 과학자의 도구가 된다. 
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
+</style>
+<div class = "blue">
+
+In 2016 and 2017, Kaggle was dominated by two approaches: gradient boosting machines and deep learning. Specifically, gradient boosting is used for problems where structured data is available, whereas deep learning is used for perceptual problems such as image classification. Practitioners of the former almost always use the excellent XGBoost library.
+
+These are the two techniques you should be the most familiar with in order to be successful in applied machine learning today: gradient boosting machines, for shallow-learning problems; and deep learning, for perceptual problems. In technical terms, this means you’ll need to be familiar with XGBoost and Keras—the two libraries that currently dominate Kaggle competitions.
+</div>
+
+## `treesnip` {#tidymodels-tools}
+
+[`treesnip`](https://github.com/curso-r/treesnip/) 팩키지를 통해서 다음 의사결정나무모형을 활용할 수 있다.
+
+- `tree` 엔진: `decision_tree()`
+- `catboost` 엔진: `boost_tree()`
+- `lightGBM` 엔진: `boost_tree()`
+
+## Hyper Parameter {#tidymodels-hyperparameter}
+
+의사결정나무로 예측모형을 개발할 때 모형별로 Hyper Paramter를 튜닝하여 선정해야 한다.
+
+### **decision_tree()** {#tidymodels-hyperparameter-decision-tree}
+
+```{r tidymodels-hyperparameter-decision-tree}
+library(tidyverse)
+
+tibble::tribble(
+  ~ parsnip, ~tree, 
+  "min_n", "minsize",
+  "cost_complexity", "mindev"
+) %>% knitr::kable()
+```
+
+### **boost_tree()** {#tidymodels-hyperparameter-boost-tree}
+
+```{r tidymodels-hyperparameter-boost-tree}
+tibble::tribble(
+  ~ parsnip, ~catboost, ~lightGBM,
+  'mtry', 'rsm', 'feature_fraction',
+  'trees', 'iterations', 'num_iterations',
+  'min_n', 'min_data_in_leaf', 'min_data_in_leaf',
+  'tree_depth', 'depth', 'max_depth',
+  'learn_rate', 'learning_rate', 'learning_rate',
+  'loss_reduction', kableExtra::cell_spec('Not found', color = 'red', bold = TRUE), 'min_gain_to_split',
+  'sample_size', 'subsample', 'bagging_fraction'
+) %>% knitr::kable(escape = FALSE) 
+```
+
+## 설치 {#tidymodels-hyperparameter-install}
+
+`devtools::install_github("curso-r/treesnip")` 명령어로 `treesnip`을 설치하여 `parnsip`에서 활용할 수 있도록 한다.
+
+[LightGBM builds](https://github.com/curso-r/lightgbm-build) 저장소를 참고한다. 먼저 맥 운영체제에 필수적인 두가지 도구를 먼저 설치한다.
+
+```{r lightgbm-mac, eval = FALSE}
+brew install gcc
+brew install libomp
+```
+
+```{r install-lightgbm-pkg, eval = FALSE}
+install.packages(
+  sprintf(
+    "https://github.com/curso-r/lightgbm-build/releases/download/macos-r-%d.%d/lightgbm_3.0.0.zip",
+    getRversion()$major, getRversion()$minor
+  ),
+  repos = NULL
+)
+```
+
+
+```{r lightgbm-installl, eval = FALSE}
+# remotes::install_github("curso-r/treesnip")
+
+devtools::install_github("curso-r/rightgbm")
+rightgbm::install_lightgbm()
+```
+
+
+# 작업흐름 {#tidymodels-workflows}
+
+직사각형 정형데이터를 기반으로 예측모형을 작성할 경우 일반적으로 Hyper Parameter를 갖는 모형이 우선 검토 대상이 되며 이를 실제 운영에 활용할 경우 Hyper Parameter를 교차검증 데이터에서 추론하여 가장 성능이 좋은 모형을 실제 운영계로 이관하게 된다. 이 과정에서 예측모형의 성능을 평가하는 내용도 필히 살펴봐야 된다.
+
+- 환경설정 
+    - 데이터와 팩키지 가져오기
+- 훈련/시험 데이터 나누기: `rsample`
+- 데이터 전처리, Feature Engineering: `recipes`
+- 모형 Hyper Parameters 특정 
+    - 교차검정(CV) 데이터 준비: `rsample`
+    - 모형, 모형공식, 전처리를 포함한 작업흐름 생성: `workflows`
+    - 모형 명세서 생성: `parsnip`, `treesnip` (XGBoost)
+    - Hyper Parameter 탐색공간 격자 생성: `dials`
+    - 모형 튜닝 실행:`tune`
+- 모형 튜닝 실행하여 최적 모형 선정
+- 최적 모형 시험(test) 데이터에 적합
+- 시험 데이터로 모형 성능 평가: `yardstick`
+
+
+# `XGBoost` 퍵균 성별 분류기 {#tidymodels-workflows-classifier}
+
+## 환경설정 {#tidymodels-workflows-environment}
+
+`tidymodels`도 `tidyverse`와 마찬가지로 `library(tidymodels)` 명령어로 기계학습에 필요한 팩키지를 모두 가져올 수 있다. `tidytuesdayR`를 활용하여 필요한 데이터도 작업공간에 신속히 올려놓는다.
+
+```{r tidymodels-environment}
+# 팩키지
+
+library(tidyverse)
+library(tidymodels)
+
+# 데이터 
+
+tuesdata <- tidytuesdayR::tt_load('2020-07-28')
+penguin <- tuesdata$penguins
+```
+
+## 데이터 전처리 {#fearture-engineering-tidymodels}
+
+간략하게 데이터 정제작업과 함께 범주형, 숫자형 변수에 대한 Feature Engineering도 함께 작업하고 나서, 훈련, 시험, 교차검증 데이터로 쪼개 후속 작업을 준비한다.
+
+```{r penguin-tidymodels-fe}
+# 데이터 전처리
+penguin_df <- penguin %>%
+  filter(!is.na(sex)) %>%
+  select(-year, -island) %>% 
+  mutate_if(is.character, as.factor)
+
+penguin_rec <- recipe(sex ~ ., data = penguin_df) %>%
+    step_normalize(all_numeric()) %>% 
+    step_novel(all_nominal(), -all_outcomes()) %>% 
+    step_dummy(all_nominal()) %>% 
+    prep()
+
+# 훈련, 시험, 교차검증 데이터
+penguin_split <- initial_split(penguin_df, prop = 0.8, strata = sex)
+penguin_train <- training(penguin_split)
+penguin_test <- testing(penguin_split)
+
+penguin_cv <- vfold_cv(penguin_train, v =10, repeats = 1) 
+```
+
+
+## Hyper Parameter 반영 최적모형 {#hyper-parameter-pengin-model}
+
+```{r penguin-tidymodels-fe-best, eval = FALSE}
+xgboost_spec <-boost_tree(
+        mode = "classification",
+        mtry = tune(), 
+        trees = 1000, 
+        min_n = tune(), 
+        tree_depth = tune(),
+        loss_reduction = tune(), 
+        learn_rate = tune(), 
+        sample_size = tune()
+    ) %>%
+    set_engine("lightgbm", objective = "binary:logistic", verbose = -1)
+```
+

@@ -54,11 +54,12 @@ title: 데이터 과학 -- 모형
     - [포켓몬 PCA](model-pokemon-unsupervised.html)        
     - [펭귄 성별예측모형: `tidymodels`](tidyverse-parsnip-penguin.html)
     - [펭귄 성별예측모형: `tidymodels` - Hyper Parameter](tidyverse-parsnip-penguin-hyper-parameter.html)
-    - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)
+    - [펭귄 성별예측모형: `tidymodels` - `xgBoost`](tidyverse-parsnip-penguin-xgboost.html)
     - [`tidymodels` - MDP / DALEX](tidyverse-parsnip-DALEX.html)
         - [펭귄 성별예측모형 설명: `tidymodels` - MDP / DALEX](tidyverse-parsnip-penguin-DALEX.html)
     - [펭귄 성별예측모형: `tidyposterior`](model-tidyposterior.html)
     - [펭귄 성별예측모형: `tidymodels` - Shiny](tidyverse-parsnip-penguin-shiny.html)
+    - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)
 - **GDPR**
     - [GDPR 벌금 예측모형: EDA](model-gdpr-fine.html)
     - [예측모형 GDPR: 설명가능한 특정 모형](model-gdpr-challenge.html)
@@ -124,7 +125,6 @@ title: 데이터 과학 -- 모형
     - [파이썬 + R - 포도주 품질](model-python-wine.html) 
     - [파이썬 고객이탈 - `xgBoost`](model-python-churn.html) 
         - [파이썬 고객이탈 - `XGBoost` 초모수 튜닝](model-python-xgboost-hyper.html)
-        - [R 고객이탈 - `xgBoost`](model-r-churn.html)
     - [파이썬 예측모형 - 시운전(Dry-Run)](model-python-predictive-model.html)
     - [파이썬 예측모형 - 생애주기(lifecycle)](model-python-predictive-model-lifecycle.html)
     - [파이썬 예측모형 - 교차검증(cross-validation)](model-python-cross-validation.html)
@@ -135,4 +135,3 @@ title: 데이터 과학 -- 모형
 
   </div>
 </div>
-
