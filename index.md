@@ -54,7 +54,7 @@ title: 데이터 과학 -- 모형
     - [포켓몬 PCA](model-pokemon-unsupervised.html)        
     - [펭귄 성별예측모형: `tidymodels`](tidyverse-parsnip-penguin.html)
     - [펭귄 성별예측모형: `tidymodels` - Hyper Parameter](tidyverse-parsnip-penguin-hyper-parameter.html)
-    - [펭귄 성별예측모형: `tidymodels` - `xgBoost`](tidyverse-parsnip-penguin-xgboost.html)
+    - [펭귄 성별예측모형: `tidymodels` - `XGBoost`](tidyverse-parsnip-penguin-xgboost.html)
     - [`tidymodels` - MDP / DALEX](tidyverse-parsnip-DALEX.html)
         - [펭귄 성별예측모형 설명: `tidymodels` - MDP / DALEX](tidyverse-parsnip-penguin-DALEX.html)
     - [펭귄 성별예측모형: `tidyposterior`](model-tidyposterior.html)
