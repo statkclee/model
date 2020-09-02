@@ -1,0 +1,43 @@
+---
+layout: page
+title: "xwMOOC 모형 - `tidymodels`"
+subtitle: "펭귄 성별예측모형: 파이썬 + `Shiny`"
+author:
+  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+  url: https://www.facebook.com/groups/tidyverse/
+  affiliation: Tidyverse Korea
+  affiliation_url: https://www.facebook.com/groups/tidyverse/
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
+---
+ 
+``` {r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+```
+
+# `shiny`와 `scikit-learng` 만남 {#meet-shiny-scikit-learn}
+
+풀고자하는 문제는 가능하면 적은 시간과 노력으로 데이터 과학 해결책을 제시하는 것이다. 몇가지 방식이 있지만, 여기서는 펭귄 성별예측문제를 `shiny` 웹앱으로 서비스를 제공하는데 펭귄 성별 예측모델은 `tidymodels`가 아니라 `scikit-learn`으로 구축한 것을 사용한다. 이러한 접근법은 딥러닝 모형으로 예측모형 서비스를 만들고 빠른 시간내에 MVP 제품을 제작할 경우 큰 효과를 발휘할 수 있다.
+
+![](fig/penguin-python-shiny.png)
+
+
