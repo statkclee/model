@@ -40,6 +40,17 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
 
 ![](fig/penguin-python-shiny.png)
 
+## 파이썬 팩키지 설치 {#install-python-pkg}
+
+RStudio에서 파이썬 코드를 돌리기 위해서 필요한 팩키지 예를 들어 `pandas`, `scikit-learn` 등은 `py_install()` 함수로 설치한다.
+
+```{r install-python-pkg, eval = FALSE}
+library(reticulate)
+py_install("pandas")
+py_install("scikit-learn")
+```
+
+
 # 파이썬 예측모형 [^build-penguin-model] {#build-python-model}
 
 [^build-penguin-model]: [Chanin Nantasenamat (Jul 16 2020), "How to Build a Data Science Web App in Python (Penguin Classifier) - Part 3: ML-Powered Web App in a Little Over 100 Lines of Code"](https://towardsdatascience.com/how-to-build-a-data-science-web-app-in-python-penguin-classifier-2f101ac389f3)
@@ -79,16 +90,18 @@ penguin_df
 import pandas as pd
 penguins = pd.read_csv('data/penguins_cleaned.csv')
 
+penguins_df = penguins[['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g', 'sex']]
+
 # Ordinal feature encoding
 # https://www.kaggle.com/pratik1120/penguin-dataset-eda-classification-and-clustering
-df = penguins.copy()
+df = penguins_df.copy()
 target = 'sex'
-encode = ['species','island']
-
-for col in encode:
-    dummy = pd.get_dummies(df[col], prefix=col)
-    df = pd.concat([df,dummy], axis=1)
-    del df[col]
+# encode = ['species','island']
+# 
+# for col in encode:
+#     dummy = pd.get_dummies(df[col], prefix=col)
+#     df = pd.concat([df,dummy], axis=1)
+#     del df[col]
 
 target_mapper = {'male':0, 'female':1}
 def target_encode(val):
@@ -113,12 +126,44 @@ pickle.dump(clf, open('data/penguins_clf.pkl', 'wb'))
 
 # R 환경에서 테스트 {#build-python-model-test}
 
-```{r }
+파이썬 예측모형이 담긴 피클 파일을 R 환경으로 불러온다. 이를 위해서 `read_pickle.py` 파일에 helper function을 작성하여 이를 함수로 불러올 수 있도록 한다.
+
+```{python reader-pickle, eval = FALSE}
+import pandas as pd
+
+def read_pickle_file(file):
+    pickle_data = pd.read_pickle(file)
+    return pickle_data
+```
+
+파이썬 예측모형 R 환경으로 불러오는 방법은 다음과 같다.
+
+```{r call-pickle}
 library(reticulate)
 
 source_python("code/read_pickle.py")
 penguin_clf <- read_pickle_file("data/penguins_clf.pkl")
 
 penguin_clf
+```
+
+## R 데이터프레임 예측 {#r-dataframe-predict}
+
+먼저 예측에 사용될 펭귄을 데이터프레임으로 추출한다. 그리고 파이썬 성별예측 모형을 R로 불러와서 `predict()`에 넣어 성별을 예측한다. `predict_proba()`에 넣게 되면 숫컷, 암컷 펭귄 확률도 확인이 가능하다.
+
+```{r predict-dataframe}
+unkonwn_penguin <- penguin_df %>% 
+  select(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) %>% 
+  slice(1:10)
+  # sample_n(10)
+
+unkonwn_penguin
+
+penguin_clf$predict(unkonwn_penguin) %>% 
+  bind_cols(unkonwn_penguin) %>% 
+  bind_cols(penguin_clf$predict_proba(unkonwn_penguin)) %>% 
+  rename(pred_sex = `...1`) %>% 
+  mutate(pred_sex = ifelse(pred_sex == 0, 'male', 'female')) %>% 
+  bind_cols(penguin_df$sex[1:10])
 ```
 
