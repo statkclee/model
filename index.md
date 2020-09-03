@@ -50,7 +50,7 @@ title: 데이터 과학 -- 모형
     - [임직원 이탈 예측: `tidymodel`](tidyverse-parsnip-advanced.html): 2020-07-20
     - [`tidymodels`: 나무모형](model_tree_tidymodels.html), [나무모형 예측모형(CART, RF, ..., SGBM)](model_tree.html)
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
-        - [나무모형과 지리정보의 만남 - 서울 택시인기 지점 예측](model_geospatial_taxi.html)
+        - [나무모형과 지리정보의 만남 - 택시인기 지점 예측](model_geospatial_taxi.html)
     - [포켓몬 PCA](model-pokemon-unsupervised.html)        
     - [펭귄 성별예측모형: `tidymodels`](tidyverse-parsnip-penguin.html)
     - [펭귄 성별예측모형: `tidymodels` - Hyper Parameter](tidyverse-parsnip-penguin-hyper-parameter.html)
@@ -58,9 +58,10 @@ title: 데이터 과학 -- 모형
     - [`tidymodels` - MDP / DALEX](tidyverse-parsnip-DALEX.html)
         - [펭귄 성별예측모형 설명: `tidymodels` - MDP / DALEX](tidyverse-parsnip-penguin-DALEX.html)
     - [펭귄 성별예측모형: `tidyposterior`](model-tidyposterior.html)
-    - [펭귄 성별예측모형: `tidymodels` - Shiny](tidyverse-parsnip-penguin-shiny.html)
+    - [펭귄 성별예측모형: `tidymodels` - `Shiny`](tidyverse-parsnip-penguin-shiny.html)
     - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)
-    - [펭귄 성별예측모형: 파이썬 + Shiny](tidyverse-penguin-python-shiny.html)
+    - [펭귄 성별예측모형: 파이썬 + `Shiny`](tidyverse-penguin-python-shiny.html)
+    - [펭귄 성별예측모형: 파이썬 + `Shiny` 배포](tidyverse-penguin-python-shiny-deploy.html)
 - **GDPR**
     - [GDPR 벌금 예측모형: EDA](model-gdpr-fine.html)
     - [예측모형 GDPR: 설명가능한 특정 모형](model-gdpr-challenge.html)
