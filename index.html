@@ -4,46 +4,46 @@
     <meta charset="utf-8">
     <meta name="generator" content="pandoc">
     <title>Software Carpentry: 데이터 과학 – 모형</title>
-    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.css" />
-    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap-theme.css" />
-    <link rel="stylesheet" type="text/css" href="css/swc.css" />
-    <link rel="alternate" type="application/rss+xml" title="Software Carpentry Blog" href="http://software-carpentry.org/feed.xml"/>
-    <meta charset="UTF-8" />
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    
-      ga('create', 'UA-59802572-17', 'auto');
-      ga('send', 'pageview');
-    
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap-theme.css" />
+    <link rel="stylesheet" type="text/css" href="css/swc.css" />
+    <link rel="alternate" type="application/rss+xml" title="Software Carpentry Blog" href="http://software-carpentry.org/feed.xml"/>
+    <meta charset="UTF-8" />
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-59802572-17', 'auto');
+      ga('send', 'pageview');
+
     </script>
   </head>
   <body class="lesson">
     <div class="container card">
-      <div class="banner">
-        <a href="http://software-carpentry.org" title="Software Carpentry">
-          <img alt="Software Carpentry banner" src="img/software-carpentry-banner.png" />
-        </a>
+      <div class="banner">
+        <a href="http://software-carpentry.org" title="Software Carpentry">
+          <img alt="Software Carpentry banner" src="img/software-carpentry-banner.png" />
+        </a>
       </div>
       <article>
       <div class="row">
         <div class="col-md-10 col-md-offset-1">
                     <h1 class="title">데이터 과학 – 모형</h1>
           <aside class="callout panel panel-info">
-<div class="panel-heading">
-<h3 id="기계와의-경쟁을-준비하며-ai-is-a-superpower"><span class="glyphicon glyphicon-pushpin"></span>기계와의 경쟁을 준비하며… AI is a Superpower</h3>
-</div>
+<section id="기계와의-경쟁을-준비하며-ai-is-a-superpower" class="panel-heading">
+<h3><span class="glyphicon glyphicon-pushpin"></span>기계와의 경쟁을 준비하며… AI is a Superpower</h3>
+</section>
 <div class="panel-body">
-<p>“고대에는 ’땅’이 가장 중요했고 땅이 소수에게 집중되자 인간은 귀족과 평민으로 구분됐으며, 근대에는 ’기계’가 중요해지면서 기계가 소수에게 집중되자 인간은 자본가와 노동자 계급으로 구분됐다”. 이제는 <strong>데이터</strong>가 또 한번 인류를 구분하는 기준이 될 것이다. 향후 데이터가 소수에게 집중되면 단순 계급에 그치는 게 아니라 데이터를 가진 종과 그렇지 못한 종으로 분류될 것이이다. <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>“고대에는 ’땅’이 가장 중요했고 땅이 소수에게 집중되자 인간은 귀족과 평민으로 구분됐으며, 근대에는 ’기계’가 중요해지면서 기계가 소수에게 집중되자 인간은 자본가와 노동자 계급으로 구분됐다”. 이제는 <strong>데이터</strong>가 또 한번 인류를 구분하는 기준이 될 것이다. 향후 데이터가 소수에게 집중되면 단순 계급에 그치는 게 아니라 데이터를 가진 종과 그렇지 못한 종으로 분류될 것이이다. <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 <p>           - <a href="https://www.youtube.com/watch?v=7Xs3auqcX7k">유발 하라리(Yuval Noah Harari)</a></p>
 <p>“AI is a superpower!!!”, 인공지능을 체득하면 슈퍼파워를 손에 쥘 것이다.</p>
 <p>           - <a href="https://twitter.com/andrewyng/status/728986380638916609">Andrew Ng</a></p>
@@ -97,7 +97,6 @@
 <li><a href="tidyverse-parsnip-penguin-shiny.html">펭귄 성별예측모형: <code>tidymodels</code> - <code>Shiny</code></a></li>
 <li><a href="tidyverse-parsnip-penguin-RESTful-api.html">펭귄 성별예측모형: <code>tidymodels</code> - RESTful API</a></li>
 <li><a href="tidyverse-penguin-python-shiny.html">펭귄 성별예측모형: 파이썬 + <code>Shiny</code></a></li>
-<li><a href="tidyverse-penguin-python-shiny-deploy.html">펭귄 성별예측모형: 파이썬 + <code>Shiny</code> 배포</a></li>
 </ul></li>
 <li><strong>GDPR</strong>
 <ul>
@@ -211,25 +210,25 @@
 </div></li>
 </ul>
 </div>
-<section class="footnotes">
+<section class="footnotes" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1"><p><a href="http://news.mk.co.kr/newsRead.php?year=2018&amp;no=58432">‘사피엔스’ 저자 유발 하라리 “인간을 해킹하는 시대가 온다”, “머신러닝·AI·생물학 발전…뇌과학 이해도 한층 높여”</a><a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1" role="doc-endnote"><p><a href="http://news.mk.co.kr/newsRead.php?year=2018&amp;no=58432">‘사피엔스’ 저자 유발 하라리 “인간을 해킹하는 시대가 온다”, “머신러닝·AI·생물학 발전…뇌과학 이해도 한층 높여”</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
         </div>
       </div>
       </article>
-      <div class="footer">
-        <a class="label swc-blue-bg" href="http://software-carpentry.org">Software Carpentry</a>
-        <a class="label swc-blue-bg" href="https://github.com/swcarpentry/lesson-template">Source</a>
-        <a class="label swc-blue-bg" href="mailto:admin@software-carpentry.org">Contact</a>
-        <a class="label swc-blue-bg" href="LICENSE.html">License</a>
+      <div class="footer">
+        <a class="label swc-blue-bg" href="http://software-carpentry.org">Software Carpentry</a>
+        <a class="label swc-blue-bg" href="https://github.com/swcarpentry/lesson-template">Source</a>
+        <a class="label swc-blue-bg" href="mailto:admin@software-carpentry.org">Contact</a>
+        <a class="label swc-blue-bg" href="LICENSE.html">License</a>
       </div>
     </div>
-    <!-- Javascript placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script src="css/bootstrap/bootstrap-js/bootstrap.js"></script>
+    <!-- Javascript placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="css/bootstrap/bootstrap-js/bootstrap.js"></script>
     <script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
   </body>
 </html>

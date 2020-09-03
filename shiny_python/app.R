@@ -1,21 +1,19 @@
+## Packages ----------
 library(shiny)
 library(tidyverse)
 library(reticulate)
 
+## Python Model import -----------------------
+
 reticulate::use_condaenv("miniconda3")
 
-if (fs::file_exists("penguins_clk.pkl")) {
-  print("Python model already exists, no need to re-run python script.")
-} else {
-  print("Python model does not exist")
-}
+source_python("read_pickle.py")
+penguin_clf <- read_pickle_file("penguins_clf.pkl")
 
-rm(list = ls())
-
-reticulate::source_python("./read_pickle.py")
+## Shiny ----------------
 
 ui <- fluidPage(
-  titlePanel("Scikit-learn Breast Cancer Data"),
+  titlePanel("Scikit-learn Palmer Penguins Data"),
   
   fluidRow(
     column(3,
@@ -41,9 +39,12 @@ ui <- fluidPage(
                    value = 4200)
     ),
     column(9,
+           tags$h2("Penguins Features"),
            tableOutput('penguin_table'),
-           verbatimTextOutput("prediction")
-           
+           tags$h2("Penguins Sex Prediction"),
+           verbatimTextOutput("prediction"),
+           tags$h2("Penguins Sex Probability"),
+           tableOutput('probability_table')
     )
   )
 )
@@ -68,8 +69,14 @@ server <- function(input, output) {
   })
   
   output$prediction <- renderPrint({
-    # predictions()
-    100
+    ifelse(penguin_clf$predict(penguin_df()) == 0, "male", "female")
+  })
+
+  output$probability_table <- renderTable({
+    prob_df <- penguin_clf$predict_proba( penguin_df() )
+    prob_df %>% 
+      as_tibble() %>% 
+      set_names(c("male", "female"))
   })
   
 }

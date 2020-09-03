@@ -167,3 +167,115 @@ penguin_clf$predict(unkonwn_penguin) %>%
   bind_cols(penguin_df$sex[1:10])
 ```
 
+# Shiny와 Python 웹앱 [^daniel-chen] {#shiny-meet-python-webapp}
+
+[^daniel-chen]: [Daniel Chen, "Debunking the R vs. Python Myth", 2020-08-26-rstudio_debunk](https://github.com/chendaniely/2020-08-26-rstudio_debunk)
+
+개발과정을 단순화시키기 위해서 관련 모든 개발 파일을 한 디렉토리에 모아둔다.
+Front-End는 Shiny, Back-End는 `scikit-learn` 피클 파일로 펭귄 성별 예측모형을 둔다.
+
+```{bash shiny-meet-python, eval = TRUE}
+tree shiny_python/
+```
+
+## UI wireframe {#ui-wireframe}
+
+최대한 유사하게 UI를 구성하여 이를 Shiny로 작성한다.
+
+![](fig/penguin-shiny-python.png)
+
+## Shiny 웹앱 코드 {#shiny-meet-python}
+
+먼저, reticulate 팩키지를 활용하여 파이썬 코드를 불러읽어 R 환경에서 작업을 할 수 있도록 한다. 그리고 `Shiny` UI를 개발하고 `server`에 파이썬 피클 파일을 불러읽어 들여 Front-End에서 입력받은 입력값을 데이터프레임으로 변환시키고 이를 파이썬 객체에 넘겨 펭귄 성별 예측과 확률값을 출력시킨다.
+
+```{r shiny-frontend, eval = FALSE}
+## Packages ----------
+library(shiny)
+library(tidyverse)
+library(reticulate)
+
+## Python Model import -----------------------
+
+reticulate::use_condaenv("miniconda3")
+
+source_python("read_pickle.py")
+penguin_clf <- read_pickle_file("penguins_clf.pkl")
+
+## Shiny ----------------
+
+ui <- fluidPage(
+  titlePanel("Scikit-learn Palmer Penguins Data"),
+  
+  fluidRow(
+    column(3,
+       sliderInput("bill_length_mm",
+                   "bill_length_mm:",
+                   min = 32,
+                   max = 50,
+                   value = 41),
+       sliderInput("bill_depth_mm",
+                   "bill_depth_mm:",
+                   min = 13,
+                   max = 22,
+                   value = 17),
+       sliderInput("flipper_length_mm",
+                   "flipper_length_mm:",
+                   min = 170,
+                   max = 235,
+                   value = 200),
+       sliderInput("body_mass_g",
+                   "body_mass_g:",
+                   min = 2700,
+                   max = 6300,
+                   value = 4200)
+    ),
+    column(9,
+           tags$h2("Penguins Features"),
+           tableOutput('penguin_table'),
+           tags$h2("Penguins Sex Prediction"),
+           verbatimTextOutput("prediction"),
+           tags$h2("Penguins Sex Probability"),
+           tableOutput('probability_table')
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  ## Dataframe -------------------------------------------------
+  penguin_df <- reactive({
+    temp_df <- tibble(bill_length = input$bill_length_mm,
+                      bill_depth =  input$bill_depth_mm,
+                      flipper_length = input$flipper_length_mm,
+                      body_mass = input$body_mass_g)
+    return(temp_df)
+  })
+  
+
+  output$penguin_table <- renderTable(penguin_df())
+    
+  ## Prediction -------------------------------------------------
+  predictions <- reactive({
+      return(py$python_model$predict(t(test_data[1, ])))
+  })
+  
+  output$prediction <- renderPrint({
+    ifelse(penguin_clf$predict(penguin_df()) == 0, "male", "female")
+  })
+
+  output$probability_table <- renderTable({
+    prob_df <- penguin_clf$predict_proba( penguin_df() )
+    prob_df %>% 
+      as_tibble() %>% 
+      set_names(c("male", "female"))
+  })
+  
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+## 실행결과 {#shiny-meet-python-demo}
+
+![](fig/penguin-python-shiny.gif)

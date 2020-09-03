@@ -61,7 +61,6 @@ title: 데이터 과학 -- 모형
     - [펭귄 성별예측모형: `tidymodels` - `Shiny`](tidyverse-parsnip-penguin-shiny.html)
     - [펭귄 성별예측모형: `tidymodels` - RESTful API](tidyverse-parsnip-penguin-RESTful-api.html)
     - [펭귄 성별예측모형: 파이썬 + `Shiny`](tidyverse-penguin-python-shiny.html)
-    - [펭귄 성별예측모형: 파이썬 + `Shiny` 배포](tidyverse-penguin-python-shiny-deploy.html)
 - **GDPR**
     - [GDPR 벌금 예측모형: EDA](model-gdpr-fine.html)
     - [예측모형 GDPR: 설명가능한 특정 모형](model-gdpr-challenge.html)
