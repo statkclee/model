@@ -90,16 +90,18 @@ penguin_df
 import pandas as pd
 penguins = pd.read_csv('data/penguins_cleaned.csv')
 
+penguins_df = penguins[['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g', 'sex']]
+
 # Ordinal feature encoding
 # https://www.kaggle.com/pratik1120/penguin-dataset-eda-classification-and-clustering
-df = penguins.copy()
+df = penguins_df.copy()
 target = 'sex'
-encode = ['species','island']
-
-for col in encode:
-    dummy = pd.get_dummies(df[col], prefix=col)
-    df = pd.concat([df,dummy], axis=1)
-    del df[col]
+# encode = ['species','island']
+# 
+# for col in encode:
+#     dummy = pd.get_dummies(df[col], prefix=col)
+#     df = pd.concat([df,dummy], axis=1)
+#     del df[col]
 
 target_mapper = {'male':0, 'female':1}
 def target_encode(val):
@@ -143,5 +145,25 @@ source_python("code/read_pickle.py")
 penguin_clf <- read_pickle_file("data/penguins_clf.pkl")
 
 penguin_clf
+```
+
+## R 데이터프레임 예측 {#r-dataframe-predict}
+
+먼저 예측에 사용될 펭귄을 데이터프레임으로 추출한다. 그리고 파이썬 성별예측 모형을 R로 불러와서 `predict()`에 넣어 성별을 예측한다. `predict_proba()`에 넣게 되면 숫컷, 암컷 펭귄 확률도 확인이 가능하다.
+
+```{r predict-dataframe}
+unkonwn_penguin <- penguin_df %>% 
+  select(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) %>% 
+  slice(1:10)
+  # sample_n(10)
+
+unkonwn_penguin
+
+penguin_clf$predict(unkonwn_penguin) %>% 
+  bind_cols(unkonwn_penguin) %>% 
+  bind_cols(penguin_clf$predict_proba(unkonwn_penguin)) %>% 
+  rename(pred_sex = `...1`) %>% 
+  mutate(pred_sex = ifelse(pred_sex == 0, 'male', 'female')) %>% 
+  bind_cols(penguin_df$sex[1:10])
 ```
 
