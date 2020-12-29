@@ -1,29 +1,38 @@
 ---
 layout: page
 title: xwMOOC 모형
-subtitle: "Cloudera - 고객이탈 - 로지스틱 회귀모형"
+subtitle: "고객이탈: 로지스틱 회귀모형 - `tidymodels`"
 author:
-    name: xwMOOC
-    url: https://www.facebook.com/groups/tidyverse/
-    affiliation: Tidyverse Korea
+- name: "이광춘"
+  affiliation: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
 date: "`r Sys.Date()`"
+tags: ["데이터 과학", "Data Science", "데이터 사이언스", "tidymodels", "parsnip", "로지스틱 회귀모형", "tidyverse", "고객이탈"]
 output:
   html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: journal
     toc: yes
+    toc_depth: 2
     toc_float: true
     highlight: tango
     code_folding: show
     number_section: true
     self_contained: true
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: blue
 editor_options: 
-  chunk_output_type: console  
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
                       comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
-
 ```
+
 
 # 고객이탈과 HR 이탈 {#hr-overview}
 
@@ -200,24 +209,49 @@ churn_iv$Summary %>%
 ```
 
 
-# 예측모형 생성 {#hr-dataset-turnover-predictive-model}
+# 예측모형 생성 [^churn-model-parsnip] {#hr-dataset-turnover-predictive-model}
+
+[^churn-model-parsnip]: [Matt Dancho (2020-12-15), "Logistic Regression in R | R-Tip 015", Business Science](https://www.youtube.com/watch?v=Qi-sVE0SWFc)
+
+과거 `caret` 팩키지를 활용하여 훈련데이터와 검증데이터로 분리했다면, 
+이번에는 `tidymodels`를 구성하는 `parsnip` 팩키지를 활용하여 로지스틱 회귀모형을 구현한다.
 
 ## 훈련/시험 데이터 생성 {#hr-dataset-feature-split}
 
-`caret` 팩키지를 활용하여 훈련데이터와 검증데이터로 분리한다.
+먼저, 훈련/시험 데이터로 나눠 훈련데이터를 대상으로 고객이탈 예측모형을 개발한다.
+`initial_split()` 함수로 전체 데이터를 7:3으로 훈련/시험 데이터로 분리할 수 있다.
 
 ```{r hr-dataset-train-test-split}
-library(caret)
+library(tidymodels)
 
-index_train <- createDataPartition(churn_df$churn, p = 0.7, list = FALSE)
+churn_tbl <- churn_df %>% 
+  mutate_if(is.character, as.factor) %>% 
+  drop_na()
 
-train_df <- churn_df[index_train, ]
-test_df  <- churn_df[-index_train, ]
+set.seed(777)
+
+splits <- initial_split(churn_tbl, prop = 0.7, strata = churn)
+
+splits
 ```
+
+## 피처 공학 {#hr-dataset-predictive-model-fe}
+
+피처 공학을 통해 먼저 범주형 데이터는 `step_other()` 함수로 One-hot 인코딩하고,
+숫자형 변수는 정규화시킨다.
+
+```{r hr-dataset-fe}
+recipe_spec <- recipe(churn ~ ., data = training(splits)) %>% 
+  step_other(all_nominal(), -all_outcomes()) %>% 
+  step_normalize(all_numeric())
+
+# recipe_spec %>% prep() %>% juice()
+```
+
 
 ## 예측모형 생성 {#hr-dataset-predictive-model}
 
-과적합을 방지하기 위해서 `car` 팩키지 `vif()` 함수를 사용해서 VIF가 **5** 이상되는 변수를 제거하여 강건한 예측모형을 생성한다.
+과적합을 방지하기 위해서 `car` 팩키지 `vif()` 함수를 사용해서 VIF가 **5** 이상되는 변수를 제거하여 강건한 예측모형을 생성했다.
 
 |     VIF           |        Interpretation         |
 |-------------------|-------------------------------|
@@ -225,60 +259,129 @@ test_df  <- churn_df[-index_train, ]
 | 1 < VIF < 5       |     다소 상관관계 존재함      |
 |     VIF > 5       |   심하게 상관관계 존재함      |
 
-VIF가 5보다 큰 경우 해당 변수를 제거하고 회귀모형을 구축하고 더이상 VIF가 5보다 큰게 없는 경우까지 반복함.
+VIF가 5보다 큰 경우 해당 변수를 제거하고 회귀모형을 구축하고 더이상 VIF가 5보다 큰게 없는 경우까지 반복하는 과정을 거쳤다.
+
+하지만, `tidymodels`로 바뀌게 되면 Feature Engineering은 `recipes`, 다양한 모형은 `parsnip`을 사용해서 정의하고 이를 `workflows`로 연결시키면 코드도 깔끔하고 나중에 유연하게 고성능 예측모형을 개발할 수 있게 된다.
 
 ```{r hr-dataset-variable-selection-vif}
-churn_glm <- glm(churn ~ ., 
-                  family = "binomial", data = train_df)
 
-car::vif(churn_glm)
+model_spec <- logistic_reg( mode = "classification") %>%
+    set_engine("glm")
 
-best_glm <- glm(churn ~ . -total_charges, 
-                  family = "binomial", data = train_df)
+wkfl_fit <- workflows::workflow() %>% 
+  add_recipe(recipe_spec) %>% 
+  add_model(model_spec) %>% 
+  fit(training(splits))
 
-# car::vif(best_glm)
+wkfl_fit
 ```
 
 ## 예측모형 성능 {#hr-dataset-predictive-model-performance}
 
-VIF를 통해 다공선성을 방지한 강건한 예측모형을 생성했는데 이에 대한 성능평가를 예측모형 구축에 사용되지 않은 `test_df` 데이터를 바탕으로 `caret` 팩키지 `confusionMatrix()` 함수로 평가한다.
+VIF를 통해 다공선성을 방지한 강건한 예측모형을 생성했는데 이에 대한 성능평가를 예측모형 구축에 사용되지 않은 `test_df` 데이터를 바탕으로 `caret` 팩키지 `confusionMatrix()` 함수로 평가했다.
 
+`workflow` 객체를 `predict()` 함수에 넣어 시험데이터를 대상으로 고객이탈 여부와 확률을 산출하여 이를 데이터프레임으로 저장시킨다.
 
 ```{r hr-dataset-predictive-model-performance}
-library(tidypredict)
+prediction_class_test <- predict(wkfl_fit, new_data = testing(splits), type = "class")
 
-test_df <- test_df %>%
-  tidypredict_to_column(best_glm) %>% 
-  mutate(pred_churn = ifelse(fit > 0.5, "Yes", "No") %>% as.factor)
+prediction_prob_test  <- predict(wkfl_fit, new_data = testing(splits), type = "prob")
 
-confusionMatrix(table(test_df$churn, test_df$pred_churn))
+results_tbl <- bind_cols(
+    prediction_class_test,
+    prediction_prob_test,
+    testing(splits)
+)
+```
+
+고객이탈 분류기 성능을 `roc_auc()` 함수로 추정할 수 있고, `autoplot()` 함수로 시각적으로 확이도 가능하다.
+
+```{r hr-dataset-predictive-model-viz}
+results_tbl %>%
+    roc_auc(churn, .pred_Yes )
+
+results_tbl %>%
+    roc_curve(churn, .pred_Yes ) %>%
+    autoplot(
+        options = list(
+            smooth = TRUE
+        )
+    ) +
+    labs(title = "Area Under the Curve (AUC): 0.836")
+```
+
+# 예측모형 설명 {#hr-dataset-predictive-explain}
+
+## 중요 변수 {#hr-dataset-predictive-explain-vip}
+
+`workflow` 객체로부터 `parsnip` 객체를 뽑아내서 이를 `vip()` 함수에 넣어준다.
+이를 통해, 중요변수로 `tenure`, `monthly_charges`를 확인할 수 있다.
+
+```{r hr-dataset-predictive-explain}
+library(vip)
+
+# 중요변수 시각화
+wkfl_fit$fit$fit %>%
+    vip(
+        num_features = 20,
+        geom         = "point",
+        aesthetics   = list(
+            size     = 4,
+            color    = "#18bc9c"
+        )
+    ) +
+    theme_minimal(base_size = 18) +
+    labs(title = "로지스틱 회귀모형 - 변수 중요도",
+         y="중요도")
+```
+
+## 고객 이탈 설명 {#hr-dataset-predictive-explain-vip-boxplot}
+
+중요변수로 `tenure`, `monthly_charges`를 고객이탈야부를 교차시켜 시각화한다.
+월별 통신료가 높은 고객의 이탈율이 상대적으로 초기에 높은 것이 확인된다.
+
+```{r hr-dataset-predictive-explain-box}
+churn_tbl %>%
+    ggplot(aes(tenure, monthly_charges, color = churn)) +
+    geom_smooth(method = "loess") +
+    geom_jitter(alpha = 0.25) +
+    theme_minimal(base_size = 18) +
+    scale_color_viridis_d(end = 0.4) +
+    labs(title = "월별 통신료가 높은 고객의 이탈율이 높음",
+         x     = "가입기간",
+         y     = "월별 통신료",
+         color = "이탈여부") +
+    theme(legend.position = "top")
 ```
 
 
 # 예측모형 활용 {#hr-dataset-predictive-model-application}
 
 예측모형 성능을 확인한 후에 가장 이탈 위험이 많은 고객 상위 10을 뽑아 이를 다음 후속작업에 활용한다.
-`tidypredict` 팩키지 `tidypredict_to_column()` 함수를 사용하면 깔끔하게 이탈확률이 높은 고객을 추려내는데 도움이 된다.
+`tidypredict` 팩키지 `tidypredict_to_column()` 함수를 사용하면 깔끔하게 이탈확률이 높은 고객을 추려내는데 도움이 되는데,
+따로 팩키지를 사용하지 말고 앞서 제작한 `results_tbl` 데이터프레임에 모든 정보가 담겨있어 이를 활용하여 이탈위험이 높은 고객 10명을 추려낸다.
 
 ```{r hr-dataset-predictive-model-predict-performance}
-cbind(churn_dat[-index_train, "customerID"], test_df) %>%
-  tidypredict_to_column(best_glm) %>% 
-  select(customerID, churn, fit) %>% 
-  top_n(10, wt=fit) %>% 
+results_tbl %>%  
+  select(-.pred_No) %>% 
+  top_n(10, wt=.pred_Yes) %>% 
   DT::datatable() %>% 
-    DT::formatPercentage("fit", digits=1)
+    DT::formatPercentage(".pred_Yes", digits=1)
 ```
 
 
 # 예측모형 커뮤니케이션  {#hr-dataset-predictive-model-communication}
 
 `texreg` 팩키지 혹은 `stargazer` 팩키지를 통해 예측모형에 대한 사항을 정리하여 커뮤니케이션하기 용이하다.
+마찬가지로 `workflow` 객체에서 `parsnip` 객체를 추출한다.
 
 ```{r hr-dataset-model-communication-html, results="asis"}
 library(texreg)
 
 # screenreg(list(churn_glm, best_glm), custom.note = "")
-htmlreg(list(churn_glm, best_glm), custom.note = "")
+# htmlreg(list(churn_glm, best_glm), custom.note = "")
+
+htmlreg(wkfl_fit$fit$fit, custom.note = "")
 ```
 
 
