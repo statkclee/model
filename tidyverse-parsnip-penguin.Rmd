@@ -1,19 +1,18 @@
 ---
 layout: page
-title: "xwMOOC 모형 - `tidymodels`"
+title: "Tidyverse 모형 - `tidymodels`"
 subtitle: "펭귄 성별예측모형: `tidymodels`"
 author:
-  name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
-  url: https://www.facebook.com/groups/tidyverse/
-  affiliation: Tidyverse Korea
-  affiliation_url: https://www.facebook.com/groups/tidyverse/
+- name: "이광춘"
+  affiliation: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
 date: "`r Sys.Date()`"
+tags: ["데이터 과학", "Data Science", "데이터 사이언스", "tidymodels", "parsnip", "로지스틱 회귀모형", "tidyverse", "팽귄", "penguin"]
 output:
   html_document: 
     include:
       after_body: footer.html
       before_body: header.html
-    theme: journal
+    theme: default
     toc: yes
     toc_depth: 2
     toc_float: true
@@ -21,7 +20,7 @@ output:
     code_folding: show
     number_section: true
     self_contained: true
-bibliography: ../bibliography.bib
+bibliography: bibliography_model.bib
 csl: biomed-central.csl
 urlcolor: blue
 linkcolor: bluee
@@ -29,12 +28,38 @@ editor_options:
   chunk_output_type: console
 ---
 
-``` {r, include=FALSE}
-# source("tools/chunk-options.R")
+``` {r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
                     comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
 
-library(here)
+html_sticker <- function(x) {
+  x <- rev(sort(x))
+  bad_svg <- c("dplyr", "tidyr")
+  x <- ifelse(x %in% bad_svg, paste0(x, ".png"), paste0(x, ".svg"))
+  markup <- function(pkg) glue::glue('<img src="images/{pkg}" class="title-hex">')
+  res <- purrr::map_chr(x, markup)
+  paste0(res, collapse = "")
+}
+
+# `r I(html_sticker('tidymodels'))`
+
+r_sticker <- function(x) {
+  x <- rev(sort(x))
+  bad_svg <- c("dplyr", "tidyr")
+  x <- ifelse(x %in% bad_svg, paste0(x, ".png"), paste0(x, ".svg"))
+  x <- glue::glue("{here::here()}/images/{x}")
+
+  pkgs <- purrr::map(x, magick::image_read) %>% 
+    magick::image_join(.)
+  
+  pkg_list <- pkgs %>% 
+    image_scale('150') %>% 
+    image_append(stack = FALSE)  
+  return(pkg_list)
+}
+
+# r_sticker(c('dplyr', 'tidymodels', 'purrr'))
+
 ```
 
 
@@ -44,13 +69,35 @@ library(here)
 
 데이터 과학의 기본 데이터셋으로 인정받던 붓꽃(Iris) 데이터가 이제는 자리를 펭귄 데이터셋에게 자리를 물려주는 듯 싶다. 기초 통계학, 시각화 뿐만 아니라 `tidymodels`에도 이를 기본 데이터셋으로 활용하는 사례가 심심치 않게 보여주고 있다. 이런 추세는 최근 [TidyTuesday](https://github.com/rfordatascience/tidytuesday) 2020년 31번째 데이터셋(2020-07-28)으로 **팔머 팽귄(Palmer Penguins)**으로 당첨되면서 Iris 데이터를 대체하는 것은 기정사실화 된 듯 싶다.
 
-```{r penguins}
+```{r penguins-dataset}
 library(tidyverse)
 tuesdata <- tidytuesdayR::tt_load('2020-07-28')
 
 penguin <- tuesdata$penguins
 
 penguin
+```
+
+
+# 팩키지 [^rstudio-pkg]  {#tidymodels-packages}
+
+[^rstudio-pkg]: [rstudio/hex-stickers](https://github.com/rstudio/hex-stickers)
+
+데이터 팩키지와는 별도로 `tidymodels` 예측모형 개발에 사용된 팩키지는 다음과 같다.
+
+```{r packages-for-demonstration}
+library(magick)
+
+pkgs <- c('tidyverse', 'tidymodels', 'parsnip', 'ggplot2', 'pipe', 'purrr', 'usethis')
+
+pkgs_path <- glue::glue("https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/{pkgs}.svg")
+
+pkgs_img <- purrr::map(pkgs_path, magick::image_read) %>% 
+  magick::image_join(.)
+
+pkgs_img %>% 
+  image_scale('150') %>% 
+  image_append(stack = FALSE)  
 ```
 
 
@@ -66,7 +113,9 @@ penguin_df <- penguin %>%
 ```
 
 
-# 성별예측 모형 {#predict-sex}
+# 성별예측 모형 [^julia-silge-ikea] {#predict-sex}
+
+[^julia-silge-ikea]: [Julia Silge (2020-12-03), "Tune random forests for #TidyTuesday IKEA prices", https://juliasilge.com/blog/ikea-prices/](https://juliasilge.com/blog/ikea-prices/)
 
 펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
 
@@ -77,12 +126,25 @@ penguin_df <- penguin %>%
 ```{r predict-sex}
 library(tidymodels)
 
-penguin_split <- initial_split(penguin_df, prop = 0.8, strata = sex)
-penguin_train <- training(penguin_split)
-penguin_test <- testing(penguin_split)
+# 훈련 시험 데이터 분할
+splits <- initial_split(penguin_df, prop = 0.8, strata = sex)
+penguin_train <- training(splits)
+penguin_test <- testing(splits)
 
+# Hyper parameter tuning을 위한 데이터셋
 penguin_cv <- vfold_cv(penguin_train, v =10, repeats = 1) 
 ```
+
+## `usemodels` {#predict-sex-model-workflow}
+
+[`usemodels`](https://github.com/tidymodels/usemodels)를 사용하게 되면 `tidymodels`를 사용할 때 기본적인 내용을 채워주기 때문에 신속하고 정확하게 빠진 사항없이 예측모형을 개발하는데 도움을 준다. 즉, `tidymodels` 개발 위한 템플릿의 역할이라고 볼 수 있다.
+
+```{r usemodels-template}
+library(usemodels)
+
+usemodels::use_ranger(sex ~ ., data = training(splits)) 
+```
+
 
 ## 모형 작업흐름 {#predict-sex-model-workflow}
 
@@ -179,7 +241,7 @@ glm_eval %>%
 ```{r predict-sex-model-evaluate-test}
 penguin_final <- penguin_wf %>%
   add_model(glm_spec) %>%
-  last_fit(penguin_split)
+  last_fit(splits)
 
 penguin_final %>% 
   collect_metrics()
