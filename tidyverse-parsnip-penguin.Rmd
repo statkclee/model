@@ -62,6 +62,7 @@ r_sticker <- function(x) {
 
 ```
 
+![](fig/tidymodels-ecosystem.png)
 
 # 펭귄 데이터셋 [^penguins-dataset] {#penguins-dataset}
 
@@ -83,7 +84,9 @@ penguin
 
 [^rstudio-pkg]: [rstudio/hex-stickers](https://github.com/rstudio/hex-stickers)
 
-데이터 팩키지와는 별도로 `tidymodels` 예측모형 개발에 사용된 팩키지는 다음과 같다.
+## `tidymverse` 팩키지  {#tidymodels-packages-tidyverse}
+
+데이터 팩키지와는 별도로 `tidymodels` 예측모형 개발에 간접적으로 사용된 팩키지는 다음과 같다.
 
 ```{r packages-for-demonstration}
 library(magick)
@@ -96,6 +99,24 @@ pkgs_img <- purrr::map(pkgs_path, magick::image_read) %>%
   magick::image_join(.)
 
 pkgs_img %>% 
+  image_scale('150') %>% 
+  image_append(stack = FALSE)  
+```
+
+## `tidymodels` 팩키지  {#tidymodels-packages-tidymodels}
+
+`tidymodels`를 구성하는 핵심 팩키지는 다음과 같다.
+
+```{r packages-for-demonstration-tidymodels}
+
+tidymodels_pkgs <- c('rsample', 'recipes', 'parsnip', 'yardstick', 'tune', 'dials', 'workflows', 'plumber')
+
+tidymodels_pkgs_path <- glue::glue("https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/{tidymodels_pkgs}.svg")
+
+tidymodels_pkgs_img <- purrr::map(tidymodels_pkgs_path, magick::image_read) %>% 
+  magick::image_join(.)
+
+tidymodels_pkgs_img %>% 
   image_scale('150') %>% 
   image_append(stack = FALSE)  
 ```
