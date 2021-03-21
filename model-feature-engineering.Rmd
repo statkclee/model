@@ -1,17 +1,32 @@
 ---
 layout: page
-title: xwMOOC 모형
-subtitle: 피처 공학(Feature Engineering)
+title: "Tidyverse 모형 - `tidymodels`"
+subtitle: "피처 공학(Feature Engineering)"
+author:
+- name: "이광춘"
+  affiliation: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+date: "`r Sys.Date()`"
+tags: ["데이터 과학", "Data Science", "데이터 사이언스", "tidymodels", "parsnip", "로지스틱 회귀모형", "tidyverse", "팽귄", "penguin", "피처 공학", "Feature Engineering"]
 output:
   html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: default
     toc: yes
+    toc_depth: 2
     toc_float: true
     highlight: tango
     code_folding: show
     number_section: true
     self_contained: true
----
- 
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: bluee
+editor_options: 
+  chunk_output_type: console
+--- 
 
 ```{r, include=FALSE}
 source("tools/chunk-options.R")
@@ -80,7 +95,7 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
 "One of the holy grails of machine learning is to automate more and more of the feature engineering process." -- Pedro Domingos, A Few Useful Things to Know about Machine Learning
 </div>
 
-# 피처 공학 기법 {#data-preprocesing-reason-for-predictive-model-methods}
+# 피처 공학 기법: `caret` {#data-preprocesing-reason-for-predictive-model-methods}
 
 예측모형 대부분은 숫자만을 입력값으로 받아야 하는데, 결측값이 입력값으로 전달되는 경우 이를 처리할 수 없다. 
 이런 문제를 해결하기 위해 결측값을 제거하지 않는 경우 데이터에 편향이 발생하여 모형신뢰성이 떨어진다.
@@ -97,21 +112,21 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
 
 회귀분석 사례로 많이 사용되는 보스터 집값 사례를 살펴보자. 데이터를 불러와서 `glimpse`, `summary` 함수로 일별한다.
 
-``` {r boston-housing-price-setting, warnings=FALSE}
-##==========================================================================================
+``` {r boston-housing-price-setting}
+##===============================================
 ## 00. 환경설정
-##==========================================================================================
+##===============================================
 # Classification and Regression Training 팩키지
 # install.packages("caret")
-suppressWarnings(suppressMessages(library(caret)))
-suppressWarnings(suppressMessages(library(dplyr)))
+library(tidyverse)
+library(tidymodels)
 
-##==========================================================================================
+##===============================================
 ## 01. 데이터 가져오기
-##==========================================================================================
+##===============================================
 # 보스톤 주택가격
 # install.packages("mlbench")
-suppressWarnings(suppressMessages(library(mlbench)))
+library(mlbench)
 data("BostonHousing")
 
 # 데이터 살펴보기
@@ -128,16 +143,16 @@ summary(BostonHousing)
 `preProcess = "medianImpute"` 인자를 `train` 함수에 넣어 중위수 대체를 하게 되면 결측값에 따른 문제가 해소된다.
 
 ``` {r boston-housing-price-median, eval=FALSE}
-##==========================================================================================
+##===============================================
 ## 02. 데이터 전처리
-##==========================================================================================
+##===============================================
 
 
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 02.01. 중위수 대체
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 임의 결측값 채워넣기
-suppressWarnings(suppressMessages(library(randomForest)))
+library(randomForest)
 set.seed(777)
 BostonHousing[sample(1:nrow(BostonHousing), 10), "crim"] <- NA
 # 예측모형: 설명변수와 종속변수 분리
@@ -169,9 +184,9 @@ model
 이런 경우 `preProcess = "knnImpute"` 인자는 다른 설명변수를 이용하여 결측값을 추정하여 채워넣게 된다. RMSE 값을 비교하면 더 향상된 것(RMSE 오차가 축소)이 확인된다.
 
 ``` {r boston-housing-price-knn}
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 02.02. knn 대체 : 결측값이 임의가 아님
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 범죄가 0.5 이상 결측값 채워넣기
 set.seed(777) 
 data("BostonHousing")
@@ -210,13 +225,13 @@ print(min(model_knn$results$RMSE))
 선정한다.
 
 ``` {r boston-housing-price-pipeline}
-##==========================================================================================
+##===============================================
 ## 03. 데이터 전처리 파이프라인
-##==========================================================================================
+##===============================================
 
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 03.01. 전처리 파이프라인
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 임의 결측값 채워넣기
 set.seed(777)
 data("BostonHousing")
@@ -259,13 +274,13 @@ print(min(model$results$RMSE))
 모형적합이 제대로 됨이 확인된다.
 
 ``` {r boston-housing-price-constant, eval = FALSE}
-##==========================================================================================
+##===============================================
 ## 05. 변수 전처리 - 변수제거와 차원축소
-##==========================================================================================
+##===============================================
 
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 05.01. 상수 변수: 분산이 0
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------
 # 임의 결측값 채워넣기
 set.seed(777)
 data("BostonHousing")
@@ -291,9 +306,9 @@ print(min(model$results$RMSE))
 
 
 ``` {r boston-housing-price-near-zero}
-#-------------------------------------------------------------------------------------------
+#-------------------------------------------------
 # 05.02. 거의 상수 변수: 분산이 거의 0에 가까움
-#-------------------------------------------------------------------------------------------
+#-------------------------------------------------
 # 임의 결측값 채워넣기
 set.seed(777)
 data("BostonHousing")
@@ -319,9 +334,9 @@ print(min(model$results$RMSE))
 변수간에 상관관계가 높은 문제에 대한 전처리를 수행하게 된다.
 
 ``` {r boston-housing-price-near-pca}
-#-------------------------------------------------------------------------------------------
+#----------------------------------------------
 # 05.03. 중복변수 제거: PCA
-#-------------------------------------------------------------------------------------------
+#----------------------------------------------
 # 임의 결측값 채워넣기
 set.seed(777)
 data("BostonHousing")
@@ -334,3 +349,84 @@ X <- BostonHousing[, 1:13]
 model <- train(x = X, y = Y, method="glm", preProcess = c("medianImpute", "center", "scale", "pca"))
 print(min(model$results$RMSE))
 ```
+
+
+# `recipes` 팩키지 {#recipes}
+
+![](fig/feature-engineering-recipe.png)
+`recipes` 팩키지는 피처공학 데이터 전처를 위한 요리법을 작성하는 `recipe()` 단계와 재료를 손질하는 준비 `prep()`, 마지막으로 모형에 적합시킬 수 있는 형태 데이터로 변환시킨 `bake()` 함수를 적용하는 3단계로 나눠진다.
+
+## `recipes` 친해지기 {#recipes-friends}
+
+먼저, `recipes` 팩키지 3가지 단계를 익숙해지기 위해서 단계별로 `recipe()` &rarr;  `prep()` &rarr; `bake()`를 진행해보자.
+
+```{r basic-feature-engineering}
+library(tidymodels)
+
+data("BostonHousing")
+
+splits <- initial_split(data = BostonHousing, prop = 0.8, strata = 'medv')
+  
+price_rec <- recipe(medv ~ . , data = training(splits)) %>% 
+  step_log(medv, base = 10)
+
+price_rec
+```
+
+`prep()` 단계를 통해 재료준비를 끝마쳐둔다.
+
+```{r basic-fe-prep}
+price_rec_prep <- price_rec %>% 
+  prep(training = training(splits))
+
+price_rec_prep
+```
+
+마지막으로 기계학습을 위한 데이터를 준비해보자. 
+`bake()` 함수를 통해 `medv` 변수가 로그 변환된 것을 확인할 수 있다.
+
+```{r basic-fe-bake}
+price_rec_prep %>% 
+  bake(new_data = NULL)
+```
+
+동일한 `recipe`를 시험 데이터에도 적용시켜보자. 
+요리법은 동일하고 데이터만 바꿔주면 되기 때문에 시험데이터 `testing(splits)`을 
+구워주면 기계학습 예측모형의 성능을 평가하는데 필요한 만반의 준비가 완료되었다.
+
+```{r basic-fe-bake-testing}
+price_rec_prep %>% 
+  bake(new_data = testing(splits))
+```
+
+
+## 숫자형과 범주형 변수 [^ordering-steps] {#numerical-categorical-variable}
+
+[^ordering-steps]: [`recipes`, "Ordering of Steps"](https://recipes.tidymodels.org/articles/Ordering.html)
+
+`chas` 변수를 제외한 나머지 변수는 모두 숫자형이라 각 변수 자료유형에 맞춰 적절한 
+변수 변환작업을 수행한다. 범주형 변수와 숫자형 변수의 변수변환 작업에 차이가 있고 
+상황에 맞춰 적절히 조합시켜 활용한다. `step_*()` 단계별 적용 방식은 다음과 같다.
+
+1. Impute
+1. Individual transformations for skewness and other issues
+1. Discretize (if needed and if you have no other choice)
+1. Create dummy variables
+1. Create interactions
+1. Normalization steps (center, scale, range, etc)
+1. Multivariate transformation (e.g. PCA, spatial sign, etc)
+
+```{r numeric-categorical-variable}
+house_rec <- recipe(medv ~ . , data = training(splits)) %>% 
+  step_log(medv, base = 10) %>% 
+  step_normalize(all_numeric()) %>% 
+  step_corr(all_numeric(), -all_outcomes(), threshold = 0.9) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+house_rec %>% 
+  prep(training = training(splits)) %>% 
+  bake(new_data = testing(splits))
+```
+
+
+
