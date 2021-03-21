@@ -52,6 +52,7 @@ title: 데이터 과학 -- 모형
         - [나무모형과 생존분석의 만남](model_survival_tree.html)
         - [나무모형과 지리정보의 만남 - 택시인기 지점 예측](model_geospatial_taxi.html)
     - [포켓몬 PCA](model-pokemon-unsupervised.html)        
+    - [펭귄 성별예측모형](tidyverse-parsnip-penguin-101.html)    
     - [펭귄 성별예측모형: `tidymodels`](tidyverse-parsnip-penguin.html)
     - [펭귄 성별예측모형: `tidymodels` - Hyper Parameter](tidyverse-parsnip-penguin-hyper-parameter.html)
     - [펭귄 성별예측모형: `tidymodels` - `XGBoost`](tidyverse-parsnip-penguin-xgboost.html)
