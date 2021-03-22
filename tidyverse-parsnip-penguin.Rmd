@@ -127,7 +127,7 @@ tidymodels_pkgs_img %>%
 나름 잘 정리되어 있어 결측값만 처리하고 연도와 펭귄이 거주하고 있는 섬만 제거한다.
 
 ```{r penguins-preprocessing}
-penguin_df <- penguin %>%
+penguin_tbl <- penguin %>%
   filter(!is.na(sex)) %>%
   select(-year, -island) %>% 
   mutate_if(is.character, as.factor)
@@ -139,141 +139,230 @@ penguin_df <- penguin %>%
 [^julia-silge-ikea]: [Julia Silge (2020-12-03), "Tune random forests for #TidyTuesday IKEA prices", https://juliasilge.com/blog/ikea-prices/](https://juliasilge.com/blog/ikea-prices/)
 
 펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
+이를 위해서 사용되는 기본적인 팩키지는 다음과 같다.
+
+- 훈련/시험 데이터 구분을 위해서 `rsample``
+- 피처 공학을 위해서 `recipes`
+- 예측모형을 지정하기 위해서 `parsnip`
+- 예측모형 작업흐름 관리를 위해서 `workflows`
+- 예측모형 성능평가를 위해서 `yardstick`
+
+```{r draw-workflows}
+pkgs <- c('rsample', 'recipes', 'parsnip', 'workflows', 'yardstick')
+
+pkgs_path <- glue::glue("https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/{pkgs}.svg")
+
+pkgs_img <- purrr::map(pkgs_path, magick::image_read) %>% 
+  magick::image_join(.)
+
+pkgs_img %>% 
+  image_scale('150') %>% 
+  image_append(stack = FALSE)  
+```
+
 
 ## 훈련/교차검증/시험 데이터셋 {#predict-sex-split}
 
-`initial_split()` 함수로 훈련/시험 데이터셋으로 나누고, `vfold_cv()`함수를 사용해서 hyper parameter 튜닝 등을 통한 최적 모형 선정을 위해서 교차검증 데이터셋을 준비한다.
+`initial_split()` 함수로 훈련/시험 데이터셋으로 나누고, 필요한 경우 `vfold_cv()`함수를 사용해서 hyper parameter 튜닝 등을 통한 최적 모형 선정을 위해서 교차검증 데이터셋을 준비한다.
 
 ```{r predict-sex}
 library(tidymodels)
 
 # 훈련 시험 데이터 분할
-splits <- initial_split(penguin_df, prop = 0.8, strata = sex)
-penguin_train <- training(splits)
-penguin_test <- testing(splits)
-
-# Hyper parameter tuning을 위한 데이터셋
-penguin_cv <- vfold_cv(penguin_train, v =10, repeats = 1) 
+splits <- initial_split(penguin_tbl, prop = 0.8, strata = sex)
 ```
 
-## `usemodels` {#predict-sex-model-workflow}
+## 피처 공학 {#predict-sex-model-fe}
 
-[`usemodels`](https://github.com/tidymodels/usemodels)를 사용하게 되면 `tidymodels`를 사용할 때 기본적인 내용을 채워주기 때문에 신속하고 정확하게 빠진 사항없이 예측모형을 개발하는데 도움을 준다. 즉, `tidymodels` 개발 위한 템플릿의 역할이라고 볼 수 있다.
+피처 공학(Feature Engineering)을 적용하여 예측모형 정확도 향상에 사용될 모형 행렬(Model Matrix)을 준비한다.
 
-```{r usemodels-template}
-library(usemodels)
+```{r predict-sex-model-fe}
+penguin_recipe <- recipe(sex ~ ., data = training(splits)) %>%
+  step_corr(all_numeric(), threshold = 0.9) %>% 
+  step_normalize(all_numeric()) %>% 
+  step_dummy(all_nominal(), -all_outcomes())
 
-usemodels::use_ranger(sex ~ ., data = training(splits)) 
-```
-
-
-## 모형 작업흐름 {#predict-sex-model-workflow}
-
-먼저 `workflow()`를 설정한다. 다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
-
-```{r predict-sex-model-workflow}
-penguin_wf <- workflow() %>%
-  add_formula(sex ~ .)
+penguin_recipe
 ```
 
 ## 모형 아키텍처 {#predict-sex-model-architecture}
 
-펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM, Random Forest, MARS 모형을 선택한다.
+펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM 모형을 선택한다.
 
 ```{r predict-sex-model-architecture}
 glm_spec <- logistic_reg() %>%
   set_mode("classification") %>% 
   set_engine("glm") 
 
-rf_spec <- rand_forest() %>%
-  set_mode("classification") %>%
-  set_engine("ranger")
-
-mars_spec <- mars() %>% 
-  set_mode("classification") %>% 
-  set_engine("earth")
+glm_spec
 ```
+
+
+## 모형 작업흐름 {#predict-sex-model-workflow}
+
+`workflows` 팩키지를 사용해서 예측 모형 작업흐름을 완성한다.
+먼저 `workflow()`를 설정한다. 
+다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
+
+```{r predict-sex-model-workflow}
+penguin_wf <- workflow() %>%
+  add_recipe(penguin_recipe) %>% 
+  add_model(glm_spec)
+
+penguin_wf
+```
+
 
 ## 모형 적합(fit) {#predict-sex-model-fit}
 
-CV 교차검증 표본을 대상으로 각 모형에 적합시킨다.
+CV 교차검증 표본 이전에 기본적으로 작업흐름을 통해 훈련/시험 데이터셋을 대상으로 예측모형 개발을 자동화시킨다.
 
 ```{r predict-sex-model-fit}
-glm_rs <- penguin_wf  %>% 
-  add_model(glm_spec) %>% 
-  fit_resamples(
-    resamples = penguin_cv,
-    control = control_resamples(save_pred = TRUE),
-    metrics = metric_set(accuracy, kap, roc_auc)
-  )
+penguin_wf_fit <- penguin_wf  %>% 
+  last_fit(split = splits)
 
-rf_rs <- penguin_wf  %>% 
-  add_model(rf_spec) %>% 
-  fit_resamples(
-    resamples = penguin_cv,
-    control = control_resamples(save_pred = TRUE),
-    metrics = metric_set(accuracy, kap, roc_auc)
-  )
-
-mars_rs <- penguin_wf  %>% 
-  add_model(mars_spec) %>% 
-  fit_resamples(
-    resamples = penguin_cv,
-    control = control_resamples(save_pred = TRUE),
-    metrics = metric_set(accuracy, kap, roc_auc)
-  )
+penguin_wf_fit
 ```
 
 ## 모형 평가 {#evaluate-model}
 
-상기 세가지 모형에 대해 3가지 다른 성능평가지표를 통해 평가한다.
+`collect_metrics()` 함수를 사용해서 앞서 제작한 펭귄성별 예측모형에 대한 성능을 평가해보자.
 
 ```{r predict-sex-model-evaluate}
-glm_eval <- glm_rs %>% 
-  mutate(model = "GLM") %>% 
-  collect_metrics() 
-
-rf_eval <- rf_rs %>% 
-  mutate(model = "RF") %>% 
-  collect_metrics()
-
-mars_eval <- mars_rs %>% 
-  mutate(model = "MARS") %>% 
-  collect_metrics()
-
-glm_eval %>% 
-  bind_rows(rf_eval) %>% 
-  bind_rows(mars_eval) %>% 
-  ggplot(aes(x=mean, y=.metric, color = model)) +
-    geom_point(size = 1.5) +
-    geom_errorbar(aes(xmin = mean - std_err,
-                      xmax = mean + std_err), width=0.3) +
-    facet_wrap(~ .metric) +
-    theme_bw() +
-    theme(legend.position = "top") +
-    labs(x="", y="")
-```
-
-## 시험 데이터 성능측정 {#evaluate-model-test}
-
-가장 성능이 좋은 GLM 모형을 최종 예측모형으로 선정하고 시험데이터에 넣어 최종 모형 성능을 평가한다.
-`penguin_wf`에 `last_fit()`하여 최종 모형을 선정한다. 해당 모형에 대한 시험(test) 데이터를 통해 성능을 확인할 수 있다.
-
-```{r predict-sex-model-evaluate-test}
-penguin_final <- penguin_wf %>%
-  add_model(glm_spec) %>%
-  last_fit(splits)
-
-penguin_final %>% 
+penguin_wf_fit %>% 
   collect_metrics()
 ```
 
-많이 친숙한 `confusion matrix`를 작성해 마무리한다.
+## 예측 {#predict-test-obs}
 
-```{r predict-sex-model-evaluate-test-conf}
-penguin_final %>% 
-  collect_predictions() %>%
-  conf_mat(sex, .pred_class)
+`collect_predictions()` 함수를 사용해서 예측모형을 통해 실제 예측값을 데이터프레임으로 저장시킨다.
+시험 데이터에 대한 펭귄 성별 예측확률과 실제 성별 범주, 예측한 성별 범주값이 관측점 펭귄 별로 데이터프레임으로 저장되어 출력된다.
+
+```{r predict-with-sex-model}
+penguin_wf_fit %>% 
+  collect_predictions()
 ```
 
-# Hyper Parameter 
+
+# 성별예측 CV 모형 [^tune-dials] {#predict-sex-cv}
+
+[^tune-dials]: [Yu En Hsu (2021-01-15), "Dials, Tune, and Parsnip: Tidymodels’ Way to Create and Tune Model Parameters", towards data science](https://towardsdatascience.com/dials-tune-and-parsnip-tidymodels-way-to-create-and-tune-model-parameters-c97ba31d6173)
+
+초모수(Hyper Parameter)를 활용할 수 있는 예측모형이 더 성능이 높은 것으로 알려져 있어, 펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
+이를 위해서 사용되는 기본적인 팩키지는 기존 단순 훈련/시험 예측모형에 추가하여 `tune`, `dials` 팩키지가 추가된다.
+
+- 훈련/시험 데이터 구분을 위해서 `rsample``
+- 피처 공학을 위해서 `recipes`
+- 예측모형을 지정하기 위해서 `parsnip`
+- 예측모형 작업흐름 관리를 위해서 `workflows`
+- 예측모형 성능평가를 위해서 `yardstick`
+- 초모수 튜닝: `tune`, `dials`
+
+```{r draw-workflows-tune}
+pkgs <- c('rsample', 'recipes', 'parsnip', 'tune', 'dials', 'workflows', 'yardstick')
+
+pkgs_path <- glue::glue("https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/{pkgs}.svg")
+
+pkgs_img <- purrr::map(pkgs_path, magick::image_read) %>% 
+  magick::image_join(.)
+
+pkgs_img %>% 
+  image_scale('150') %>% 
+  image_append(stack = FALSE)  
+```
+
+
+## 훈련/교차검증/시험 데이터셋 {#predict-sex-split-cv}
+
+`initial_split()` 함수로 훈련/시험 데이터셋으로 나누고, 초모수가 포함된 강력한 예측모형 구축을 위해서 `vfold_cv()`함수를 사용해서 hyper parameter 튜닝 등을 통한 최적 모형 선정을 위해서 교차검증 데이터셋을 준비한다.
+
+```{r predict-sex-cv}
+library(tidymodels)
+
+# 훈련 시험 데이터 분할
+splits <- initial_split(penguin_tbl, prop = 0.8, strata = sex)
+
+# 교차검증 데이터셋
+set.seed(777)
+penguin_folds <- vfold_cv(training(splits),
+                          v = 3,
+                          strata = sex)
+penguin_folds
+```
+
+## 피처 공학 {#predict-sex-model-fe-cv}
+
+피처 공학(Feature Engineering)을 적용하여 예측모형 정확도 향상에 사용될 모형 행렬(Model Matrix)을 준비한다.
+
+```{r predict-sex-model-fe-cv}
+penguin_recipe <- recipe(sex ~ ., data = training(splits)) %>%
+  step_corr(all_numeric(), threshold = 0.9) %>% 
+  step_normalize(all_numeric()) %>% 
+  step_dummy(all_nominal(), -all_outcomes())
+
+penguin_recipe
+```
+
+## 모형 아키텍처 {#predict-sex-model-architecture-cv}
+
+펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM 모형을 선택한다.
+
+```{r predict-sex-model-architecture-cv}
+glm_spec <- logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") 
+
+glm_spec
+```
+
+
+## 모형 작업흐름 {#predict-sex-model-workflow-cv}
+
+`workflows` 팩키지를 사용해서 예측 모형 작업흐름을 완성한다.
+먼저 `workflow()`를 설정한다. 
+다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
+
+```{r predict-sex-model-workflow-cv}
+penguin_wf <- workflow() %>%
+  add_recipe(penguin_recipe) %>% 
+  add_model(glm_spec)
+
+penguin_wf
+```
+
+
+## CV 교차표본 대상 모형 적합(fit) {#predict-sex-model-fit-cv}
+
+CV 교차검증 표본을 활용하여 각 재표집 표본별로 데이터에 앞서 정의한 예측모형 `glm`을 적합시킨다. 
+
+```{r predict-sex-model-fit-cv}
+penguin_rs_wf_fit <- penguin_wf  %>% 
+  fit_resamples(resamples = penguin_folds)
+
+penguin_rs_wf_fit
+```
+
+## CV 교차표본 모형 평가 {#evaluate-model-cv}
+
+`collect_metrics()` 함수를 사용해서 앞서 제작한 펭귄성별 예측모형에 대한 성능을 평가해보자.
+
+```{r predict-sex-model-evaluate-mean-cv}
+penguin_rs_wf_fit %>% 
+  collect_metrics()
+```
+
+CV가 3이기 때문에 각 재추출표본별로 적합시킨 예측모형 성능을 평가하면 `collect_metrics()` 함수에 `summarize = FALSE`를 넣어 결과를 확인할 수 있다.
+
+```{r predict-sex-model-evaluate-cv}
+penguin_rs_wf_fit %>% 
+  collect_metrics( summarize = FALSE)
+```
+
+## 최적모형 선택 {#evaluate-model-cv}
+
+`show_best()` 함수로 가장 좋은 모형 평가결과를 확인한다.
+
+```{r predict-sex-model-show-best-cv}
+penguin_rs_wf_fit %>% 
+  show_best(metric = 'roc_auc')
+```
