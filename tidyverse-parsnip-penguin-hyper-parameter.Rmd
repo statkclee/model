@@ -1,6 +1,6 @@
 ---
 layout: page
-title: "xwMOOC 모형 - `tidymodels`"
+title: "Tidyverse 모형 - `tidymodels`"
 subtitle: "펭귄 성별예측모형: `tidymodels` - Hyper Parameter"
 author:
   name: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
@@ -8,12 +8,13 @@ author:
   affiliation: Tidyverse Korea
   affiliation_url: https://www.facebook.com/groups/tidyverse/
 date: "`r Sys.Date()`"
+tags: ["데이터 과학", "Data Science", "데이터 사이언스", "tidymodels", "parsnip", "로지스틱 회귀모형", "tidyverse", "팽귄", "penguin", "Hyper Parameter", "초모수"]
 output:
   html_document: 
     include:
       after_body: footer.html
       before_body: header.html
-    theme: journal
+    theme: default
     toc: yes
     toc_depth: 2
     toc_float: true
@@ -21,15 +22,17 @@ output:
     code_folding: show
     number_section: true
     self_contained: true
-bibliography: ../bibliography.bib
+bibliography: bibliography_model.bib
 csl: biomed-central.csl
 urlcolor: blue
 linkcolor: bluee
 editor_options: 
   chunk_output_type: console
+  markdown: 
+    wrap: sentence
 ---
 
-``` {r, include=FALSE}
+```{r, include=FALSE}
 # source("tools/chunk-options.R")
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
                     comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
@@ -37,12 +40,13 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 library(here)
 ```
 
+# 펭귄 데이터셋 [^1] {#penguins-dataset}
 
-# 펭귄 데이터셋 [^penguins-dataset] {#penguins-dataset}
+[^1]: [Tidyverse Korea (2020-06-21), "펭귄 vs 붓꽃 데이터"](https://statkclee.github.io/data-science/ds-iris-penguin.html)
 
-[^penguins-dataset]: [Tidyverse Korea (2020-06-21), "펭귄 vs 붓꽃 데이터"](https://statkclee.github.io/data-science/ds-iris-penguin.html)
-
-데이터 과학의 기본 데이터셋으로 인정받던 붓꽃(Iris) 데이터가 이제는 자리를 펭귄 데이터셋에게 자리를 물려주는 듯 싶다. 기초 통계학, 시각화 뿐만 아니라 `tidymodels`에도 이를 기본 데이터셋으로 활용하는 사례가 심심치 않게 보여주고 있다. 이런 추세는 최근 [TidyTuesday](https://github.com/rfordatascience/tidytuesday) 2020년 31번째 데이터셋(2020-07-28)으로 **팔머 팽귄(Palmer Penguins)**으로 당첨되면서 Iris 데이터를 대체하는 것은 기정사실화 된 듯 싶다.
+데이터 과학의 기본 데이터셋으로 인정받던 붓꽃(Iris) 데이터가 이제는 자리를 펭귄 데이터셋에게 자리를 물려주는 듯 싶다.
+기초 통계학, 시각화 뿐만 아니라 `tidymodels`에도 이를 기본 데이터셋으로 활용하는 사례가 심심치 않게 보여주고 있다.
+이런 추세는 최근 [TidyTuesday](https://github.com/rfordatascience/tidytuesday) 2020년 31번째 데이터셋(2020-07-28)으로 **팔머 팽귄(Palmer Penguins)**으로 당첨되면서 Iris 데이터를 대체하는 것은 기정사실화 된 듯 싶다.
 
 ```{r penguins}
 library(tidyverse)
@@ -53,22 +57,48 @@ penguin <- tuesdata$penguins
 penguin
 ```
 
+# 성별예측 초모수 모형 [^2] {#predict-sex-hyper-parameter}
+
+[^2]: [Yu En Hsu (2021-01-15), "Dials, Tune, and Parsnip: Tidymodels' Way to Create and Tune Model Parameters", towards data science](https://towardsdatascience.com/dials-tune-and-parsnip-tidymodels-way-to-create-and-tune-model-parameters-c97ba31d6173)
+
+초모수(Hyper Parameter)를 활용할 수 있는 예측모형이 더 성능이 높은 것으로 알려져 있어, 펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
+이를 위해서 사용되는 기본적인 팩키지는 기존 단순 훈련/시험 예측모형에 추가하여 `tune`, `dials` 팩키지가 추가된다.
+
+-   훈련/시험 데이터 구분을 위해서 \`rsample\`\`
+-   피처 공학을 위해서 `recipes`
+-   예측모형을 지정하기 위해서 `parsnip`
+-   예측모형 작업흐름 관리를 위해서 `workflows`
+-   예측모형 성능평가를 위해서 `yardstick`
+-   초모수 튜닝: `tune`, `dials`
+
+```{r draw-workflows-tune-hp}
+library(tidyverse)
+library(magick)
+
+pkgs <- c('rsample', 'recipes', 'parsnip', 'tune', 'dials', 'workflows', 'yardstick')
+
+pkgs_path <- glue::glue("https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/{pkgs}.svg")
+
+pkgs_img <- purrr::map(pkgs_path, magick::image_read) %>% 
+  magick::image_join(.)
+
+pkgs_img %>% 
+  image_scale('150') %>% 
+  image_append(stack = FALSE)  
+```
+
+펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
 
 # 데이터 전처리 {#preprocessing-dataset}
 
 나름 잘 정리되어 있어 결측값만 처리하고 연도와 펭귄이 거주하고 있는 섬만 제거한다.
 
 ```{r penguins-preprocessing}
-penguin_df <- penguin %>%
+penguin_tbl <- penguin %>%
   filter(!is.na(sex)) %>%
   select(-year, -island) %>% 
   mutate_if(is.character, as.factor)
 ```
-
-
-# 성별예측 모형 {#predict-sex}
-
-펭귄 데이터셋에서 성별(`sex`)을 예측하는 모형을 구축해본다.
 
 ## 훈련/교차검증/시험 데이터셋 {#predict-sex-split}
 
@@ -77,136 +107,88 @@ penguin_df <- penguin %>%
 ```{r predict-sex}
 library(tidymodels)
 
-penguin_split <- initial_split(penguin_df, prop = 0.8, strata = sex)
-penguin_train <- training(penguin_split)
-penguin_test <- testing(penguin_split)
+splits <- initial_split(penguin_tbl, prop = 0.8, strata = sex)
 
-penguin_cv <- vfold_cv(penguin_train, v =10, repeats = 1) 
+penguin_cv <- vfold_cv(training(splits), v =3, repeats = 1) 
 ```
 
-## 모형 작업흐름 {#predict-sex-model-workflow}
+## 피처 공학 {#predict-sex-model-fe}
 
-먼저 `workflow()`를 설정한다. 다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
+피처 공학(Feature Engineering)을 적용하여 예측모형 정확도 향상에 사용될 모형 행렬(Model Matrix)을 준비한다.
 
-```{r predict-sex-model-workflow}
-penguin_wf <- workflow() %>%
-  add_formula(sex ~ .)
+```{r predict-sex-model-fe}
+penguin_recipe <- recipe(sex ~ ., data = training(splits)) %>%
+  step_corr(all_numeric(), threshold = 0.9) %>% 
+  step_normalize(all_numeric()) %>% 
+  step_dummy(all_nominal(), -all_outcomes())
+
+penguin_recipe
 ```
+
+# 기본설정 모형 {#predict-sex-basic}
+
+펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM, Random Forest, MARS 모형을 선택한다.
+GLM 모형이 가장 좋은 성능을 앞서 보여줬기 때문에 Baseline 모형으로 GLM(일반화 선형 모형)을 선택하고 Hyper Parameter 튜닝을 하여 성능을 좀더 높여보도록 한다.
+[Search parsnip models](https://www.tidymodels.org/find/parsnip/) 웹사이트에 모형에 대한 전반적인 사항을 파악할 수 있다.
 
 ## 모형 아키텍처 {#predict-sex-model-architecture}
 
-펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM, Random Forest, MARS 모형을 선택한다. GLM 모형이 가장 좋은 성능을 앞서 보여줬기 때문에 Baseline 모형으로 GLM(일반화 선형 모형)을 선택하고 Hyper Parameter 튜닝을 하여 성능을 좀더 높여보도록 한다. [Search parsnip models](https://www.tidymodels.org/find/parsnip/) 웹사이트에 모형에 대한 전반적인 사항을 파악할 수 있다. 
-
+펭귄 성별 예측에 사용될 모형 아키텍처를 선정하는데 우선 가장 많이 사용되는 GLM 모형이 기본 평타를 치는 모형으로 삼고 Random Forest를 그 다음 가장 많이 사용하는 인기 모형이라 이것을 모형 아키텍처로 삼는다.
+`ranger` 엔진을 사용하지만, 초모수에 대해서는 아무런 설정도 하지 않는다.
 
 ```{r predict-sex-model-architecture}
-glm_spec <- logistic_reg() %>%
+rf_spec <- rand_forest() %>%
   set_mode("classification") %>% 
-  set_engine("glm") 
+  set_engine("ranger") 
 
-lasso_spec <- logistic_reg(penalty = tune(), mixture = 1) %>%
-  set_mode("classification") %>%
-  set_engine("glmnet")
+rf_spec
 ```
 
-## 모형 적합(fit) {#predict-sex-model-fit}
+## 모형 작업흐름 {#predict-sex-model-workflow-01}
 
-CV 교차검증 표본을 대상으로 각 모형에 적합시킨다. 단순한 모형 비교와 다른 점은 Hyper Parameter를 찾아야 되기 때문에 `grid_regular()` 함수를 사용해서 격자 탐색(Grid Search)를 통해 최적 Hyper Parameter를 찾아낸다. 
+`workflows` 팩키지를 사용해서 예측 모형 작업흐름을 완성한다.
+먼저 `workflow()`를 설정한다.
+다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
 
-### Baseline 모형 적합(fit) {#predict-sex-model-fit-baseline}
+```{r predict-sex-model-workflow-basic}
+penguin_wf <- workflow() %>%
+  add_recipe(penguin_recipe) %>% 
+  add_model(rf_spec)
 
-먼저 앞선 GLM 벤치마킹 기본 모형을 적합시킨다.
+penguin_wf
+```
+
+## 바닐라 모형 적합(fit) {#predict-sex-model-fit}
+
+CV 교차검증 표본을 대상으로 각 모형에 적합시킨다.
+Hyper Parameter는 탐색범위가 정해지지 않았기 때문에 Random Forest에서 설정된 기본값들이 CV 교차검증 표본에 대해서 `vfold` 를 10 모둠으로 지정했기 때문에 10번 훈련 표본에 대해 적합을 시도한다.
 
 ```{r predict-sex-model-fit}
 doParallel::registerDoParallel()
 
-glm_rs <- penguin_wf  %>% 
-  add_model(glm_spec) %>% 
+rf_vanilla_rs <- penguin_wf  %>% 
   fit_resamples(
     resamples = penguin_cv,
     control = control_resamples(save_pred = TRUE),
     metrics = metric_set(accuracy, kap, roc_auc)
   )
-```
-
-### Lasso 모형 적합(fit) {#predict-sex-model-fit-baseline-hp}
-
-Hyper Paramter 튜닝작업을 통해 최적 Hyper Paramter를 찾아낸다. 
-
-```{r grid-regular-tuning}
-lasso_grid <- grid_regular(
-  penalty(range = c(-4, 0)),
-  levels = 10
-)
-
-lasso_grid
-```
-
-`tune_grid()` 함수를 적용시켜 라소 회귀모형에 적시된 `penalty=`에 대한 초모수를 특정한다.
-
-```{r grid-regular-tuning-fit}
-lasso_rs <- tune_grid(
-  penguin_wf %>% add_model(lasso_spec),
-  resamples = penguin_cv,
-  grid = lasso_grid, 
-  control = control_grid(save_pred = TRUE, verbose = TRUE)
-) 
-
-lasso_rs
-```
-
-이제 초모수를 특정해보자. `autoplot()`을 통해 시각화할 수 있다.
-
-```{r grid-regular-tuning-fit-specification-viz}
-autoplot(lasso_rs)
 ```
 
 `collect_metrics()` 또는 `show_best()` 함수로 최적 Hyper Paramter를 선정할 수 있다.
 
-```{r grid-regular-tuning-fit-specification-metric}
-lasso_rs %>% 
+```{r grid-regular-tuning-fit-specification-metric2}
+rf_vanilla_rs %>% 
   show_best("roc_auc")
 ```
 
-이제 최적 모형을 만들어서 기준 `roc_auc`로 최적 초모수가 적용된 라소 모형을 생성한다.
+이제 최적 모형을 만들어서 기준 `roc_auc`로 RF 모형을 생성한다.
 
 ```{r lasso-fit-best-model}
-best_roc_auc <- select_best(lasso_rs, "roc_auc")
+best_roc_auc <- select_best(rf_vanilla_rs, "roc_auc")
 best_roc_auc
 
-lasso_spec_final <- finalize_workflow(penguin_wf %>% add_model(lasso_spec), best_roc_auc)
-lasso_spec_final
-```
-
-## 모형 평가 {#evaluate-model}
-
-Baseline GLM 모형과 비교하여 `glmnet` 라소 모형을 사용하여 Hyper Paramter 튜닝을 한 모형의 성능이 `roc_auc`는 향상되었으나 `accuracy`는 여전히 GLM이 우세한 것을 시각적으로 확인할 수 있다.
-
-```{r predict-sex-model-evaluate}
-glm_eval <- glm_rs %>% 
-  mutate(model = "GLM") %>% 
-  collect_metrics() 
-
-lasso_glm_rs <- lasso_spec_final %>% 
-  fit_resamples(
-    resamples = penguin_cv,
-    control = control_resamples(save_pred = TRUE),
-    metrics = metric_set(accuracy, kap, roc_auc)
-  )
-
-lasso_glm_eval <- lasso_glm_rs %>% 
-  mutate(model = "Lasso GLM") %>% 
-  collect_metrics() 
-
-glm_eval %>% 
-  bind_rows(lasso_glm_eval) %>% 
-  ggplot(aes(x=mean, y=.metric, color = model)) +
-    geom_point(size = 1.5) +
-    geom_errorbar(aes(xmin = mean - std_err,
-                      xmax = mean + std_err), width=0.3) +
-    facet_wrap(~ .metric) +
-    theme_bw() +
-    theme(legend.position = "top") +
-    labs(x="", y="")
+rf_vanilla_final <- finalize_workflow(penguin_wf, best_roc_auc)
+rf_vanilla_final
 ```
 
 ## 시험 데이터 성능측정 {#evaluate-model-test}
@@ -214,27 +196,275 @@ glm_eval %>%
 `last_fit()`함수를 사용하여 최종 모형을 아주 귀중한 시험 데이터(Test Data)에 적용시켜 최종 예측모형 성능을 평가한다.
 
 ```{r predict-sex-model-evaluate-test}
-penguin_final_fit <- lasso_spec_final %>%
-  last_fit(penguin_split)
+rf_vanilla_final_fit <- rf_vanilla_final %>%
+  last_fit(splits)
 
-penguin_final_fit %>% 
+rf_vanilla_final_fit %>% 
   collect_metrics()
 ```
 
 많이 친숙한 `confusion matrix`를 작성해 마무리한다.
 
 ```{r predict-sex-model-evaluate-test-conf}
-penguin_final_fit %>% 
+rf_vanilla_final_fit %>% 
   collect_predictions() %>%
   conf_mat(sex, .pred_class)
 ```
+
+# Hyper Parameter 찾기 {#predict-sex-hyper-parameter-search}
+
+`show_model_info()` 함수를 사용해서 `rand_forest`에 대한 Random Forest 모형에 대한 자세한 정보를 얻을 수 있다.
+
+```{r show-model-info}
+show_model_info("rand_forest")
+```
+
+또한, `show_engines()` 사용해서 Random Forest 모형에 대해 사용가능한 엔진과 분류문제냐 회귀문제냐를 확인할 수 있다.
+
+```{r show-engines}
+show_engines('rand_forest')
+```
+
+# Hyper Parameter 모형: `tune` {#tune-hyper-parameter}
+
+## 모형 아키텍처
+
+Random Forest 모형을 선정하고 엔진으로 `randomForest` 대신 `ranger` 엔진을 사용하고, Hyper Parameter를 `tune()` 함수로 지정한다.
+
+```{r predict-sex-model-architecture-tune-basic}
+rf_tune_spec <- rand_forest(mtry  = tune(), 
+                       trees = tune(),
+                       min_n = tune()) %>%
+  set_mode("classification") %>% 
+  set_engine("ranger") 
+
+rf_tune_spec
+```
+
+## 모형 작업흐름 {#predict-sex-model-workflow-tune}
+
+`workflows` 팩키지를 사용해서 예측 모형 작업흐름을 완성한다.
+먼저 `workflow()`를 설정한다.
+다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
+
+```{r predict-sex-model-workflow-tune}
+penguin_tune_wf <- penguin_wf %>%
+  update_model(rf_tune_spec)
+
+penguin_tune_wf
+```
+
+## `tune` 모형 적합(fit) {#predict-sex-model-fit-tune}
+
+CV 교차검증 표본을 대상으로 각 모형에 적합시킨다.
+Hyper Parameter를 지정했기 때문에 Random Forest에서 해당 초모수에 대해 모형적합을 실시한다.
+CV 교차검증 표본에 대해서 `vfold` 를 10모둠으로 지정했기 때문에 10번 훈련 표본에 대해 적합을 시도한다.
+`fit_resamples()` 함수 대신 앞서 지정한 Hyper Parameter를 대상으로 모형적합을 진행해야 되기 때문에 `tune_grid()` 함수를 사용한다.
+이를 위해서 크게 두가지 방식이 존재한다.
+하나는 격자를 손수 수작업으로 지정하는 방식이고 다른 하나는 무작위로 탐색갯수를 지정하는 것이다.
+
++-------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------+
+| 수작업으로 지정하는 방식                                                                                                      | 무작위로 갯수만 지정하는 방식                    |
++===============================================================================================================================+==================================================+
+| `tune_grid(    resamples = folds_5,     grid = expand.grid(      mtry = c(1, 3, 5),       trees = c(500, 1000, 2000)    )  )` | `tune_grid(    resamples = folds_5, grid = 5  )` |
++-------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------+
+
+```{r predict-sex-model-fit-tune}
+doParallel::registerDoParallel()
+
+rf_tune_rs <- penguin_tune_wf  %>% 
+  tune_grid(
+    resamples = penguin_cv,
+    grid      = 10,
+    control   = control_resamples(save_pred = TRUE),
+    metrics   = metric_set(accuracy, kap, roc_auc)
+  )
+```
+
+`collect_metrics()` 또는 `show_best()` 함수로 최적 Hyper Paramter를 선정할 수 있다.
+
+```{r tuning-fit-specification-metric-dials}
+rf_tune_rs %>% 
+  show_best("roc_auc", n = 3)
+```
+
+이제 최적 모형을 만들어서 기준 `roc_auc`로 RF 모형을 생성한다.
+`finalize_workflow()`를 통해 최적으로 선택된 Hyper Parameter 조합을 살펴볼 수 있다.
+
+```{r tune-fit-best-model-dials2}
+best_tune_roc_auc <- select_best(rf_tune_rs, "roc_auc")
+best_tune_roc_auc
+
+rf_tune_final <- finalize_workflow(penguin_tune_wf, best_tune_roc_auc)
+rf_tune_final
+```
+
+## 시험 데이터 성능측정
+
+Random Forest 모형의 Hyper Parameter를 선정하여 `last_fit()`함수를 사용하여 최종 모형을 아주 귀중한 시험 데이터(Test Data)에 적용시켜 최종 예측모형 성능을 평가한다.
+
+```{r predict-sex-model-evaluate-test-tune}
+rf_tune_final_fit <- rf_tune_final %>%
+  last_fit(splits)
+
+rf_tune_final_fit %>% 
+  collect_metrics()
+```
+
+많이 친숙한 `confusion matrix`를 작성해 마무리한다.
+
+```{r predict-sex-model-evaluate-test-conf-tune}
+rf_tune_final_fit %>% 
+  collect_predictions() %>%
+  conf_mat(sex, .pred_class)
+```
+
+# Hyper Parameter 모형: `dials` {#dials-hyper-parameter}
+
+## 모형 아키텍처 {#dials-model-architecture}
+
+Random Forest 모형을 선정하고 엔진으로 `randomForest` 대신 `ranger` 엔진을 사용하고, Hyper Parameter를 `tune()` 함수로 지정하는 것 까지는 동일하다.
+
+```{r predict-sex-model-architecture-dials}
+rf_dials_spec <- rand_forest(mtry  = tune(), 
+                       trees = tune(),
+                       min_n = tune()) %>%
+  set_mode("classification") %>% 
+  set_engine("ranger") 
+
+rf_dials_spec
+```
+
+## 모형 작업흐름 {#predict-sex-model-workflow-dials}
+
+`workflows` 팩키지를 사용해서 예측 모형 작업흐름을 완성한다.
+먼저 `workflow()`를 설정한다.
+다양한 모형조합을 작업흐름에 맞춰 유연하고 수월히 최적 모형 구축을 할 수 있다.
+
+```{r predict-sex-model-workflow-dials}
+penguin_dials_wf <- penguin_wf %>%
+  update_model(rf_dials_spec)
+
+penguin_dials_wf
+```
+
+## `dials` 초모수 공간 {#predict-sex-model-dials-space}
+
+`grid_random()` 함수를 사용하게 되면 탐색할 초모수 공간에서 `size = 5`로 특정되어 5개만 만들어 낼 수 있다.
+
+```{r random-grid}
+dials_random <- grid_random(
+  mtry  = mtry(c(1, ncol(penguin) - 1)),
+  trees(),
+  min_n(),
+  size = 5
+)
+
+dials_random
+```
+
+`grid_regular()` 함수를 사용하게 되면 각 초모수에서 2개씩만 뽑아 이를 조합한 $2 \times 2 \times 2 = 8$ 개 초모수 공간을 만들어낸다.
+
+```{r regular-grid}
+dials_regular <- grid_regular(
+  mtry(c(1, ncol(penguin) - 1)),
+  trees(),
+  min_n(),
+  levels = 2
+)
+dials_regular
+```
+
+
+## `dials` 모형 적합(fit) {#predict-sex-model-fit-dials}
+
+CV 교차검증 표본을 대상으로 각 모형에 적합시킨다.
+Hyper Parameter를 지정했기 때문에 Random Forest에서 해당 초모수에 대해 모형적합을 실시한다.
+CV 교차검증 표본에 대해서 `vfold` 를 10모둠으로 지정했기 때문에 10번 훈련 표본에 대해 적합을 시도한다. `tune()`을 사용하는 것과 비교하여 `dials`를 사용하게 되면 Hyper Parameter를 좀더 유연하게 명시적으로 설정하여 예측모형 개발에 사용할 수 있다.
+
+```{r predict-sex-model-fit-dials}
+doParallel::registerDoParallel()
+
+rf_dials_rs <- penguin_dials_wf  %>% 
+  tune_grid(
+    resamples = penguin_cv,
+    grid      = dials_regular,
+    control   = control_resamples(save_pred = TRUE),
+    metrics   = metric_set(accuracy, kap, roc_auc)
+  )
+rf_dials_rs
+```
+
+`collect_metrics()` 또는 `show_best()` 함수로 최적 Hyper Paramter를 선정할 수 있다.
+
+```{r tuning-fit-specification-metric-basic}
+rf_dials_rs %>% 
+  show_best("roc_auc", n = 3)
+```
+
+이제 최적 모형을 만들어서 기준 `roc_auc`로 RF 모형을 생성한다.
+`finalize_workflow()`를 통해 최적으로 선택된 Hyper Parameter 조합을 살펴볼 수 있다.
+
+```{r tune-fit-best-model-dials}
+best_dials_roc_auc <- select_best(rf_dials_rs, "roc_auc")
+best_dials_roc_auc
+
+rf_dials_final <- finalize_workflow(penguin_dials_wf, best_dials_roc_auc)
+rf_dials_final
+```
+
+## 시험 데이터 성능측정 {#dials-hyper-parameter}
+
+Random Forest 모형의 Hyper Parameter를 선정하여 `last_fit()`함수를 사용하여 최종 모형을 아주 귀중한 시험 데이터(Test Data)에 적용시켜 최종 예측모형 성능을 평가한다.
+
+```{r predict-sex-model-evaluate-test-dials}
+rf_dials_final_fit <- rf_dials_final %>%
+  last_fit(splits)
+
+rf_dials_final_fit %>% 
+  collect_metrics()
+```
+
+많이 친숙한 `confusion matrix`를 작성해 마무리한다.
+
+```{r predict-sex-model-evaluate-test-conf-dials}
+rf_dials_final_fit %>% 
+  collect_predictions() %>%
+  conf_mat(sex, .pred_class)
+```
+
+# Hyper Parameter 분석 {#dials-hyper-parameter-analysis}
+
+Hyper Parameter를 통해 예측 모형을 만들게 되면 ANOVA 형태 데이터를 갖게 되어 이를 활용한 다양한 분석을 수행할 수 있다. 즉, 다음과 같은 수학적인 모형을 마음속에 상정하고 분석을 수행하게 되면 최적의 Hyper Parameter 조합을 찾는데 도움을 받을 수 있다.
+
+$$\text{정확도, AUC 등} = \text{mtry} + \text{trees} + \text{min_n} + \epsilon$$
+
+```{r hp-data}
+hp_tbl <- rf_dials_rs %>% 
+  collect_metrics(summarize = FALSE)
+
+hp_tbl
+```
+
+요약 통계량을 구해보면 다음과 같다.
+
+```{r hp-summary}
+hp_tbl %>% 
+  group_by(.metric) %>%
+  summarize(min = min(.estimate),
+  median = median(.estimate),
+  max = max(.estimate),
+  mean = mean(.estimate),
+  sd = sd(.estimate))
+```
+
 
 # 예측모형 배포 {#deploy-predictive-models}
 
 `fit()` 함수를 사용해서 예측모형 바이너리 파일을 로컬 파일로 저장한다.
 제대로 저장이 되었는지 관측점 한개를 만들어서 가상의 펭귄의 성별을 기본 정보를 바탕으로 예측해보자.
 
-```{r load-predictive-model}
+```{r load-predictive-model, eval = FALSE}
 penguin_predictvie_model <- fit(lasso_spec_final, data = penguin_df)
 write_rds(penguin_predictvie_model, "data/penguin_predictvie_model.rds")
 penguin_predictvie_model_test <- read_rds("data/penguin_predictvie_model.rds")
