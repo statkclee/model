@@ -122,14 +122,19 @@ API를 작성할 때 사람이 사용하기 쉽게 설계한다.
 
 `tidymodels`은 통계검정과 모형 크게 두가지로 나눌 수 있는데 여기서는 우선 모형에 관련된 사항에 집중하기로 한다. 모형이 `tidyverse` 체계를 구성하는 핵심 사항임에도 불구하고 `dplyr`, `ggplot`과 비교하여 체계적으로 정리된 것이 없어 과거 `caret`이 했던 기능을 `tidymodels`를 통해 하나씩 채워나가고 있다. `tidymodels`를 구성하는 핵심 팩키지는 `rsample`, `recipes`, `parnip`, `yardstick`을 들 수 있다.
 
+![](fig/tidymodels-pkgs.png)
+
+
 - [`tidymodels`](https://github.com/tidymodels/tidymodels)
     - 전처리와 피처 공학(Feature Engineering)
         - [`recipe`](https://github.com/tidymodels/recipes)(feature engineering): 모형 설계행렬 데이터를 생성하고 전처리하는 기능.
             - [`embed`](https://github.com/tidymodels/embed): 범주형 예측변수를 숫자 칼럼 예측변수로 담아내는 기능.
         - [`rsample`](https://github.com/tidymodels/rsample): 모형개발을 위한 표본추출 기능
-        - [`themis`]()
+        - [`themis`](https://github.com/tidymodels/themis): 불균형 데이터 처리 전문 팩키지
+        - [`spatialsample`](https://spatialsample.tidymodels.org/): 공간 데이터 표본추출
+        - [`textrecipes`](https://textrecipes.tidymodels.org/): 텍스트 전처리
     - 모형(Model)    
-        - [`parsip`](https://topepo.github.io/parsnip/): 모형공식(formula) 표준화
+        - [`parsip`](https://topepo.github.io/parsnip/): 다양한 모형 적합
     - 모형 미세조정(tuning)        
         - [`dials`](https://github.com/tidymodels/dials): 모형 초모수 튜닝 값 생성
         - [`tune`](https://github.com/tidymodels/tune): 모형 초모수 튜닝 도구
@@ -137,17 +142,27 @@ API를 작성할 때 사람이 사용하기 쉽게 설계한다.
         - [`yardstick`](https://github.com/tidymodels/yardstick): 깔끔한 데이터(tidy data) 원칙에 따라 모형성능 추정.
     - 작업흐름(workflow)
         - [`workflows`](https://github.com/tidymodels/workflows)
-    - 기타
-        - `tidytext`
-        - `broom`
-        - `tidypredict`
-        - `butcher`
-        - `textrecipes`
-        - `corrr`
+- 후처리(Post Processing)
+     - [`probably`](https://probably.tidymodels.org/)
+- 모형 배포(Deployment)
+    - [`modeldb`](https://modeldb.tidymodels.org/)
+    - [`tidypredict`](https://tidypredict.tidymodels.org/)
 - 통계 검정(Statistical Testing)        
     - [`tidyposterior`](https://tidymodels.github.io/tidyposterior/): 사후(post hoc) 모형 분석
-
-# CART: `iris` 사례 {#iris-helloword}
-
-![분류문제 - 작업흐름도](fig/tidymodels-iris.png)
+- 모형 쌓기(Model Stacking)
+    - [`stacks`](https://cran.r-project.org/web/packages/stacks/index.html)
+- `tidymodels` 템플릿 생성
+    - [`usemodels`](https://github.com/tidymodels/usemodels)
+- 예측모형 저장소 `workflowsets` 
+    - [`workflowsets`](https://github.com/tidymodels/workflowsets)
+- 통계 분석
+    - `corrr`
+    - `infer`
+- 기타
+    - `broom`
+    - [`butcher`](https://butcher.tidymodels.org/)
+    - [`baguette`](https://baguette.tidymodels.org/)
+    - [`applicable`](https://applicable.tidymodels.org/index.html)
+- 모형 개발 팩키지
+    - [`hardhat`](https://hardhat.tidymodels.org/)
 
