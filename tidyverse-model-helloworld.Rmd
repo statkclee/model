@@ -1,0 +1,231 @@
+---
+layout: page
+title: "Tidyverse 모형 - `tidymodels`"
+subtitle: "`tidyverse` 모형 헬로월드"
+author:
+- name: "이광춘"
+  affiliation: "[Tidyverse Korea](https://www.facebook.com/groups/tidyverse/)"
+date: "`r Sys.Date()`"
+tags: ["데이터 과학", "Data Science", "데이터 사이언스", "tidymodels", "parsnip", "tidyverse", "펭귄", "penguin", "헬로월드"]
+output:
+  html_document: 
+    include:
+      after_body: footer.html
+      before_body: header.html
+    theme: default
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+    code_folding: show
+    number_section: true
+    self_contained: true
+bibliography: bibliography_model.bib
+csl: biomed-central.csl
+urlcolor: blue
+linkcolor: blue
+editor_options: 
+  chunk_output_type: console
+---
+ 
+
+``` {r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,
+                      comment="", digits = 3, tidy = FALSE, prompt = FALSE, fig.align = 'center')
+
+```
+
+# `iris` 데이터 작업흐름 {#iris-helloword}
+
+![분류문제 - 작업흐름도](fig/tidymodels-iris.png)
+
+
+# 탐색적 데이터 분석 {#iris-tidymodels-EDA}
+
+탐색적 데이터 분석에 대해서 모형개발에 필요한 전반적인 사항은 모두 파악한다. 여기서는 `skimr` 팩키지로 붓꽃데이터에 대한 모든 사항을 파악한 것으로 갈음한다.
+
+```{r iris-case-study-library-EDA}
+library(tidyverse)
+skimr::skim(iris)
+```
+
+# `tidymodels` 도구 {#iris-tidymodels}
+
+`tidymodels` 팩키지에 `tidyverse` 체계에서 예측모형을 구현하는 다양한 팩키지가 일괄적으로 포함되어 있다.
+
+```{r iris-case-study-library}
+library(tidymodels)
+```
+
+# 전처리와 피쳐 공학 {#iris-tidymodels-fe}
+
+기계학습 예측모형을 개발할 때 훈련/시험 데이터로 쪼개고 피쳐 공학(Feature Engineering)을 통해 Basetable을 다양한 기계학습 알고리즘에 적합시키도록 사전 정지작업을 수행한다.
+
+가장 먼저 `initial_split()` 함수로 훈련/시험 데이터를 7:3 비율로 쪼갠다. 특히 층화(`strata`)를 두어 7:3 비율이 정확히 유지되도록 지정한다.
+`training()`, `testing()` 함수로 basetable 모형 데이터를 훈련/시험 데이터로 분리시킨다.
+
+```{r iris-case-study}
+iris_tbl <- iris %>% as_tibble %>% 
+  janitor::clean_names()
+
+iris_split <- initial_split(iris_tbl, prop = 0.7, strata = species)
+iris_split
+
+train_iris <- training(iris_split)
+test_iris  <- testing(iris_split)
+```
+
+다음으로 `recipes` 팩키지를 사용해서 피쳐 공학 기법을 적용하여 다양한 기계학습 알고리즘을 적용시키도록 준비시킨다. `ggplot` 사용법에 익숙하신 분은 `recipes` 팩키지의 다양한 함수 사용법을 어려움 없이 사용할 수 있을 것이다.
+
+`recipe()` 함수에 모형 공식을 작성하고, `step_*` 함수에 다양한 피처 공학 기법을 적용시켜 준비시킨다. 
+만약 피처공학된 결과를 보고자 한다면 `iris_recipe %>% prep() %>% bake(new_data = train_iris)` 명령어로 레서피에 정의된 결과를 파악할 수 있다.
+
+```{r iris-recipes-training-show}
+iris_recipe <- recipe(species ~., data = train_iris) %>%
+  step_center(all_predictors(), -all_outcomes()) %>%
+  step_scale(all_predictors(), -all_outcomes()) %>% 
+  step_zv(all_predictors()) %>% 
+  prep()
+
+summary(iris_recipe)
+```
+
+`iris_recipe` 요리법을 그대로 시험 데이터에 적용시켜 나중에 예측모형 성능평가에 사용한다. 
+이때 사용되는 동사가 `bake()`로 구워둔다. 
+
+```{r iris-recipes-testing}
+iris_testdata <- iris_recipe %>% 
+  prep() %>% 
+  bake(new_data = test_iris)
+
+glimpse(iris_testdata)
+```
+
+
+시험 데이터에 대한 전처리 및 피처 공학 적용이 완료되었다면, 다음 단계로 훈련 데이터에도 동일한 작업을 수행하는데 `juice()` 동사를 사용해서 해당 작업을 수행시키는데 이때 사용되는 요리법도 `iris_recipe`가 된다. 
+
+`prep()`, `bake()`, `juice()` 동사로 중간중간 결과물을 파악한다.
+
+```{r iris-recipes-training}
+juice(iris_recipe) %>% 
+  head()
+```
+
+
+# 모형지정 {#fit-model}
+
+Random Forest 모형의 경우 `ranger`, `randomForest` 팩키지가 사실의 표준으로 학계와 산업계를 대표하고 있는데 인터페이스가 서로 달라 동일한 알고리즘임에도 불구하고 구문을 별도 작성해야 하는 어려움이 있는데 `parsnip`이 이를 표준화했다.
+`rand_forest()`으로 모형을 정의하고 `set_engine()`에 팩키지명을 지정한다.
+
+```{r iris-model}
+iris_ranger <- rand_forest(trees = 100) %>%
+  set_mode("classification") %>% 
+  set_engine("ranger") # `ranger` 팩키지
+  # set_engine("randomForest") %>% # `randomForest` 팩키지
+```
+
+# 예측모형 작업흐름 {#fit-model-workflow}
+
+목적은 동일하지만 데이터 형태와 예측이냐 분류냐, 적용하고자 하는 예측모형에 따라 차이가 나더라도 `workflows`를 사용하면 앞선 예측모형 적용과정을 매우 단순화할 수 있다.
+
+```{r iris-model-workflows}
+library(workflows)
+
+iris_workflow <- 
+  workflow() %>% 
+  add_model(iris_ranger) %>% 
+  add_recipe(iris_recipe)
+```
+
+# 모형 적합 {#fit-model-workflow-fit}
+
+`recipes` 단계에서 모형공식은 지정했기 때문에 `fit()` 함수 내부에 이를 중복해서 지정할 필요는 없다.
+
+```{r iris-model-workflows-fit}
+iris_fit <- iris_workflow %>% 
+  fit(data = train_iris)
+
+iris_fit
+```
+
+# 훈련데이터 - 예측 {#fit-model-predict-traing}
+
+예측모형에 대한 성능을 파악하려면 예측값을 생성되어야 한다.
+`predict()` 함수를 사용하게 되면 예측모형에 대한 예측값을 생성시킬 수 있는데 `broom` 팩키지와 마찬가지로 사용해서 `bind_cols()` 함수를 사용하게 되면 데이터프레임으로 후속 작업이 가능한 형태로 구현이 가능하다.
+
+```{r iris-fit-predict-train}
+iris_pred <- train_iris %>% 
+  bind_cols(iris_fit %>% predict(train_iris)) %>% 
+  bind_cols(iris_fit %>% predict(train_iris, type = "prob"))
+
+head(iris_pred)
+```
+
+# 모형 성능 {#fit-model-performance}
+
+`yardstic` 팩키지 `metrics()` 함수를 사용해서 예측모형의 성능을 파악할 수 있다.
+먼저, `yardstick` 팩키지 `accuracy()` 함수로 정확도를 파악한다.
+
+```{r iris-fit-predict-train-accuracy}
+iris_pred %>% 
+  accuracy(truth = species, estimate = .pred_class)
+```
+
+`conf_mat()` 함수를 사용해서 혼동행렬(confusion matrix)을 계산할 수 있다.
+
+```{r iris-fit-predict-train-confusion}
+iris_pred %>% 
+  conf_mat(truth = species, estimate = .pred_class)
+```
+
+`metrics()` 함수를 사용하게 되면 특정 예측모형 측도를 지정하지 않고도 예측모형 성능에 대한 대략적인 정보를 획득할 수 있다.
+
+```{r iris-fit-performance}
+iris_pred %>%
+  metrics(truth = species, estimate = .pred_class)
+```
+
+`iris` 데이터는 3가지 품종을 꽃에 대한 4가지 측정정보를 바탕으로 예측하는 것이라 보통 정확도만을 따지지만, `tidyverse`의 `dplyr`, `broom`을 사용한 경험이 있다면 각 범주별로 ROC, AUC를 계산하는 것도 수월하게 진행할 수 있다.
+
+`gain_curve()`, `roc_curve()` 함수를 사용해서 이득(Gain), ROC 곡선도 코드 한줄로 작성이 가능하다.
+
+```{r parsnip-performance-ggplot}
+iris_pred %>%
+  # gain_curve(species, .pred_setosa:.pred_virginica) %>%
+  roc_curve(species, .pred_setosa:.pred_virginica) %>%
+  autoplot()
+```
+
+마지막으로 예측모형 성능평가만을 위해서 추출한 성능평가지표(metrics)만 추출하여 데이터프레임으로 제작하여 성능지표에 대한 마무리를 한다.
+
+```{r metric-concluded}
+iris_pred %>% 
+  metrics(species, .pred_setosa:.pred_virginica, estimate = .pred_class)
+```
+
+# 시험데이터 - 예측 {#fit-model-predict-test}
+
+`predict()` 함수를 사용하게 되면 예측모형에 대한 예측값을 생성시킬 수 있는데 `broom` 팩키지와 마찬가지로 사용해서 `bind_cols()` 함수를 사용하게 되면 데이터프레임으로 후속 작업이 가능한 형태로 구현이 가능하다.
+
+```{r iris-fit-predict}
+test_pred <- test_iris %>% 
+  bind_cols(iris_fit %>% predict(test_iris)) %>% 
+  bind_cols(iris_fit %>% predict(test_iris, type = "prob"))
+
+test_pred
+```
+
+`yardstick` 팩키지 `accuracy()` 함수로 시험데이터에 대한 정확도를 파악한다.
+
+```{r iris-fit-predict-metrics}
+test_pred %>% 
+  accuracy(truth = species, estimate = .pred_class)
+```
+
+`conf_mat()` 함수를 사용해서 혼동행렬(confusion matrix)을 계산할 수 있다.
+
+```{r iris-fit-predict-test-confusion}
+test_pred %>% 
+  conf_mat(truth = species, estimate = .pred_class)
+```
+
