@@ -464,8 +464,8 @@ hp_tbl %>%
 `fit()` 함수를 사용해서 예측모형 바이너리 파일을 로컬 파일로 저장한다.
 제대로 저장이 되었는지 관측점 한개를 만들어서 가상의 펭귄의 성별을 기본 정보를 바탕으로 예측해보자.
 
-```{r load-predictive-model, eval = FALSE}
-penguin_predictvie_model <- fit(lasso_spec_final, data = penguin_df)
+```{r load-predictive-model, eval = TRUE}
+penguin_predictvie_model <- fit(rf_dials_final, data = penguin_tbl)
 write_rds(penguin_predictvie_model, "data/penguin_predictvie_model.rds")
 penguin_predictvie_model_test <- read_rds("data/penguin_predictvie_model.rds")
 
